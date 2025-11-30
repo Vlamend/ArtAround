@@ -1,0 +1,13 @@
+{
+  "museumName": "GENERIC MUSEUM",
+  "mapImage": "/assets/placeholder-map.png",
+  "rooms": [],
+  "objects": [],
+  "navigation": {
+    "entrance": "",
+    "exit": "",
+    "toilet": "",
+    "bar": "",
+    "shop": ""
+  }
+}
