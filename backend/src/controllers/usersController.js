@@ -1,6 +1,5 @@
 import User from "../models/user.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 
 
 //Genera un token JWT con i dati minimi per identificare l’utente
@@ -12,7 +11,7 @@ function generateToken(user) {
             role: user.role
         },
         process.env.JWT_SECRET,
-        { expiresIn: "2h" }
+        { expiresIn: "5h" }
     );
 }
 
