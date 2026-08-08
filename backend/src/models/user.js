@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import bcrypt from"bcryptjs";
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const usrRegex = /^[^\s]+$/;
 
@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     validate: {
       validator: usrRegex.test.bind(usrRegex),
-      message: "Nome utente non valido"
+      message: 'Nome utente non valido'
     }
   },
 
@@ -25,38 +25,54 @@ const UserSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ["admin", "user"],
-    default: "user"
+    enum: ['admin', 'user'],
+    default: 'user'
   },
 
-  preferredDetailLevel: {
+  /* ---- Preferenze del profilo utente ----
+   *
+   * preferredLanguageLevel: usa lo stesso enum di Item.language,
+   *   non un valore arbitrario. E' quello che il Navigator confronta
+   *   direttamente con Item.language per scegliere l'item più
+   *   adatto al profilo dell'utente (vedi specifiche ArtAround:
+   *   "Il Navigator sceglie l'item con il language più adatto al
+   *   profilo dell'utente")
+   *
+   * interfaceLanguage: lingua dell'interfaccia (menu, comandi
+   *   vocali, eventuale traduzione dei contenuti). Rinominato
+   *   rispetto a 'language' per non confondersi con
+   *   Item.language, che indica il livello linguistico del
+   *   contenuto e non la lingua
+   * --------------------------------- */
+  preferredLanguageLevel: {
     type: String,
-    enum: ["short", "medium", "long"],
-    default: "short"
+    enum: ['infantile', 'elementare', 'medio', 'specialistico'],
+    default: 'medio'
   },
 
-  language: {
+  interfaceLanguage: {
     type: String,
-    enum: ["it", "en"],
-    default: "it"
+    enum: ['it', 'en'],
+    default: 'it'
   },
 
-  visitIds: [{
+  // Visite acquistate/adottate dall'utente
+  purchasedVisits: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Visit"
+    ref: 'Visit'
   }]
-});
+}, { timestamps: true });
 
 // Middleware Mongoose per hashare la password prima di salvare
-UserSchema.pre("save", async function (next) {
+UserSchema.pre('save', async function (next) {
   // Se la password NON è stata modificata, non la ri-hashiamo
-  if (!this.isModified("password")) {
+  if (!this.isModified('password')) {
     return next();
   }
-  //Altrimenti, hash della password
+  // Altrimenti, hash della password
   try {
-    const sale = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, sale);
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (err) {
     next(err);
@@ -68,6 +84,4 @@ UserSchema.methods.comparePassword = function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-
-
-export default mongoose.model("User", UserSchema);
+export default mongoose.model('User', UserSchema);

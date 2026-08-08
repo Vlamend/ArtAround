@@ -61,8 +61,6 @@ export async function register(req, res) {
     }
 }
 
-
-
 //Verifica le credenziali dell’utente e restituisce un JWT
 export async function login(req, res) {
     try {
@@ -105,27 +103,8 @@ export async function login(req, res) {
     }
 }
 
-
-//logout utente (gestito lato client eliminando il token)
+//logout utente (gestito lato client eliminando il token; con JWT stateless
+//non c'è nulla da invalidare lato server)
 export function logout(req, res) {
     res.json({ message: "Logout effettuato. Elimina il token lato client." });
-}
-
-
-
-//Genera un nuovo token JWT per l’utente autenticato
-export function refreshToken(req, res) {
-    try {
-        const user = req.user;
-
-        const newToken = generateToken(user);
-
-        res.json({
-            message: "Token aggiornato.",
-            token: newToken
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: "Errore generazione nuovo token." });
-    }
 }

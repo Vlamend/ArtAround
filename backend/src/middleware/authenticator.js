@@ -5,6 +5,9 @@ import jwt from "jsonwebtoken";
  * Controlla che il token JWT sia presente e valido.
  */
 export function authenticateToken(req, res, next) {
+    if (!process.env.JWT_SECRET){
+        return res.status(500).json({ error: "JWT_SECRET non configurato" });
+    }
     const authHeader = req.headers["authorization"];
 
     // Il token deve arrivare come: "Bearer <token>"
@@ -14,21 +17,18 @@ export function authenticateToken(req, res, next) {
         return res.status(401).json({ error: "Token mancante. Accesso negato." });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-        if (err) {
-            console.error("JWT error:", err);
-            return res.status(403).json({ error: "Token non valido." });
-        }
-
-        // user = payload inserito nel token
-        req.user = user;
+    try {
+        req.user = jwt.verify(token, process.env.JWT_SECRET);
         next();
-    });
+    }
+    catch(err){
+        return res.status(403).json({ error: "Token non valido." });
+    }
 }
 
 /**
  * Middleware per permettere solo agli admin di accedere a una route.
- * Va usato *dopo* authenticateToken.
+ * Va usato dopo authenticateToken.
  */
 export function requireAdmin(req, res, next) {
     if (!req.user || req.user.role !== "admin") {
