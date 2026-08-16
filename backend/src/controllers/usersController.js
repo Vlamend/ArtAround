@@ -108,3 +108,20 @@ export async function login(req, res) {
 export function logout(req, res) {
     res.json({ message: "Logout effettuato. Elimina il token lato client." });
 }
+
+// Route per verificare se l'utente è autenticato e ottenere i suoi dati
+export async function protectedRoute(req, res) {
+    try {
+        const user = await User.findById(req.user.id).select("-password");
+ 
+        if (!user) {
+            return res.status(404).json({ error: "Utente non trovato." });
+        }
+ 
+        res.json({ user });
+ 
+    } catch (error) {
+        console.error("Errore nel recupero dell'utente:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}

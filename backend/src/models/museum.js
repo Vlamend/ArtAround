@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 
 const urlRegex = /^https?:\/\/[^\s$.?#].[^\s]*$/;
-const imgUrlRegex = /^https?:\/\/.*\.(png|jpg|jpeg|gif|svg)$/i;
+const imgUrlRegex = /^((https?:\/\/.*)|(\/[\w\-\/]+))\.(png|jpg|jpeg|gif|svg)$/i;
 const mailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^\d{7,15}$/;
 const capRegex = /^\d{5}$/;
@@ -34,6 +34,22 @@ const roomSchema = new Schema({
     description: {
         type: String,
         default: ''
+    },
+
+    /* ---- Rettangolo di delimitazione della sala ----
+     * Coordinate 0-100, stesso sistema di Item.coords e
+     * pointsOfInterest.coords. Opzionale: se assente, la mappa del
+     * Navigator si limita a mostrare i punti (comportamento precedente)
+     * senza disegnare i contorni della sala. Non è un vero motore CAD
+     * con porte/corridoi, solo un rettangolo indicativo sufficiente a
+     * dare un riferimento visivo di dove finisce una sala e ne inizia
+     * un'altra.
+     * --------------------------------- */
+    bounds: {
+        x: { type: Number },
+        y: { type: Number },
+        width: { type: Number },
+        height: { type: Number }
     }
 
 });
@@ -236,14 +252,39 @@ const museumSchema = new Schema({
 
     rooms: [roomSchema],
 
+    /* ---- Planimetrie ----
+     * Una per piano, fornita dal museo (come se fosse la vera
+     * planimetria dell'edificio). Le coordinate di Item.coords e
+     * pointsOfInterest.coords per gli elementi di un dato piano sono
+     * percentuali (0-100) RELATIVE A QUESTA IMMAGINE, non a un canvas
+     * condiviso tra piani diversi - ogni piano ha il proprio sistema
+     * di coordinate locale.
+     * Se un piano non ha una planimetria fornita, il Navigator ricade
+     * su una rappresentazione astratta calcolata da Museum.rooms[].bounds.
+     * --------------------------------- */
+    floorPlans: [{
+        floor: { type: Number, required: true },
+        imageUrl: {
+            type: String,
+            required: true,
+            validate: {
+                validator: v => imgUrlRegex.test(v),
+                message: 'URL planimetria non valido'
+            }
+        }
+    }],
+
     // Luoghi rilevanti svincolati dalla visita: entrata, uscita, toilette,
     // bar, shop, ascensori, ostacoli di accessibilità ecc.
     pointsOfInterest: [poiSchema]
 
 }, { timestamps: true });
 
-//Indici per velocizzare le query più frequenti (ricerca per nome e città)
+/* --------------------------------------------------
+ Indici
+-------------------------------------------------- */
 
+museumSchema.index({ slug: 1 });
 museumSchema.index({ name: 1 });
 museumSchema.index({ city: 1 });
 

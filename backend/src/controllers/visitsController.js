@@ -1,10 +1,9 @@
-import Item from "../models/item.js";
+import Visit from "../models/visit.js";
 
-// Lista item, filtrabile per museo, tipo (object/related) e livello
-// linguistico. Il Navigator la usa per scegliere l'item più adatto al
-// profilo dell'utente, il marketplace per popolare la lista dei
-// contenuti disponibili.
-export async function getItems(req, res) {
+// Lista visite, filtrabile per museo e visibilità pubblica
+// (marketplace: "contenuti esistenti - sia gratuiti sia in vendita -
+// per il museo in questione")
+export async function getVisits(req, res) {
     try {
         const filter = {};
 
@@ -12,139 +11,125 @@ export async function getItems(req, res) {
             filter.museum = req.query.museum;
         }
 
-        if (req.query.type) {
-            filter.type = req.query.type;
-        }
-
-        if (req.query.language) {
-            filter.language = req.query.language;
-        }
-
-        // Per default mostra solo gli item pubblici; un autore che vuole
-        // vedere anche i propri item privati lo farà da un'altra route
-        // dedicata (fuori scope per ora, stesso discorso fatto per Visit).
+        // Per default mostra solo le visite pubbliche; un autore che
+        // vuole vedere anche le proprie visite private lo farà tramite
+        // un'altra route dedicata (fuori scope per ora).
         filter.isPublic = true;
 
-        const items = await Item.find(filter).populate('museum', 'name slug');
+        const visits = await Visit.find(filter).populate('museum', 'name slug');
 
-        res.json(items);
+        res.json(visits);
 
     } catch (error) {
-        console.error("Errore nel recupero degli item:", error);
+        console.error("Errore nel recupero delle visite:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }
 
-// Dettaglio di un singolo item
-export async function getItemById(req, res) {
+// Dettaglio di una singola visita, con gli item della sequenza popolati
+// (il Navigator ne ha bisogno per eseguire la visita passo per passo)
+export async function getVisitById(req, res) {
     try {
-        const item = await Item.findById(req.params.id).populate('museum');
+        const visit = await Visit.findById(req.params.id)
+            .populate('museum')
+            .populate('steps.item');
 
-        if (!item) {
-            return res.status(404).json({ error: "Item non trovato." });
+        if (!visit) {
+            return res.status(404).json({ error: "Visita non trovata." });
         }
 
-        res.json(item);
+        res.json(visit);
 
     } catch (error) {
-        console.error("Errore nel recupero dell'item:", error);
+        console.error("Errore nel recupero della visita:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }
 
-// Creazione di un nuovo item: l'autore è SEMPRE preso dal token, mai
-// dal body, per evitare che un utente possa intestare un item a
-// qualcun altro (stessa logica applicata a createVisit).
-export async function createItem(req, res) {
+// Creazione di una nuova visita: l'autore è SEMPRE preso dal token,
+// mai dal body, per evitare che un utente possa intestare una visita
+// a qualcun altro.
+export async function createVisit(req, res) {
     try {
-        const {
-            title, year, technique, dimensions, image,
-            wikidataId, artistWikidata, styleWikidata,
-            museum, coords, roomId,
-            texts, language, license, type,
-            price, tags
-        } = req.body;
+        const { title, description, museum, entranceInfo, steps, license, price, tags } = req.body;
 
-        if (!title || !museum || !texts || texts.length === 0 || !language) {
-            return res.status(400).json({ error: "Titolo, museo, almeno un testo e il livello linguistico sono obbligatori." });
+        if (!title || !museum || !steps || steps.length === 0) {
+            return res.status(400).json({ error: "Titolo, museo e almeno un item nella sequenza sono obbligatori." });
         }
 
-        const newItem = new Item({
-            title, year, technique, dimensions, image,
-            wikidataId, artistWikidata, styleWikidata,
-            museum, coords, roomId,
-            texts, language, license, type,
-            price, tags,
+        const newVisit = new Visit({
+            title,
+            description,
+            museum,
+            entranceInfo,
+            steps,
+            license,
+            price,
+            tags,
             author: req.user.id
         });
 
-        await newItem.save();
+        await newVisit.save();
 
-        res.status(201).json(newItem);
+        res.status(201).json(newVisit);
 
     } catch (error) {
-        console.error("Errore nella creazione dell'item:", error);
+        console.error("Errore nella creazione della visita:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }
 
-// Modifica di un item esistente: solo l'autore originale può farlo
-export async function updateItem(req, res) {
+// Modifica di una visita esistente: solo l'autore originale può farlo
+export async function updateVisit(req, res) {
     try {
-        const item = await Item.findById(req.params.id);
+        const visit = await Visit.findById(req.params.id);
 
-        if (!item) {
-            return res.status(404).json({ error: "Item non trovato." });
+        if (!visit) {
+            return res.status(404).json({ error: "Visita non trovata." });
         }
 
-        if (item.author.toString() !== req.user.id) {
-            return res.status(403).json({ error: "Non sei l'autore di questo item." });
+        if (visit.author.toString() !== req.user.id) {
+            return res.status(403).json({ error: "Non sei l'autore di questa visita." });
         }
 
         // Campi effettivamente modificabili: non permettiamo di
-        // riassegnare autore, museo o adozioni da qui.
-        const editableFields = [
-            'title', 'year', 'technique', 'dimensions', 'image',
-            'wikidataId', 'artistWikidata', 'styleWikidata',
-            'coords', 'roomId',
-            'texts', 'language', 'license', 'type',
-            'isPublic', 'price', 'tags'
-        ];
+        // riassegnare autore, adozioni o museo da qui.
+        const editableFields = ['title', 'description', 'entranceInfo', 'steps', 'license', 'price', 'isPublic', 'tags'];
         for (const field of editableFields) {
             if (req.body[field] !== undefined) {
-                item[field] = req.body[field];
+                visit[field] = req.body[field];
             }
         }
 
-        await item.save();
+        await visit.save();
 
-        res.json(item);
+        res.json(visit);
 
     } catch (error) {
-        console.error("Errore nell'aggiornamento dell'item:", error);
+        console.error("Errore nell'aggiornamento della visita:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }
 
-// Cancellazione di un item: solo l'autore originale può farlo
-export async function deleteItem(req, res) {
+// Cancellazione di una visita: solo l'autore originale può farlo
+export async function deleteVisit(req, res) {
     try {
-        const item = await Item.findById(req.params.id);
+        const visit = await Visit.findById(req.params.id);
 
-        if (!item) {
-            return res.status(404).json({ error: "Item non trovato." });
+        if (!visit) {
+            return res.status(404).json({ error: "Visita non trovata." });
         }
 
-        if (item.author.toString() !== req.user.id) {
-            return res.status(403).json({ error: "Non sei l'autore di questo item." });
+        if (visit.author.toString() !== req.user.id) {
+            return res.status(403).json({ error: "Non sei l'autore di questa visita." });
         }
 
-        await item.deleteOne();
+        await visit.deleteOne();
 
-        res.json({ message: "Item eliminato." });
+        res.json({ message: "Visita eliminata." });
 
     } catch (error) {
-        console.error("Errore nell'eliminazione dell'item:", error);
+        console.error("Errore nell'eliminazione della visita:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }

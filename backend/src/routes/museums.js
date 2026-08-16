@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMuseums, getMuseumById } from '../controllers/museumsController.js';
+import { getMuseums, getMuseumById, getMuseumBySlug } from '../controllers/museumsController.js';
 
 const router = express.Router();
 
@@ -8,5 +8,6 @@ const router = express.Router();
 // attuale del progetto.
 router.get('/', getMuseums);
 router.get('/:id', getMuseumById);
+router.get('/slug/:slug', getMuseumBySlug);
 
 export default router;

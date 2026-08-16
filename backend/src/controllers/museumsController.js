@@ -34,3 +34,19 @@ export async function getMuseumById(req, res) {
         res.status(500).json({ error: "Errore del server." });
     }
 }
+
+export async function getMuseumBySlug(req, res) {
+    try {
+        const museum = await Museum.findOne({ slug: req.params.slug });
+
+        if (!museum) {
+            return res.status(404).json({ error: "Museo non trovato." });
+        }
+
+        res.json(museum);
+
+    } catch (error) {
+        console.error("Errore nel recupero del museo:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}

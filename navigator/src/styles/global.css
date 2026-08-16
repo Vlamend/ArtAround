@@ -1,0 +1,72 @@
+@import './tokens.css';
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  margin: 0 0 var(--space-2) 0;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Focus visibile per accessibilità da tastiera, coerente con la
+ * modalità "a bottoni equivalenti ai comandi vocali" richiesta */
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.screen {
+  min-height: 100%;
+  padding: var(--space-4) var(--space-3) var(--space-5);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-soft);
+  margin-bottom: var(--space-1);
+}
+
+.status-message {
+  color: var(--color-ink-soft);
+  font-size: var(--fs-small);
+  text-align: center;
+  padding: var(--space-4) 0;
+}
+
+.error-message {
+  color: var(--color-accent);
+  font-size: var(--fs-small);
+  text-align: center;
+  padding: var(--space-3) 0;
+}

@@ -50,6 +50,8 @@ async function seed() {
         region: "Emilia-Romagna",
         cap: "40126",
         website: "https://pinacotecabologna.beniculturali.it",
+        primaryColor: "#8C1C13",
+        secondaryColor: "#B08D57",
         ticketInfo: "Biglietto intero 6€, ridotto 2€. Ingresso gratuito la prima domenica del mese.",
         openingHours: {
             monday: "Chiuso",
@@ -62,11 +64,15 @@ async function seed() {
         },
         services: ["guardaroba", "bookshop", "audioguide"],
         rooms: [
-            { name: "Sala 1 - Duecento e Trecento", floor: 1 },
-            { name: "Sala 2 - Quattrocento", floor: 1 },
-            { name: "Sala 3 - Rinascimento maturo", floor: 1 },
-            { name: "Sala 4 - Manierismo", floor: 2 },
-            { name: "Sala 5 - Seicento", floor: 2 }
+            { name: "Sala 1 - Duecento e Trecento", floor: 1, bounds: { x: 5, y: 10, width: 25, height: 80 } },
+            { name: "Sala 2 - Quattrocento", floor: 1, bounds: { x: 35, y: 10, width: 25, height: 80 } },
+            { name: "Sala 3 - Rinascimento maturo", floor: 1, bounds: { x: 65, y: 10, width: 30, height: 80 } },
+            { name: "Sala 4 - Manierismo", floor: 2, bounds: { x: 5, y: 10, width: 40, height: 80 } },
+            { name: "Sala 5 - Seicento", floor: 2, bounds: { x: 50, y: 10, width: 45, height: 80 } }
+        ],
+        floorPlans: [
+            { floor: 1, imageUrl: "/assets/floorplans/piano1.svg" },
+            { floor: 2, imageUrl: "/assets/floorplans/piano2.svg" }
         ],
         pointsOfInterest: [] // popolate dopo aver creato le rooms, per usarne gli _id
     });
@@ -74,19 +80,35 @@ async function seed() {
     // Aggiunge punti di interesse ora che conosciamo gli _id delle rooms
     const [room1, room2, room3, room4, room5] = museum.rooms;
     museum.pointsOfInterest = [
-        { type: "entrance", name: "Ingresso principale", coords: { x: 5, y: 50 } },
-        { type: "exit", name: "Uscita", coords: { x: 95, y: 50 } },
-        { type: "restroom", name: "Bagni", floor: 1, roomId: room2._id, coords: { x: 40, y: 80 } },
-        { type: "bar", name: "Caffetteria", floor: 1, coords: { x: 10, y: 30 } },
-        { type: "shop", name: "Bookshop", floor: 1, coords: { x: 8, y: 60 } },
-        { type: "elevator", name: "Ascensore", coords: { x: 50, y: 10 } },
-        { type: "obstacle", name: "Gradino sala 4", floor: 2, roomId: room4._id, coords: { x: 30, y: 45 } }
+        { type: "entrance", name: "Ingresso principale", floor: 1, coords: { x: 2, y: 50 } },
+        { type: "exit", name: "Uscita", floor: 1, coords: { x: 98, y: 50 } },
+        { type: "restroom", name: "Bagni", floor: 1, roomId: room2._id, coords: { x: 47, y: 85 } },
+        { type: "bar", name: "Caffetteria", floor: 1, coords: { x: 15, y: 95 } },
+        { type: "shop", name: "Bookshop", floor: 1, coords: { x: 85, y: 95 } },
+        { type: "elevator", name: "Ascensore", floor: 1, coords: { x: 50, y: 95 } },
+        { type: "obstacle", name: "Gradino sala 4", floor: 2, roomId: room4._id, coords: { x: 25, y: 50 } }
     ];
     await museum.save();
     console.log("Museo creato con sale e punti di interesse.");
 
     // ---------- Opere (10 opere, 2 livelli linguistici ciascuna) ----------
     const rooms = [room1, room2, room2, room3, room3, room4, room4, room5, room5, room1];
+
+    // Restituisce un punto DENTRO il rettangolo della sala (non più
+    // scollegato dalla sala assegnata come nella versione precedente).
+    // 'slot' distingue più item nella stessa sala (qui usiamo al più 2
+    // occorrenze per sala, vedi array 'rooms' sopra).
+    function pointInRoom(room, slot) {
+        const b = room.bounds;
+        const pad = 5;
+        const fraction = slot === 0 ? 0.3 : 0.7;
+        return {
+            x: b.x + pad + (b.width - pad * 2) * fraction,
+            y: b.y + b.height / 2
+        };
+    }
+
+    const roomOccurrence = new Map(); // room._id -> quante volte già usata, per calcolare lo slot
 
     const artworks = [
         { title: "Madonna in trono col Bambino", year: "1290 ca.", technique: "Tempera su tavola", wikidataId: "Q100000001", artistWikidata: "Q100000101", styleWikidata: "Q100000201" },
@@ -124,6 +146,10 @@ async function seed() {
         const a = artworks[i];
         const room = rooms[i];
 
+        const occurrence = roomOccurrence.get(room._id.toString()) ?? 0;
+        roomOccurrence.set(room._id.toString(), occurrence + 1);
+        const coords = pointInRoom(room, occurrence);
+
         const elementareItem = await Item.create({
             title: a.title,
             year: a.year,
@@ -133,7 +159,7 @@ async function seed() {
             styleWikidata: a.styleWikidata,
             museum: museum._id,
             roomId: room._id,
-            coords: { x: 20 + i * 5, y: 40 },
+            coords,
             texts: makeTexts("elementare"),
             language: "elementare",
             author: users.autore1._id,
@@ -150,7 +176,7 @@ async function seed() {
             styleWikidata: a.styleWikidata,
             museum: museum._id,
             roomId: room._id,
-            coords: { x: 20 + i * 5, y: 40 },
+            coords,
             texts: makeTexts("medio"),
             language: "medio",
             author: users.autore2._id,
