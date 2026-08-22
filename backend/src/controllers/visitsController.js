@@ -14,9 +14,15 @@ export async function getVisits(req, res) {
         // Per default mostra solo le visite pubbliche; un autore che
         // vuole vedere anche le proprie visite private lo farà tramite
         // un'altra route dedicata (fuori scope per ora).
-        filter.isPublic = true;
+        if (req.query.mine === 'true' && req.user) {
+            filter.author = req.user.id;
+        } else {
+            filter.isPublic = true;
+        }
 
-        const visits = await Visit.find(filter).populate('museum', 'name slug');
+        const visits = await Visit.find(filter)
+        .populate('museum', 'name slug')
+        .populate('author', 'username');
 
         res.json(visits);
 
@@ -32,6 +38,7 @@ export async function getVisitById(req, res) {
     try {
         const visit = await Visit.findById(req.params.id)
             .populate('museum')
+            .populate('author', 'username')
             .populate('steps.item');
 
         if (!visit) {

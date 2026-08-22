@@ -20,10 +20,22 @@ export async function getItems(req, res) {
             filter.language = req.query.language;
         }
 
+        if (req.query.artistWikidata) {
+            filter.artistWikidata = req.query.artistWikidata;
+        }
+ 
+        if (req.query.styleWikidata) {
+            filter.styleWikidata = req.query.styleWikidata;
+        }
+        
         // Per default mostra solo gli item pubblici; un autore che vuole
         // vedere anche i propri item privati lo farà da un'altra route
         // dedicata (fuori scope per ora, stesso discorso fatto per Visit).
-        filter.isPublic = true;
+        if (req.query.mine === 'true' && req.user) {
+            filter.author = req.user.id;
+        } else {
+            filter.isPublic = true;
+        }
 
         const items = await Item.find(filter).populate('museum', 'name slug');
 
@@ -84,7 +96,8 @@ export async function createItem(req, res) {
 
     } catch (error) {
         console.error("Errore nella creazione dell'item:", error);
-        res.status(500).json({ error: "Errore del server." });
+        res.status(500).json({ error: 
+            "Errore del server." });
     }
 }
 

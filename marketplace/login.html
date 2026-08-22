@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtAround Editor — Accedi</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main style="max-width: 400px; margin-top: 4rem;">
+    <h1>ArtAround Editor</h1>
+    <form id="login-form">
+      <label>
+        Email
+        <input type="email" id="email" required autocomplete="email" />
+      </label>
+      <label>
+        Password
+        <input type="password" id="password" required autocomplete="current-password" />
+      </label>
+      <p id="login-error" class="error-message" hidden></p>
+      <button type="submit" class="primary" id="login-submit">Accedi</button>
+    </form>
+  </main>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

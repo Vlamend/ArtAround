@@ -118,7 +118,16 @@ export async function protectedRoute(req, res) {
             return res.status(404).json({ error: "Utente non trovato." });
         }
  
-        res.json({ user });
+        res.json({ 
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                preferredLanguageLevel: user.preferredLanguageLevel,
+                interfaceLanguage: user.interfaceLanguage
+            }
+         });
  
     } catch (error) {
         console.error("Errore nel recupero dell'utente:", error);

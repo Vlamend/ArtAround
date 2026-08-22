@@ -1,12 +1,12 @@
 import express from 'express';
 import { getVisits, getVisitById, createVisit, updateVisit, deleteVisit } from '../controllers/visitsController.js';
-import { authenticateToken } from '../middleware/authenticator.js';
+import { authenticateToken, optionalAuth } from '../middleware/authenticator.js';
 
 const router = express.Router();
 
 // Lettura pubblica: marketplace (lista, eventualmente filtrata per museo)
 // e Navigator (dettaglio di una visita da eseguire)
-router.get('/', getVisits);
+router.get('/', optionalAuth, getVisits);
 router.get('/:id', getVisitById);
 
 // Scrittura: richiede autenticazione. Il controllo che l'utente sia

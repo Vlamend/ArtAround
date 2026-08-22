@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 
-/**
- * Middleware principale:
+/*
  * Controlla che il token JWT sia presente e valido.
  */
 export function authenticateToken(req, res, next) {
@@ -28,13 +27,35 @@ export function authenticateToken(req, res, next) {
     }
 }
 
-/**
- * Middleware per permettere solo agli admin di accedere a una route.
+/*
+ * Permettere solo agli admin di accedere a una route.
  * Va usato dopo authenticateToken.
  */
 export function requireAdmin(req, res, next) {
     if (!req.user || req.user.role !== "admin") {
         return res.status(403).json({ error: "Permessi insufficienti: richiede ruolo admin." });
+    }
+    next();
+}
+
+/*
+ * Permette l'accesso sia agli utenti autenticati che a quelli anonimi.
+ * Se il token è presente e valido, aggiunge req.user.
+ * Se il token non è presente o non valido, prosegue come richiesta anonima.
+ */
+export function optionalAuth(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader?.split(" ")[1];
+ 
+    if (!token) {
+        return next(); // nessun token: richiesta anonima
+    }
+ 
+    try {
+        req.user = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        // token presente ma non valido/scaduto: ignoriamo silenziosamente,
+        // trattiamo la richiesta come anonima
     }
     next();
 }

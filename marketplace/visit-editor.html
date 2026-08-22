@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtAround Editor — Visita</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <strong>ArtAround Editor</strong>
+  </header>
+
+  <main>
+    <p><a id="back-link" href="museums.html">&larr; Torna alle visite</a></p>
+
+    <h1 id="page-title">Nuova visita</h1>
+    <p id="status" class="status-message" hidden></p>
+
+    <form id="visit-form">
+      <label>
+        Titolo
+        <input type="text" id="title" required />
+      </label>
+
+      <label>
+        Descrizione
+        <textarea id="description" rows="2"></textarea>
+      </label>
+
+      <label>
+        Indicazioni logistiche generali (ingresso, biglietto, servizi)
+        <textarea id="entrance-info" rows="2"></textarea>
+      </label>
+
+      <label>
+        Licenza
+        <select id="license">
+          <option value="CC0">CC0</option>
+          <option value="CC-BY" selected>CC-BY</option>
+          <option value="CC-BY-SA">CC-BY-SA</option>
+          <option value="CC-BY-NC">CC-BY-NC</option>
+          <option value="private">Privata</option>
+        </select>
+      </label>
+
+      <label>
+        Prezzo (€, 0 = gratuita)
+        <input type="number" id="price" min="0" step="0.5" value="0" />
+      </label>
+
+      <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="is-public" style="width: auto;" />
+        Pubblica (visibile nel marketplace)
+      </label>
+
+      <label>
+        Tag (separati da virgola)
+        <input type="text" id="tags" placeholder="es. famiglie, curiosità" />
+      </label>
+
+      <h2>Tappe della visita</h2>
+
+      <div>
+        <label>
+          Cerca opere del museo
+          <input type="text" id="item-search" placeholder="Titolo…" />
+        </label>
+        <label>
+          Tipo
+          <select id="item-type-filter">
+            <option value="object" selected>Opere</option>
+            <option value="related">Contenuti correlati</option>
+            <option value="">Tutti</option>
+          </select>
+        </label>
+      </div>
+      <ul id="item-results" class="card-list"></ul>
+
+      <h3>Sequenza attuale</h3>
+      <p id="steps-empty" class="status-message">Nessuna tappa aggiunta. Cerca un'opera qui sopra.</p>
+      <ul id="steps-list" class="card-list"></ul>
+
+      <p id="form-error" class="error-message" hidden></p>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="primary" id="submit-btn">Crea visita</button>
+        <button type="button" class="danger" id="delete-btn" hidden>Elimina visita</button>
+      </div>
+    </form>
+  </main>
+
+  <script type="module" src="js/visit-editor.js"></script>
+</body>
+</html>
