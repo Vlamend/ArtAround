@@ -21,6 +21,7 @@ export function clearToken() {
 
 async function request(path, options = {}) {
   const token = getToken();
+
   const headers = {
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -45,8 +46,7 @@ export async function login(email, password) {
     method: 'POST',
     body: JSON.stringify({ email, password })
   });
-  console.log('login data:', data); 
-  setToken(data.token);
+  setToken(data.token); // FONDAMENTALE: mancava, la sessione non veniva mai salvata
   return data.user;
 }
 

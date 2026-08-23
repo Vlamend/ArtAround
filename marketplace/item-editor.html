@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtAround Editor — Contenuto</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <strong>ArtAround Editor</strong>
+  </header>
+
+  <main>
+    <p><a id="back-link" href="museums">&larr; Torna ai contenuti</a></p>
+
+    <h1 id="page-title">Nuovo contenuto</h1>
+    <p id="status" class="status-message" hidden></p>
+
+    <form id="item-form">
+      <label>
+        Titolo
+        <input type="text" id="title" required />
+      </label>
+
+      <label>
+        Tipo
+        <select id="type">
+          <option value="object" selected>Opera (object)</option>
+          <option value="related">Contenuto correlato (related)</option>
+        </select>
+      </label>
+
+      <label>
+        Anno
+        <input type="text" id="year" placeholder="es. 1514 ca." />
+      </label>
+
+      <label>
+        Tecnica
+        <input type="text" id="technique" placeholder="es. Olio su tavola" />
+      </label>
+
+      <label>
+        Dimensioni
+        <input type="text" id="dimensions" placeholder="es. 100x80 cm" />
+      </label>
+
+      <label>
+        URL immagine di riconoscimento
+        <input type="url" id="image" placeholder="https://..." />
+      </label>
+
+      <label>
+        Sala
+        <select id="room">
+          <option value="">— nessuna —</option>
+        </select>
+      </label>
+
+      <div style="display:flex; gap:0.75rem;">
+        <label style="flex:1">
+          Coordinata X (0-100)
+          <input type="number" id="coord-x" min="0" max="100" value="0" />
+        </label>
+        <label style="flex:1">
+          Coordinata Y (0-100)
+          <input type="number" id="coord-y" min="0" max="100" value="0" />
+        </label>
+      </div>
+
+      <h2>Identificatori Wikidata</h2>
+      <p class="status-message">Collegano l'opera al knowledge graph e permettono di riconoscere duplicati/contenuti correlati.</p>
+
+      <label>
+        ID opera (wikidataId)
+        <input type="text" id="wikidata-id" placeholder="es. Q126599960" />
+      </label>
+      <label>
+        ID autore storico (artistWikidata)
+        <input type="text" id="artist-wikidata" placeholder="es. Q1527051" />
+      </label>
+      <label>
+        ID stile (styleWikidata)
+        <input type="text" id="style-wikidata" placeholder="es. Q131808" />
+      </label>
+
+      <h2>Testi</h2>
+      <p class="status-message">Almeno un testo è obbligatorio. Idealmente almeno 15s e 40s.</p>
+      <div id="texts-list"></div>
+      <button type="button" id="add-text-btn">+ Aggiungi testo</button>
+
+      <label>
+        Livello linguistico (di TUTTI i testi di questo contenuto)
+        <select id="language" required>
+          <option value="infantile">Infantile</option>
+          <option value="elementare">Elementare</option>
+          <option value="medio" selected>Medio</option>
+          <option value="specialistico">Specialistico</option>
+        </select>
+      </label>
+
+      <h2>Pubblicazione</h2>
+
+      <label>
+        Licenza
+        <select id="license">
+          <option value="CC0">CC0</option>
+          <option value="CC-BY" selected>CC-BY</option>
+          <option value="CC-BY-SA">CC-BY-SA</option>
+          <option value="CC-BY-NC">CC-BY-NC</option>
+          <option value="private">Privata</option>
+        </select>
+      </label>
+
+      <label>
+        Prezzo (€, 0 = gratuito)
+        <input type="number" id="price" min="0" step="0.5" value="0" />
+      </label>
+
+      <label style="flex-direction: row; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="is-public" checked style="width: auto;" />
+        Pubblica (visibile nel marketplace)
+      </label>
+
+      <label>
+        Tag (separati da virgola)
+        <input type="text" id="tags" />
+      </label>
+
+      <p id="form-error" class="error-message" hidden></p>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" class="primary" id="submit-btn">Crea contenuto</button>
+        <button type="button" class="danger" id="delete-btn" hidden>Elimina contenuto</button>
+      </div>
+    </form>
+  </main>
+
+  <script type="module" src="js/item-editor.js"></script>
+</body>
+</html>

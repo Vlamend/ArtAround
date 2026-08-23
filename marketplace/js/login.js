@@ -1,8 +1,8 @@
-import { login, getToken, setToken } from './api.js';
+import { login, getToken } from './api.js';
 
 // Se già autenticato, salta direttamente alla selezione museo
 if (getToken()) {
-  window.location.href = 'museums.html';
+  window.location.href = 'museums';
 }
 
 const form = document.getElementById('login-form');
@@ -19,8 +19,10 @@ form.addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value;
 
   try {
+    // login() salva già il token internamente (vedi api.js) e
+    // restituisce l'utente autenticato, non il token grezzo.
     await login(email, password);
-    window.location.href = 'museums.html';
+    window.location.href = 'museums';
   } catch (err) {
     errorEl.textContent = err.message || 'Credenziali non valide.';
     errorEl.hidden = false;

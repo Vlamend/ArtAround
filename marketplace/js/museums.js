@@ -1,16 +1,16 @@
 import { requireAuth } from './auth-guard.js';
 import { getMuseums } from './api.js';
 
+const statusEl = document.getElementById('status');
+const listEl = document.getElementById('museum-list');
+
 main();
 
 async function main() {
   const currentUser = await requireAuth();
-  if(!currentUser) {
-    console.log('Utente non autenticato, redirect al login');
-    return; 
+  if (!currentUser) {
+    return; // requireAuth ha già gestito il redirect al login
   }
-  const statusEl = document.getElementById('status');
-  const listEl = document.getElementById('museum-list');
 
   try {
     const museums = await getMuseums();
@@ -23,14 +23,13 @@ async function main() {
         listEl.appendChild(renderMuseumCard(museum));
       }
     }
-  } catch (err) {
+  } catch {
     statusEl.textContent = 'Non riesco a contattare il server. Riprova più tardi.';
     statusEl.className = 'error-message';
   }
 }
 
 function renderMuseumCard(museum) {
-  const id = `${museum._id}`;
   const li = document.createElement('li');
   li.className = 'card';
 
@@ -47,7 +46,7 @@ function renderMuseumCard(museum) {
   openBtn.className = 'primary';
   openBtn.textContent = 'Apri';
   openBtn.addEventListener('click', () => {
-    window.location.href = `visits?museum=${id}`;
+    window.location.href = `visits?museum=${museum._id}`;
   });
 
   actions.appendChild(openBtn);

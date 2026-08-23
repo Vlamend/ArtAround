@@ -24,6 +24,8 @@ async function main() {
     return; // requireAuth ha già gestito il redirect al login
   }
 
+  document.getElementById('items-link').href = `items?museum=${museumId}`;
+
   document.getElementById('new-visit-btn').addEventListener('click', () => {
     window.location.href = `visit-editor?museum=${museumId}`;
   });
@@ -65,10 +67,8 @@ async function loadVisits() {
 }
 
 function renderVisitCard(visit) {
-  const id = `${visit._id}`;
   const li = document.createElement('li');
   li.className = 'card';
-  li.id = id;
 
   const isMine = visit.author?._id === currentUser.id;
 
@@ -86,7 +86,7 @@ function renderVisitCard(visit) {
     const editBtn = document.createElement('button');
     editBtn.textContent = 'Modifica';
     editBtn.addEventListener('click', () => {
-      window.location.href = `visit-editor?id=${id}`;
+      window.location.href = `visit-editor?id=${visit._id}`;
     });
 
     const deleteBtn = document.createElement('button');

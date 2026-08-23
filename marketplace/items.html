@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtAround Editor — Contenuti</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <strong>ArtAround Editor</strong>
+  </header>
+
+  <main>
+    <p><a id="back-link" href="museums">&larr; Cambia museo</a></p>
+
+    <div class="toolbar">
+      <h1 id="museum-title">I tuoi contenuti</h1>
+      <button class="primary" id="new-item-btn">+ Nuovo contenuto</button>
+    </div>
+
+    <p id="status" class="status-message">Caricamento contenuti…</p>
+    <ul id="item-list" class="card-list"></ul>
+  </main>
+
+  <script type="module" src="js/items.js"></script>
+</body>
+</html>

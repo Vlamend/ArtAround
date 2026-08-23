@@ -6,7 +6,7 @@ import { clearToken, getToken, getMe, logout } from './api.js';
 export async function requireAuth() {
   const token = getToken();
   if (!token) {
-    window.location.href = 'login.html';
+    window.location.href = 'login';
     return null;
   }
 
@@ -14,9 +14,11 @@ export async function requireAuth() {
     const { user } = await getMe();
     renderHeader(user);
     return user;
-  } catch {
+  } catch (err) {
+    console.error('requireAuth ha intercettato:', err); // TEMPORANEO: rimuovi dopo il debug
+    debugger; // TEMPORANEO: mette in pausa qui, prima del redirect - ispeziona "err" nella console
     clearToken();
-    window.location.href = 'login.html';
+    window.location.href = 'login';
     return null;
   }
 }
@@ -34,6 +36,6 @@ function renderHeader(user) {
 
   document.getElementById('logout-btn').addEventListener('click', () => {
     logout();
-    window.location.href = 'login.html';
+    window.location.href = 'login';
   });
 }

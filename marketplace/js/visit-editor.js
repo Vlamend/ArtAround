@@ -1,5 +1,8 @@
 import { requireAuth } from './auth-guard.js';
-import { getMuseumById, getItems, getVisitById, createVisit, updateVisit, deleteVisit } from './api.js';
+import {
+  getMuseumById, getItems,
+  getVisitById, createVisit, updateVisit, deleteVisit
+} from './api.js';
 
 // Stato della pagina, popolato in main()
 let mode; // 'create' | 'edit'
@@ -36,7 +39,6 @@ async function main() {
 
   currentUser = await requireAuth();
   if (!currentUser) {
-    window.location.href = 'museums';
     return; // requireAuth ha già gestito il redirect al login
   }
 
