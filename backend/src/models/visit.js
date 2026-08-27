@@ -74,7 +74,6 @@ const visitSchema = new Schema({
   },
   isPublic:  { type: Boolean, default: true },
   price:     { type: Number,  default: 0, min: 0 },
-  adoptions: { type: Number,  default: 0 },  // quante volte la visita è stata scelta/acquistata
 
   // Tag liberi per la ricerca nel marketplace
   tags: [{ type: String, trim: true }]

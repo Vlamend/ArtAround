@@ -1,5 +1,5 @@
 import express from 'express';
-import { getVisits, getVisitById, createVisit, updateVisit, deleteVisit } from '../controllers/visitsController.js';
+import { getVisits, getVisitById, createVisit, updateVisit, deleteVisit, completeVisit } from '../controllers/visitsController.js';
 import { authenticateToken, optionalAuth } from '../middleware/authenticator.js';
 
 const router = express.Router();
@@ -15,5 +15,6 @@ router.get('/:id', getVisitById);
 router.post('/', authenticateToken, createVisit);
 router.put('/:id', authenticateToken, updateVisit);
 router.delete('/:id', authenticateToken, deleteVisit);
-
+//Indica che la visita è stata completata dall'utente. Se non è segnata come completa aggiorna l'array delle completedVisits nel db
+router.post('/:id/complete', authenticateToken, completeVisit);
 export default router;

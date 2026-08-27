@@ -1,4 +1,13 @@
 import Item from "../models/item.js";
+import User from "../models/user.js";
+
+const INTEREST_STEP = 1;
+const INTEREST_MAX = 10;
+const INTEREST_MIN = -10;
+
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
 
 // Lista item, filtrabile per museo, tipo (object/related) e livello
 // linguistico. Il Navigator la usa per scegliere l'item più adatto al
@@ -28,6 +37,14 @@ export async function getItems(req, res) {
             filter.styleWikidata = req.query.styleWikidata;
         }
         
+        // Usato dal Navigator per trovare varianti linguistiche dello
+        // stesso oggetto (stesso wikidataId, language diverso), per
+        // adattarsi al preferredLanguageLevel dell'utente senza dover
+        // cambiare la visita stessa.
+        if (req.query.wikidataId) {
+            filter.wikidataId = req.query.wikidataId;
+        }
+
         // Per default mostra solo gli item pubblici; un autore che vuole
         // vedere anche i propri item privati lo farà da un'altra route
         // dedicata (fuori scope per ora, stesso discorso fatto per Visit).
@@ -96,8 +113,7 @@ export async function createItem(req, res) {
 
     } catch (error) {
         console.error("Errore nella creazione dell'item:", error);
-        res.status(500).json({ error: 
-            "Errore del server." });
+        res.status(500).json({ error: "Errore del server." });
     }
 }
 
@@ -114,8 +130,6 @@ export async function updateItem(req, res) {
             return res.status(403).json({ error: "Non sei l'autore di questo item." });
         }
 
-        // Campi effettivamente modificabili: non permettiamo di
-        // riassegnare autore, museo o adozioni da qui.
         const editableFields = [
             'title', 'year', 'technique', 'dimensions', 'image',
             'wikidataId', 'artistWikidata', 'styleWikidata',
@@ -158,6 +172,68 @@ export async function deleteItem(req, res) {
 
     } catch (error) {
         console.error("Errore nell'eliminazione dell'item:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
+// Registra il feedback dell'utente su un item, aggiornando il
+// suo punteggio di interesse per ciascun ambito taggato sull'item.
+// Se l'item non ha ambiti taggati, il feedback è accettato ma non ha
+// alcun effetto (nessun ambito da aggiornare).
+export async function giveFeedback(req, res) {
+    try {
+        const { direction } = req.body; // 'up' | 'down'
+ 
+        if (direction !== 'up' && direction !== 'down') {
+            return res.status(400).json({ error: "direction deve essere 'up' o 'down'." });
+        }
+ 
+        const item = await Item.findById(req.params.id);
+        if (!item) {
+            return res.status(404).json({ error: "Item non trovato." });
+        }
+ 
+        const user = await User.findById(req.user.id);
+        const delta = direction === 'up' ? INTEREST_STEP : -INTEREST_STEP;
+ 
+        for (const domain of item.domains ?? []) {
+            const current = user.interestWeights[domain] ?? 0;
+            user.interestWeights[domain] = clamp(current + delta, INTEREST_MIN, INTEREST_MAX);
+        }
+ 
+        await user.save();
+ 
+        res.json({ interestWeights: user.interestWeights });
+ 
+    } catch (error) {
+        console.error("Errore nella registrazione del feedback:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
+export async function purchaseItem(req, res) {
+    try {
+        const { buyerId, sellerId, itemId } = req.body;
+        const buyer = await User.findById(buyerId);
+        if(!buyer) {
+            return res.status(404).json({ error: "Acquirente non trovato." });
+        }
+        const seller = await User.findById(sellerId);
+        if(!seller) {
+            return res.status(404).json({ error: "Venditore non trovato." });
+        }
+        const item = await Item.findById(itemId);
+        if(!item) {
+            return res.status(404).json({ error: "Item non trovato." });
+        }
+        // Rimuovo l'item dalla lista del venditore
+        seller.ownedItems = seller.ownedItems.filter(ownedItemId => ownedItemId.toString() !== itemId);
+        // Aggiungo l'item alla lista dell'acquirente
+        buyer.ownedItems.push(itemId);
+        await seller.save();
+        await buyer.save();
+    }catch (error){
+        console.error("Errore durante l'acquisto:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }

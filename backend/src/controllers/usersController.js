@@ -1,7 +1,6 @@
 import User from "../models/user.js";
 import jwt from "jsonwebtoken";
 
-
 //Genera un token JWT con i dati minimi per identificare l’utente
 function generateToken(user) {
     return jwt.sign(
@@ -125,12 +124,68 @@ export async function protectedRoute(req, res) {
                 email: user.email,
                 role: user.role,
                 preferredLanguageLevel: user.preferredLanguageLevel,
-                interfaceLanguage: user.interfaceLanguage
+                interfaceLanguage: user.interfaceLanguage,
+                interestWeights: user.interestWeights,
+                visitedVisits: user.visitedVisits,
+                purchasedItems: user.purchasedItems
             }
          });
  
     } catch (error) {
         console.error("Errore nel recupero dell'utente:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
+// Aggiorna le preferenze dell'utente autenticato (impostazioni):
+// livello linguistico preferito, lingua interfaccia, punteggi di
+// interesse per ambito. NON gestisce cambio username/email/password
+// (richiederebbero verifiche aggiuntive, fuori scope qui) né il ruolo.
+export async function updateMe(req, res) {
+    try {
+        const user = await User.findById(req.user.id);
+ 
+        if (!user) {
+            return res.status(404).json({ error: "Utente non trovato." });
+        }
+ 
+        const { preferredLanguageLevel, interfaceLanguage, interestWeights } = req.body;
+ 
+        if (preferredLanguageLevel !== undefined) {
+            user.preferredLanguageLevel = preferredLanguageLevel;
+        }
+        if (interfaceLanguage !== undefined) {
+            user.interfaceLanguage = interfaceLanguage;
+        }
+        if (interestWeights !== undefined) {
+            // Merge campo per campo, non sostituzione totale: permette
+            // di aggiornare anche un solo ambito senza dover rispedire
+            // tutti gli altri.
+            for (const domain of Object.keys(user.interestWeights.toObject())) {
+                if (interestWeights[domain] !== undefined) {
+                    user.interestWeights[domain] = interestWeights[domain];
+                }
+            }
+        }
+ 
+        await user.save();
+ 
+        res.json({
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                preferredLanguageLevel: user.preferredLanguageLevel,
+                interfaceLanguage: user.interfaceLanguage,
+                interestWeights: user.interestWeights,
+                visitedVisits: user.visitedVisits,
+                purchasedItems: user.purchasedItems
+            }
+        });
+ 
+    } catch (error) {
+        console.error("Errore nell'aggiornamento delle preferenze:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }

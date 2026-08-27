@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVisitById, getRelatedItems } from '../api.js';
+import { getVisitById, getRelatedItems, getMe, getItems, giveFeedback, completeVisit } from '../api.js';
 import { useVoiceCommands } from '../useVoiceCommands.js';
 import { matchVoiceCommand } from '../voiceCommands.js';
 import MuseumMap from '../components/MuseumMap.jsx';
 import './NavigatorPlayer.css';
+
 
 // Ordine dal più breve al più lungo, per "dimmi di più" / "dimmi di meno"
 const DURATION_ORDER = ['3s', '15s', '40s', '1min', '4min'];
@@ -17,10 +18,15 @@ export default function NavigatorPlayer() {
   const [durationLevel, setDurationLevel] = useState(1); // indice in DURATION_ORDER, parte da '15s'
   const [showPoi, setShowPoi] = useState(false);
   const [showMap, setShowMap] = useState(false);
-  // { kind: 'author'|'style', status: 'loading'|'ready'|'empty'|'error', item }
   const [relatedPanel, setRelatedPanel] = useState(null);
-  // { transcript, recognized } - feedback dell'ultimo comando vocale
   const [lastHeard, setLastHeard] = useState(null);
+
+  const [user, setUser] = useState(null);
+  const [displayedItem, setDisplayedItem] = useState(null);
+  const [feedbackGiven, setFeedbackGiven] = useState(null);
+  const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
+
+
 
   useEffect(() => {
     getVisitById(visitId)
@@ -31,19 +37,50 @@ export default function NavigatorPlayer() {
       .catch(() => setStatus('error'));
   }, [visitId]);
 
+   useEffect(() => {
+    getMe()
+      .then(data => setUser(data.user))
+      .catch(() => setUser(null)); // se fallisce, semplicemente niente personalizzazione
+  }, []);
+
   const currentStep = visit?.steps?.[stepIndex];
   const currentItem = currentStep?.item;
 
-  // Testo disponibile più vicino al livello di dettaglio richiesto
+  useEffect(() => {
+    setFeedbackGiven(null);
+ 
+    if (!currentItem) {
+      setDisplayedItem(null);
+      return;
+    }
+ 
+    if (!user?.preferredLanguageLevel || !currentItem.wikidataId || currentItem.language === user.preferredLanguageLevel) {
+      setDisplayedItem(currentItem);
+      return;
+    }
+ 
+    let cancelled = false;
+    getItems({ wikidataId: currentItem.wikidataId, museum: visit.museum._id })
+      .then(variants => {
+        if (cancelled) return;
+        const match = variants.find(v => v.language === user.preferredLanguageLevel);
+        setDisplayedItem(match ?? currentItem);
+      })
+      .catch(() => {
+        if (!cancelled) setDisplayedItem(currentItem);
+      });
+ 
+    return () => { cancelled = true; };
+  }, [currentItem, user, visit]);
+ 
   const currentText = useMemo(() => {
-    if (!currentItem?.texts?.length) return null;
+    if (!displayedItem?.texts?.length) return null;
     const wanted = DURATION_ORDER[durationLevel];
-    const exact = currentItem.texts.find(t => t.duration === wanted);
+    const exact = displayedItem.texts.find(t => t.duration === wanted);
     if (exact) return exact;
-    // fallback: il testo disponibile più vicino nell'ordine di durata
-    return currentItem.texts[0];
-  }, [currentItem, durationLevel]);
-
+    return displayedItem.texts[0];
+  }, [displayedItem, durationLevel]);
+ 
   const speak = useCallback((text) => {
     if (!text || !('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
@@ -51,56 +88,76 @@ export default function NavigatorPlayer() {
     utterance.lang = 'it-IT';
     window.speechSynthesis.speak(utterance);
   }, []);
-
+ 
   useEffect(() => {
     if (currentText) speak(currentText.content);
     return () => window.speechSynthesis?.cancel();
   }, [currentText, speak]);
-
+ 
+  // Segna la visita come completata al raggiungimento dell'ultimo step
+  // (adattamento "è la prima volta o sono già venuto?").
+  useEffect(() => {
+    if (!visit || hasMarkedComplete) return;
+    if (stepIndex === visit.steps.length - 1) {
+      completeVisit(visitId).catch(() => {}); // non bloccante: se fallisce, non impedisce la visita
+      setHasMarkedComplete(true);
+    }
+  }, [stepIndex, visit, visitId, hasMarkedComplete]);
+ 
   function goNext() {
     if (!visit) return;
     setDurationLevel(1);
     setStepIndex(i => Math.min(i + 1, visit.steps.length - 1));
   }
-
+ 
   function goPrev() {
     setDurationLevel(1);
     setStepIndex(i => Math.max(i - 1, 0));
   }
-
+ 
   function tellMore() {
     setDurationLevel(l => Math.min(l + 1, DURATION_ORDER.length - 1));
   }
-
+ 
   function tellLess() {
     setDurationLevel(l => Math.max(l - 1, 0));
   }
-
+ 
   function jumpToStep(i) {
     setDurationLevel(1);
     setStepIndex(i);
     setShowMap(false);
   }
-
+ 
+  async function handleFeedback(direction) {
+    if (!displayedItem?._id) return;
+    setFeedbackGiven(direction); // ottimistico: aggiorna subito l'interfaccia
+    try {
+      await giveFeedback(displayedItem._id, direction);
+    } catch {
+      setFeedbackGiven(null); // rollback se la richiesta fallisce
+    }
+  }
+ 
   async function showRelated(kind) {
-    const wikidataKey = kind === 'author' ? currentItem?.artistWikidata : currentItem?.styleWikidata;
-
+    const wikidataKey = kind === 'author' ? displayedItem?.artistWikidata : displayedItem?.styleWikidata;
+ 
     setShowPoi(false);
     setShowMap(false);
     setRelatedPanel({ kind, status: 'loading', item: null });
-
+ 
     if (!wikidataKey) {
       setRelatedPanel({ kind, status: 'empty', item: null });
       return;
     }
-
+ 
     try {
       const results = await getRelatedItems({
         museum: visit.museum?._id,
         artistWikidata: kind === 'author' ? wikidataKey : undefined,
         styleWikidata: kind === 'style' ? wikidataKey : undefined
       });
-
+ 
       const found = results[0] ?? null;
       setRelatedPanel({ kind, status: found ? 'ready' : 'empty', item: found });
       if (found?.texts?.[0]?.content) speak(found.texts[0].content);
@@ -108,10 +165,7 @@ export default function NavigatorPlayer() {
       setRelatedPanel({ kind, status: 'error', item: null });
     }
   }
-
-  // Esegue l'azione corrispondente al comando vocale riconosciuto,
-  // riusando esattamente le stesse funzioni già collegate ai bottoni
-  // equivalenti (nessuna logica duplicata tra i due canali di input).
+ 
   function runVoiceAction(action) {
     switch (action) {
       case 'next': goNext(); break;
@@ -123,45 +177,61 @@ export default function NavigatorPlayer() {
       case 'style': showRelated('style'); break;
       case 'poi': setShowPoi(true); setShowMap(false); break;
       case 'map': setShowMap(v => !v); setShowPoi(false); break;
-      default: break; // non riconosciuto: gestito solo tramite lastHeard nell'interfaccia
+      default: break;
     }
   }
-
+ 
   function handleTranscript(transcript) {
     const action = matchVoiceCommand(transcript);
     setLastHeard({ transcript, recognized: !!action });
     runVoiceAction(action);
   }
-
+ 
   const { isSupported: voiceSupported, isListening, error: voiceError, start: startListening } = useVoiceCommands(handleTranscript);
-
+ 
   if (status === 'loading') return <div className="screen"><p className="status-message">Caricamento visita…</p></div>;
   if (status === 'error') return <div className="screen"><p className="error-message">Non riesco a caricare la visita.</p></div>;
   if (!visit?.steps?.length) return <div className="screen"><p className="status-message">Questa visita non ha ancora contenuti.</p></div>;
-
+ 
   const roomName = visit.museum?.rooms?.find(r => r._id === currentItem?.roomId)?.name;
-
+  const wasSwapped = displayedItem && currentItem && displayedItem._id !== currentItem._id;
+ 
   return (
     <div className="screen player-screen">
       <Link to="/visits" className="back-link">&larr; Cambia visita</Link>
-
-      {/* Elemento firma: targhetta stile bronzo museale */}
+ 
       <div className="plaque">
         <span className="plaque-step">Tappa {stepIndex + 1} di {visit.steps.length}</span>
         {roomName && <span className="plaque-room">{roomName}</span>}
       </div>
-
+ 
       <div className="item-card">
-        <h1>{currentItem?.title}</h1>
-        {currentItem?.year && <p className="item-meta">{currentItem.year}{currentItem.technique ? ` · ${currentItem.technique}` : ''}</p>}
+        <h1>{displayedItem?.title}</h1>
+        {displayedItem?.year && <p className="item-meta">{displayedItem.year}{displayedItem.technique ? ` · ${displayedItem.technique}` : ''}</p>}
+        {wasSwapped && (
+          <p className="swap-note">Adattato al tuo livello preferito ({displayedItem.language}).</p>
+        )}
         <p className="item-text">{currentText?.content ?? 'Nessun testo disponibile per questo livello.'}</p>
+ 
+        <div className="feedback-row">
+          <span className="status-message">Ti interessa questo contenuto?</span>
+          <button
+            className={feedbackGiven === 'up' ? 'feedback-btn feedback-btn-active' : 'feedback-btn'}
+            onClick={() => handleFeedback('up')}
+            aria-label="Interessante"
+          >👍</button>
+          <button
+            className={feedbackGiven === 'down' ? 'feedback-btn feedback-btn-active' : 'feedback-btn'}
+            onClick={() => handleFeedback('down')}
+            aria-label="Non interessante"
+          >👎</button>
+        </div>
       </div>
-
+ 
       {currentStep?.logisticNote && (
         <p className="logistic-note">{currentStep.logisticNote}</p>
       )}
-
-      {/* Comandi equivalenti al vocabolario vocale controllato */}
+ 
       <div className="controls">
         {voiceSupported && (
           <div className="voice-row">
@@ -198,14 +268,14 @@ export default function NavigatorPlayer() {
           <button onClick={() => setShowPoi(v => !v)}>Dove...?</button>
         </div>
         <div className="controls-row">
-          <button onClick={() => showRelated('author')} disabled={!currentItem?.artistWikidata}>Chi è l'autore</button>
-          <button onClick={() => showRelated('style')} disabled={!currentItem?.styleWikidata}>Qual è lo stile</button>
+          <button onClick={() => showRelated('author')} disabled={!displayedItem?.artistWikidata}>Chi è l'autore</button>
+          <button onClick={() => showRelated('style')} disabled={!displayedItem?.styleWikidata}>Qual è lo stile</button>
         </div>
         <div className="controls-row">
           <button onClick={() => setShowMap(v => !v)}>Mappa</button>
         </div>
       </div>
-
+ 
       {showPoi && (
         <div className="poi-panel">
           <h2>Punti di interesse</h2>
@@ -216,7 +286,7 @@ export default function NavigatorPlayer() {
           </ul>
         </div>
       )}
-
+ 
       {showMap && (
         <MuseumMap
           steps={visit.steps}
@@ -227,14 +297,14 @@ export default function NavigatorPlayer() {
           onSelectStep={jumpToStep}
         />
       )}
-
+ 
       {relatedPanel && (
         <div className="related-panel">
           <div className="related-panel-header">
             <h2>{relatedPanel.kind === 'author' ? 'Autore' : 'Stile'}</h2>
             <button className="related-panel-close" onClick={() => setRelatedPanel(null)} aria-label="Chiudi">×</button>
           </div>
-
+ 
           {relatedPanel.status === 'loading' && <p className="status-message">Ricerca in corso…</p>}
           {relatedPanel.status === 'error' && <p className="error-message">Non riesco a recuperare questa informazione ora.</p>}
           {relatedPanel.status === 'empty' && (

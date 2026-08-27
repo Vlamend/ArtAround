@@ -116,3 +116,7 @@ export function updateItem(id, payload) {
 export function deleteItem(id) {
   return request(`/items/${id}`, { method: 'DELETE' });
 }
+
+export function purchaseItem(id) {
+  return request(`/items/${id}/purchase`, { method: 'POST' });
+}

@@ -56,10 +56,22 @@ const UserSchema = new mongoose.Schema({
     default: 'it'
   },
 
-  // Visite acquistate/adottate dall'utente
-  purchasedVisits: [{
+  interestWeights: {
+    artista:       { type: Number, default: 0 },
+    architettura:  { type: Number, default: 0 },
+    stile:         { type: Number, default: 0 },
+    materiali:     { type: Number, default: 0 },
+    storia:        { type: Number, default: 0 }
+  },
+
+  ownedItems: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Visit'
+    ref: 'Item'
+  }],
+
+visitedVisits: [{
+    visit: { type: mongoose.Schema.Types.ObjectId, ref: 'Visit' },
+    completedAt: { type: Date, default: Date.now }
   }]
 }, { timestamps: true });
 

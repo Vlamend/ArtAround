@@ -3,23 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import VisitList from './pages/VisitList.jsx';
 import NavigatorPlayer from './pages/NavigatorPlayer.jsx';
+import Settings from './pages/Settings.jsx';
 import { getToken, getMe, clearToken, getConfig, getMuseumBySlug } from './api.js';
-
-function applyMuseumTheme(museum) {
-  const root = document.documentElement;
-  if (museum?.primaryColor) {
-    root.style.setProperty('--color-primary', museum.primaryColor);
-  }
-  if (museum?.secondaryColor) {
-    root.style.setProperty('--color-secondary', museum.secondaryColor);
-  }
-}
-
-export function clearMuseumTheme() {
-  const root = document.documentElement;
-  root.style.removeProperty('--color-primary');
-  root.style.removeProperty('--color-secondary');
-}
+import { clearMuseumTheme, applyMuseumTheme} from './theme.js';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -98,6 +84,12 @@ export default function App() {
         element={!isLoggedIn ? 
         <Login onLogin={() => setIsLoggedIn(true)} /> : <Navigate to="/visits" replace/>}/>
         
+        <Route
+        path="/settings"
+        element={isLoggedIn ? 
+        <Settings /> : <Navigate to="/login" replace />}
+        />
+
         <Route 
         path="/visits" 
         element={isLoggedIn ? (

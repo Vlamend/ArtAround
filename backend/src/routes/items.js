@@ -1,5 +1,5 @@
 import express from 'express';
-import { getItems, getItemById, createItem, updateItem, deleteItem } from '../controllers/itemsController.js';
+import { getItems, getItemById, createItem, updateItem, deleteItem, giveFeedback, purchaseItem } from '../controllers/itemsController.js';
 import { authenticateToken, optionalAuth } from '../middleware/authenticator.js';
 
 const router = express.Router();
@@ -14,5 +14,10 @@ router.get('/:id', getItemById);
 router.post('/', authenticateToken, createItem);
 router.put('/:id', authenticateToken, updateItem);
 router.delete('/:id', authenticateToken, deleteItem);
+// Feedback: Viene fatto un feedback su un item, che modifica i pesi di interesse 
+// dell'utente per le varie categorie (artista, architettura, stile, materiali, storia).
+router.post('/:id/feedback', authenticateToken, giveFeedback);
 
+// Acquisto di un item da un utente ad un altro.
+router.post('/:id/purchase', authenticateToken, purchaseItem);
 export default router;

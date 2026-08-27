@@ -6,15 +6,17 @@ import Museum from "./src/models/museum.js";
 import Item from "./src/models/item.js";
 import Visit from "./src/models/visit.js";
 
-// NB: i wikidataId qui sotto sono PLACEHOLDER (non verificati contro il
-// vero Wikidata) - da sostituire con gli ID reali prima della consegna
-// finale, come già anticipato dall'utente.
+// NB: i wikidataId qui sotto sono PLACEHOLDER (tranne quello di Bedoli,
+// ripreso dall'esempio del PDF) - da sostituire con ID reali prima
+// della consegna finale. Stesso discorso per i testi delle opere:
+// sono generici/template, da personalizzare opera per opera.
+// Anche i tag "domains" sono assegnazioni plausibili di comodo per il
+// seed, da rivedere quando i testi reali saranno pronti.
 
 async function seed() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Connesso al DB per il seeding.");
 
-    // Pulizia collection esistenti
     await Promise.all([
         User.deleteMany({}),
         Museum.deleteMany({}),
@@ -23,7 +25,7 @@ async function seed() {
     ]);
     console.log("Collection pulite.");
 
-    // ---------- Utenti demo (richiesti dalle specifiche) ----------
+    // ---------- Utenti demo ----------
     const usersData = [
         { username: "autore1", email: "autore1@artaround.test", password: "12345678", role: "user" },
         { username: "autore2", email: "autore2@artaround.test", password: "12345678", role: "user" },
@@ -73,11 +75,9 @@ async function seed() {
         floorPlans: [
             { floor: 1, imageUrl: "/assets/floorplans/piano1.svg" },
             { floor: 2, imageUrl: "/assets/floorplans/piano2.svg" }
-        ],
-        pointsOfInterest: [] // popolate dopo aver creato le rooms, per usarne gli _id
+        ]
     });
 
-    // Aggiunge punti di interesse ora che conosciamo gli _id delle rooms
     const [room1, room2, room3, room4, room5] = museum.rooms;
     museum.pointsOfInterest = [
         { type: "entrance", name: "Ingresso principale", floor: 1, coords: { x: 2, y: 50 } },
@@ -89,15 +89,11 @@ async function seed() {
         { type: "obstacle", name: "Gradino sala 4", floor: 2, roomId: room4._id, coords: { x: 25, y: 50 } }
     ];
     await museum.save();
-    console.log("Museo creato con sale e punti di interesse.");
+    console.log("Museo creato con sale, planimetrie e punti di interesse.");
 
     // ---------- Opere (10 opere, 2 livelli linguistici ciascuna) ----------
     const rooms = [room1, room2, room2, room3, room3, room4, room4, room5, room5, room1];
 
-    // Restituisce un punto DENTRO il rettangolo della sala (non più
-    // scollegato dalla sala assegnata come nella versione precedente).
-    // 'slot' distingue più item nella stessa sala (qui usiamo al più 2
-    // occorrenze per sala, vedi array 'rooms' sopra).
     function pointInRoom(room, slot) {
         const b = room.bounds;
         const pad = 5;
@@ -108,23 +104,22 @@ async function seed() {
         };
     }
 
-    const roomOccurrence = new Map(); // room._id -> quante volte già usata, per calcolare lo slot
+    const roomOccurrence = new Map();
 
+    // domains: tag plausibili di comodo, da rivedere con i testi reali
     const artworks = [
-        { title: "Madonna in trono col Bambino", year: "1290 ca.", technique: "Tempera su tavola", wikidataId: "Q100000001", artistWikidata: "Q100000101", styleWikidata: "Q100000201" },
-        { title: "Polittico di San Giacomo", year: "1330 ca.", technique: "Tempera su tavola", wikidataId: "Q100000002", artistWikidata: "Q100000102", styleWikidata: "Q100000201" },
-        { title: "Annunciazione", year: "1450 ca.", technique: "Tempera su tavola", wikidataId: "Q100000003", artistWikidata: "Q100000103", styleWikidata: "Q100000202" },
-        { title: "Estasi di Santa Cecilia", year: "1514 ca.", technique: "Olio su tavola trasportato su tela", wikidataId: "Q100000004", artistWikidata: "Q100000104", styleWikidata: "Q100000203" },
-        { title: "Ritratto di frate in veste di San Tommaso d'Aquino", year: "1545 ca.", technique: "Olio su tavola", wikidataId: "Q126599960", artistWikidata: "Q1527051", styleWikidata: "Q131808" },
-        { title: "Madonna di San Zaccaria", year: "1560 ca.", technique: "Olio su tela", wikidataId: "Q100000006", artistWikidata: "Q100000106", styleWikidata: "Q131808" },
-        { title: "Comunione di San Girolamo", year: "1614", technique: "Olio su tela", wikidataId: "Q100000007", artistWikidata: "Q100000107", styleWikidata: "Q100000204" },
-        { title: "Strage degli Innocenti", year: "1611 ca.", technique: "Olio su tela", wikidataId: "Q100000008", artistWikidata: "Q100000107", styleWikidata: "Q100000204" },
-        { title: "Pala dei Mendicanti", year: "1595 ca.", technique: "Olio su tela", wikidataId: "Q100000009", artistWikidata: "Q100000109", styleWikidata: "Q100000204" },
-        { title: "Assunzione della Vergine", year: "1580 ca.", technique: "Olio su tela", wikidataId: "Q100000010", artistWikidata: "Q100000110", styleWikidata: "Q100000204" }
+        { title: "Madonna in trono col Bambino", year: "1290 ca.", technique: "Tempera su tavola", wikidataId: "Q100000001", artistWikidata: "Q100000101", styleWikidata: "Q100000201", domains: ["storia"] },
+        { title: "Polittico di San Giacomo", year: "1330 ca.", technique: "Tempera su tavola", wikidataId: "Q100000002", artistWikidata: "Q100000102", styleWikidata: "Q100000201", domains: ["storia"] },
+        { title: "Annunciazione", year: "1450 ca.", technique: "Tempera su tavola", wikidataId: "Q100000003", artistWikidata: "Q100000103", styleWikidata: "Q100000202", domains: ["storia"] },
+        { title: "Estasi di Santa Cecilia", year: "1514 ca.", technique: "Olio su tavola trasportato su tela", wikidataId: "Q100000004", artistWikidata: "Q100000104", styleWikidata: "Q100000203", domains: ["artista", "stile"] },
+        { title: "Ritratto di frate in veste di San Tommaso d'Aquino", year: "1545 ca.", technique: "Olio su tavola", wikidataId: "Q126599960", artistWikidata: "Q1527051", styleWikidata: "Q131808", domains: ["artista", "stile"] },
+        { title: "Madonna di San Zaccaria", year: "1560 ca.", technique: "Olio su tela", wikidataId: "Q100000006", artistWikidata: "Q100000106", styleWikidata: "Q131808", domains: ["stile"] },
+        { title: "Comunione di San Girolamo", year: "1614", technique: "Olio su tela", wikidataId: "Q100000007", artistWikidata: "Q100000107", styleWikidata: "Q100000204", domains: ["artista"] },
+        { title: "Strage degli Innocenti", year: "1611 ca.", technique: "Olio su tela", wikidataId: "Q100000008", artistWikidata: "Q100000107", styleWikidata: "Q100000204", domains: ["storia"] },
+        { title: "Pala dei Mendicanti", year: "1595 ca.", technique: "Olio su tela", wikidataId: "Q100000009", artistWikidata: "Q100000109", styleWikidata: "Q100000204", domains: ["materiali"] },
+        { title: "Assunzione della Vergine", year: "1580 ca.", technique: "Olio su tela", wikidataId: "Q100000010", artistWikidata: "Q100000110", styleWikidata: "Q100000204", domains: ["stile"] }
     ];
 
-    // Testi generici differenziati per livello linguistico (placeholder,
-    // da arricchire e personalizzare opera per opera prima della consegna).
     function makeTexts(level) {
         if (level === "elementare") {
             return [
@@ -140,7 +135,7 @@ async function seed() {
         ];
     }
 
-    const itemsByArtwork = []; // { elementare: itemDoc, medio: itemDoc }
+    const itemsByArtwork = [];
 
     for (let i = 0; i < artworks.length; i++) {
         const a = artworks[i];
@@ -164,7 +159,8 @@ async function seed() {
             language: "elementare",
             author: users.autore1._id,
             license: "CC-BY",
-            type: "object"
+            type: "object",
+            domains: a.domains
         });
 
         const medioItem = await Item.create({
@@ -181,7 +177,8 @@ async function seed() {
             language: "medio",
             author: users.autore2._id,
             license: "CC-BY",
-            type: "object"
+            type: "object",
+            domains: a.domains
         });
 
         itemsByArtwork.push({ elementare: elementareItem, medio: medioItem });
@@ -200,7 +197,8 @@ async function seed() {
             author: users.autore1._id,
             license: "CC-BY",
             type: "related",
-            styleWikidata: "Q131808"
+            styleWikidata: "Q131808",
+            domains: ["stile"]
         },
         {
             title: "Girolamo Mazzola Bedoli",
@@ -212,7 +210,8 @@ async function seed() {
             author: users.autore1._id,
             license: "CC-BY",
             type: "related",
-            artistWikidata: "Q1527051"
+            artistWikidata: "Q1527051",
+            domains: ["artista"]
         }
     ]);
     console.log("Item correlati creati.");

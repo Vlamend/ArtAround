@@ -1,6 +1,6 @@
 import { requireAuth } from './auth-guard.js';
 import {
-  getMuseumById, getItems,
+  getMuseumById, getItems, purchaseItem,
   getVisitById, createVisit, updateVisit, deleteVisit
 } from './api.js';
 
@@ -162,29 +162,56 @@ function renderResults() {
 function renderItemResult(item) {
   const li = document.createElement('li');
   li.className = 'card';
-
+ 
   const info = document.createElement('div');
   info.innerHTML = `
     <strong>${item.title}</strong><br>
     <span class="status-message">${item.language} · ${item.type}${item.price ? ` · ${item.price}€` : ''}</span>
   `;
-
-  const addBtn = document.createElement('button');
-  addBtn.textContent = '+ Aggiungi';
-  addBtn.addEventListener('click', () => {
-    steps.push({
-      itemId: item._id,
-      title: item.title,
-      language: item.language,
-      type: item.type,
-      logisticNote: ''
+ 
+  const isOwn = item.author === currentUser.id || item.author?._id === currentUser.id;
+  const isFree = !item.price || item.price === 0;
+  const alreadyPurchased = (currentUser.purchasedItems ?? []).some(
+    id => (id._id ?? id) === item._id
+  );
+  const needsPurchase = !isOwn && !isFree && !alreadyPurchased;
+ 
+  const actionBtn = document.createElement('button');
+ 
+  if (needsPurchase) {
+    actionBtn.textContent = `Acquista (${item.price}€)`;
+    actionBtn.addEventListener('click', () => handlePurchase(item, actionBtn));
+  } else {
+    actionBtn.textContent = '+ Aggiungi';
+    actionBtn.addEventListener('click', () => {
+      steps.push({
+        itemId: item._id,
+        title: item.title,
+        language: item.language,
+        type: item.type,
+        logisticNote: ''
+      });
+      renderSteps();
     });
-    renderSteps();
-  });
-
+  }
+ 
   li.appendChild(info);
-  li.appendChild(addBtn);
+  li.appendChild(actionBtn);
   return li;
+}
+ 
+async function handlePurchase(item, button) {
+  button.disabled = true;
+  button.textContent = 'Acquisto in corso…';
+  try {
+    const result = await purchaseItem(item._id);
+    currentUser.purchasedItems = result.purchasedItems;
+    renderResults(); // ricostruisce la lista: ora questo item mostrerà "+ Aggiungi"
+  } catch (err) {
+    window.alert(err.message || 'Impossibile completare l\'acquisto.');
+    button.disabled = false;
+    button.textContent = `Acquista (${item.price}€)`;
+  }
 }
 
 function renderSteps() {

@@ -27,10 +27,8 @@ button {
   cursor: pointer;
 }
 
-/* Focus visibile per accessibilità da tastiera, coerente con la
- * modalità "a bottoni equivalenti ai comandi vocali" richiesta */
 :focus-visible {
-  outline: 3px solid var(--color-accent);
+  outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -65,8 +63,39 @@ button {
 }
 
 .error-message {
-  color: var(--color-accent);
+  color: var(--color-primary);
   font-size: var(--fs-small);
   text-align: center;
   padding: var(--space-3) 0;
 }
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.back-link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  margin-bottom: var(--space-3);
+}
+
+.back-link:hover { color: var(--color-primary); }
+
+.text-link {
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  color: var(--color-ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0;
+  cursor: pointer;
+}
+
+.text-link:hover { color: var(--color-primary); }

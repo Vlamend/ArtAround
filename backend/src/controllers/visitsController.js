@@ -1,4 +1,5 @@
 import Visit from "../models/visit.js";
+import User from "../models/user.js";
 
 // Lista visite, filtrabile per museo e visibilità pubblica
 // (marketplace: "contenuti esistenti - sia gratuiti sia in vendita -
@@ -137,6 +138,38 @@ export async function deleteVisit(req, res) {
 
     } catch (error) {
         console.error("Errore nell'eliminazione della visita:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
+// Segna una visita come completata per l'utente autenticato. Usato dal
+// Navigator quando l'utente raggiunge l'ultimo step, per adattare
+// l'esperienza a chi ha già svolto quella visita (slide "ArtAround:
+// fondamenti" - "E' la prima volta, sono già venuto in passato...").
+// Idempotente: se è già segnata come completata, non la duplica.
+export async function completeVisit(req, res) {
+    try {
+        const visit = await Visit.findById(req.params.id);
+ 
+        if (!visit) {
+            return res.status(404).json({ error: "Visita non trovata." });
+        }
+ 
+        const user = await User.findById(req.user.id);
+ 
+        const alreadyCompleted = user.visitedVisits.some(
+            v => v.visit.toString() === req.params.id
+        );
+ 
+        if (!alreadyCompleted) {
+            user.visitedVisits.push({ visit: req.params.id, completedAt: new Date() });
+            await user.save();
+        }
+ 
+        res.json({ message: "Visita segnata come completata." });
+ 
+    } catch (error) {
+        console.error("Errore nel segnare la visita come completata:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }

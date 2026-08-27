@@ -77,7 +77,6 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
 // marker posizionati in percentuale (non SVG scalato: così non si
 // distorcono se l'immagine non è quadrata).
 function MapWithFloorPlan({ imageUrl, steps, currentIndex, pointsOfInterest, onSelectStep }) {
-  console.log('MapWithFloorPlan', { imageUrl, steps, currentIndex, pointsOfInterest });
   return (
     <div className="floorplan-frame">
       <img src={imageUrl} alt="Planimetria del piano" className="floorplan-image" />

@@ -82,19 +82,6 @@ const itemSchema = new Schema({
     }
   },
 
-  /* ---- Metadati obbligatori (dalle specifiche) ----
-   *
-   * language: il livello linguistico di TUTTI i testi
-   *   dell'item. Per la stessa opera fisica esistono
-   *   item diversi con language diverso. Il Navigator
-   *   sceglie l'item con il language più adatto al
-   *   profilo dell'utente.
-   *
-   * author: l'utente del marketplace che ha CREATO
-   *   il contenuto (non l'autore storico dell'opera).
-   *
-   * license: come può essere usato il contenuto.
-   * --------------------------------- */
   language: {
     type: String,
     enum: ['infantile', 'elementare', 'medio', 'specialistico'],
@@ -124,10 +111,21 @@ const itemSchema = new Schema({
     default: 'object'
   },
 
+  /* ---- Ambiti di interesse ----
+   * Vocabolario fisso, ricalca gli esempi della slide "ArtAround:
+   * fondamenti" sotto "interessi specifici". Un item può appartenere
+   * a più ambiti. Usato per adattare l'esperienza al profilo utente
+   * (vedi User.interestWeights): gli item/contenuti opzionali negli
+   * ambiti più graditi vengono proposti con priorità.
+  ------------------------------------ */
+  domains: [{
+    type: String,
+    enum: ['artista', 'architettura', 'stile', 'materiali', 'storia']
+  }],
+
   /* ---- Marketplace ---- */
   isPublic:  { type: Boolean, default: true },
   price:     { type: Number,  default: 0, min: 0 },
-  adoptions: { type: Number,  default: 0 },  // quante visite lo hanno incluso
 
   // Tag liberi per la ricerca nel marketplace
   tags: [{ type: String, trim: true }]
@@ -148,6 +146,7 @@ itemSchema.index({ museum: 1, type: 1 });    // Per separare rapidamente item "o
 itemSchema.pre('save', function (next) {
   // Rimuove duplicati nei tag
   if (this.tags) this.tags = [...new Set(this.tags)];
+  if (this.domains) this.domains = [...new Set(this.domains)];
   next();
 });
 
