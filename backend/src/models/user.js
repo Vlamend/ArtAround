@@ -64,10 +64,12 @@ const UserSchema = new mongoose.Schema({
     storia:        { type: Number, default: 0 }
   },
 
-  ownedItems: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Item'
-  }],
+  // NB: il possesso non vive più qui come array duplicato (rischio di
+  // disallineamento). La fonte di verità è Artwork.owner (non più
+  // Item.owner: license/isPublic/price/owner sono stati spostati da
+  // Content ad Artwork — un solo proprietario per opera, condiviso da
+  // tutte le sue varianti linguistiche). Per sapere cosa possiede un
+  // utente si fa Artwork.find({ owner: user._id }).
 
 visitedVisits: [{
     visit: { type: mongoose.Schema.Types.ObjectId, ref: 'Visit' },

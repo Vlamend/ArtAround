@@ -81,20 +81,23 @@ export function getMuseumBySlug(slug) {
   return request(`/museums/slug/${slug}`);
 }
 
-// Cerca item "related" (autore, stile, ecc.) collegati tramite lo
-// stesso identificatore Wikidata dell'item corrente. Usata per
-// "Chi è l'autore" / "Qual è lo stile" nel player.
-export function getRelatedItems({ museum, artistWikidata, styleWikidata }) {
-  const params = new URLSearchParams({ type: 'related' });
-  if (museum) params.set('museum', museum);
-  if (artistWikidata) params.set('artistWikidata', artistWikidata);
-  if (styleWikidata) params.set('styleWikidata', styleWikidata);
-  return request(`/items?${params.toString()}`);
+// Dettaglio di un autore/stile (bio/descrizione completa, con tutte le
+// varianti di durata) — usati per i topic 'artista'/'stile' del "dimmi
+// di più". Nessun acquisto richiesto: l'informazione è sempre
+// disponibile insieme all'artwork che la referenzia.
+export function getAuthorById(id) {
+  return request(`/authors/${id}`);
+}
+
+export function getStyleById(id) {
+  return request(`/styles/${id}`);
 }
 
 // Ricerca item generica, usata anche per trovare varianti linguistiche
-// dello stesso oggetto (stesso wikidataId, language diverso) da
-// proporre in base a preferredLanguageLevel dell'utente.
+// dello stesso artwork (stesso artwork._id, language diversa) da
+// proporre in base a preferredLanguageLevel dell'utente, e per i
+// content extra sui topic 'architettura'/'materiali'/'storia'
+// (?domains=...).
 export function getItems(params = {}) {
   const qs = new URLSearchParams(params);
   return request(`/items?${qs.toString()}`);

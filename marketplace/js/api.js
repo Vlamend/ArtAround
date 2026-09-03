@@ -116,7 +116,54 @@ export function updateItem(id, payload) {
 export function deleteItem(id) {
   return request(`/items/${id}`, { method: 'DELETE' });
 }
+// NB: l'acquisto è ora su Artwork (purchaseArtwork, sotto), non più
+// per singolo content — comprare un'opera dà accesso a tutte le sue
+// varianti in una volta.
 
-export function purchaseItem(id) {
-  return request(`/items/${id}/purchase`, { method: 'POST' });
+// ---- Artwork (l'oggetto fisico del museo: posizione, sala, autore/stile,
+// e ORA anche il controllo commerciale: license/isPublic/price/owner) ----
+
+export function getArtworks(params = {}) {
+  const qs = new URLSearchParams(params);
+  return request(`/artworks?${qs.toString()}`);
+}
+
+export function getArtworkById(id) {
+  return request(`/artworks/${id}`);
+}
+
+export function createArtwork(payload) {
+  return request('/artworks', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function updateArtwork(id, payload) {
+  return request(`/artworks/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function deleteArtwork(id) {
+  return request(`/artworks/${id}`, { method: 'DELETE' });
+}
+
+// Acquisto: dà accesso a TUTTE le varianti linguistiche e i topic
+// dell'opera in un colpo solo (non più un acquisto per singolo content).
+export function purchaseArtwork(id) {
+  return request(`/artworks/${id}/purchase`, { method: 'POST' });
+}
+
+// ---- Author / Style (catalogo riusabile tra opere e musei diversi) ----
+
+export function getAuthors() {
+  return request('/authors');
+}
+
+export function createAuthor(payload) {
+  return request('/authors', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function getStyles() {
+  return request('/styles');
+}
+
+export function createStyle(payload) {
+  return request('/styles', { method: 'POST', body: JSON.stringify(payload) });
 }

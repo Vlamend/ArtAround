@@ -57,6 +57,20 @@ const visitSchema = new Schema({
     }
   },
 
+  /* ---- Ritmo della visita ----
+   * Durata target del testo GENERALE su ogni opera (il primo
+   * testo mostrato ad ogni step, prima di qualunque "dimmi di
+   * più"). Il curatore la sceglie in base al tipo di visita:
+   * una visita lunga può permettersi 4min per opera, una
+   * infarinatura veloce sta su 15s. Deve essere uno dei valori
+   * ammessi in textEntry per le durate (3s/15s/40s/1min/4min).
+   * --------------------------------- */
+  pace: {
+    type: String,
+    enum: ['3s', '15s', '40s', '1min', '4min'],
+    default: '15s'
+  },
+
   /* ---- Autore e marketplace ----
    * L'autore è l'utente del marketplace
    * che ha creato/curato la visita.

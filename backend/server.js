@@ -8,6 +8,9 @@ import itemsRoutes from "./src/routes/items.js";
 import visitsRoutes from "./src/routes/visits.js";
 import usersRoutes from "./src/routes/users.js";
 import museumsRoutes from "./src/routes/museums.js";
+import artworksRoutes from "./src/routes/artworks.js";
+import authorsRoutes from "./src/routes/authors.js";
+import stylesRoutes from "./src/routes/styles.js";
 import { notFound, errorHandler } from "./src/middleware/errorHandlers.js";
 import "./config/db.js";
 
@@ -19,6 +22,9 @@ app.use("/api/items", itemsRoutes);
 app.use("/api/visits", visitsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/museums", museumsRoutes);
+app.use("/api/artworks", artworksRoutes);
+app.use("/api/authors", authorsRoutes);
+app.use("/api/styles", stylesRoutes);
 
 // CONFIG DEL MUSEO (richiesto dalle specifiche)
 app.get("/api/config", async (req, res) => {

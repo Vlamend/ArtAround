@@ -22,8 +22,11 @@ const VOICE_COMMANDS = [
   { patterns: ['cose questo', 'cosa e questo', 'ripeti'], action: 'repeat' },
   { patterns: ['dimmi di piu'], action: 'more' },
   { patterns: ['dimmi di meno'], action: 'less' },
-  { patterns: ['non capisco', 'troppo difficile'], action: 'less' },
-  { patterns: ['troppo semplice'], action: 'more' },
+  // Asse diverso da "dimmi di più/meno" (che agisce sulla durata):
+  // questi due agiscono sul LIVELLO LINGUISTICO del testo (infantile
+  // -> elementare -> medio -> specialistico), non sulla sua lunghezza.
+  { patterns: ['non capisco', 'troppo difficile'], action: 'simpler' },
+  { patterns: ['troppo semplice'], action: 'harder' },
   { patterns: ['chi e lautore', 'chi e l autore'], action: 'author' },
   { patterns: ['qual e lo stile', 'che stile e'], action: 'style' },
   {

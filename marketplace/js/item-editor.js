@@ -1,6 +1,6 @@
 import { requireAuth } from './auth-guard.js';
 import {
-  getMuseumById,
+  getMuseumById, getArtworks,
   getItemById, createItem, updateItem, deleteItem
 } from './api.js';
 
@@ -19,7 +19,8 @@ const form = document.getElementById('item-form');
 const errorEl = document.getElementById('form-error');
 const submitBtn = document.getElementById('submit-btn');
 const deleteBtn = document.getElementById('delete-btn');
-const roomSelect = document.getElementById('room');
+const artworkSelect = document.getElementById('artwork');
+const newArtworkLink = document.getElementById('new-artwork-link');
 const textsListEl = document.getElementById('texts-list');
 
 main();
@@ -28,6 +29,7 @@ async function main() {
   const params = new URLSearchParams(window.location.search);
   itemId = params.get('id');
   museumId = params.get('museum');
+  const preselectedArtwork = params.get('artwork');
 
   if (!itemId && !museumId) {
     window.location.href = 'museums';
@@ -46,13 +48,15 @@ async function main() {
   } else {
     titleEl.textContent = 'Nuovo contenuto';
     submitBtn.textContent = 'Crea contenuto';
+    if (preselectedArtwork) artworkSelect.dataset.pendingValue = preselectedArtwork;
   }
 
   if (!museumId) {
     return; // loadExistingItem può aver fallito e già mostrato l'errore
   }
 
-  await loadRooms();
+  await loadArtworks();
+  newArtworkLink.href = `artwork-editor?museum=${museumId}`;
 
   if (texts.length === 0) {
     addTextRow(); // parte sempre con almeno un testo da compilare
@@ -70,44 +74,40 @@ async function main() {
 async function loadExistingItem() {
   try {
     const item = await getItemById(itemId);
+    const artwork = item.artwork;
+    museumId = artwork?.museum?._id ?? artwork?.museum ?? museumId;
 
-    if (item.author !== currentUser.id && item.author?._id !== currentUser.id) {
+    // Solo il PROPRIETARIO dell'artwork può modificare i suoi content
+    // (license/isPublic/price/owner vivono lì ora, non più sul
+    // content stesso).
+    const ownerId = artwork?.owner?._id ?? artwork?.owner;
+    if (ownerId !== currentUser.id) {
       statusEl.hidden = false;
       statusEl.className = 'error-message';
-      statusEl.textContent = 'Non sei l\'autore di questo contenuto: non puoi modificarlo.';
+      statusEl.textContent = 'Non sei il proprietario dell\'opera a cui appartiene questo contenuto: non puoi modificarlo.';
       form.hidden = true;
       museumId = null;
       return;
     }
 
-    museumId = item.museum?._id ?? item.museum;
-    titleEl.textContent = `Modifica — ${item.title}`;
+    titleEl.textContent = `Modifica — ${artwork?.title ?? 'contenuto'}`;
     submitBtn.textContent = 'Salva modifiche';
     deleteBtn.hidden = false;
     deleteBtn.addEventListener('click', handleDelete);
+    document.getElementById('edit-artwork-link').href = `artwork-editor?id=${artwork?._id}`;
 
-    document.getElementById('title').value = item.title ?? '';
-    document.getElementById('type').value = item.type ?? 'object';
-    document.getElementById('year').value = item.year ?? '';
-    document.getElementById('technique').value = item.technique ?? '';
-    document.getElementById('dimensions').value = item.dimensions ?? '';
-    document.getElementById('image').value = item.image ?? '';
-    document.getElementById('coord-x').value = item.coords?.x ?? 0;
-    document.getElementById('coord-y').value = item.coords?.y ?? 0;
-    document.getElementById('wikidata-id').value = item.wikidataId ?? '';
-    document.getElementById('artist-wikidata').value = item.artistWikidata ?? '';
-    document.getElementById('style-wikidata').value = item.styleWikidata ?? '';
     document.getElementById('language').value = item.language ?? 'medio';
-    document.getElementById('license').value = item.license ?? 'CC-BY';
-    document.getElementById('price').value = item.price ?? 0;
-    document.getElementById('is-public').checked = !!item.isPublic;
     document.getElementById('tags').value = (item.tags ?? []).join(', ');
+
+    for (const checkbox of document.querySelectorAll('.domain-checkbox')) {
+      checkbox.checked = (item.domains ?? []).includes(checkbox.value);
+    }
 
     texts = (item.texts ?? []).map(t => ({ duration: t.duration, content: t.content }));
 
-    // La sala va selezionata DOPO che le option sono state popolate da
-    // loadRooms(): salviamo l'id target e lo applichiamo lì.
-    roomSelect.dataset.pendingValue = item.roomId ?? '';
+    // L'opera va selezionata DOPO che le option sono state popolate da
+    // loadArtworks(): salviamo l'id target e lo applichiamo lì.
+    artworkSelect.dataset.pendingValue = artwork?._id ?? '';
   } catch {
     statusEl.hidden = false;
     statusEl.className = 'error-message';
@@ -117,25 +117,29 @@ async function loadExistingItem() {
   }
 }
 
-async function loadRooms() {
+async function loadArtworks() {
   try {
-    const museum = await getMuseumById(museumId);
-    if (!mode || mode === 'create') {
+    const [museum, artworks] = await Promise.all([
+      getMuseumById(museumId).catch(() => null),
+      getArtworks({ museum: museumId, mine: 'true' }) // solo le opere possedute: sono le uniche su cui si può creare/modificare content
+    ]);
+
+    if (museum && (!mode || mode === 'create')) {
       titleEl.textContent = `Nuovo contenuto — ${museum.name}`;
     }
 
-    for (const room of museum.rooms ?? []) {
+    for (const artwork of artworks) {
       const option = document.createElement('option');
-      option.value = room._id;
-      option.textContent = room.name;
-      roomSelect.appendChild(option);
+      option.value = artwork._id;
+      option.textContent = artwork.title;
+      artworkSelect.appendChild(option);
     }
 
-    if (roomSelect.dataset.pendingValue) {
-      roomSelect.value = roomSelect.dataset.pendingValue;
+    if (artworkSelect.dataset.pendingValue) {
+      artworkSelect.value = artworkSelect.dataset.pendingValue;
     }
   } catch {
-    // se le sale non si caricano, il campo resta con la sola opzione "nessuna"
+    // se le opere non si caricano, il select resta con la sola opzione placeholder
   }
 }
 
@@ -197,25 +201,18 @@ async function handleSubmit(e) {
     return;
   }
 
+  if (!artworkSelect.value) {
+    errorEl.textContent = 'Seleziona l\'opera a cui si riferisce questo contenuto.';
+    errorEl.hidden = false;
+    return;
+  }
+
+  const domains = [...document.querySelectorAll('.domain-checkbox:checked')].map(c => c.value);
+
   const payload = {
-    title: document.getElementById('title').value.trim(),
-    type: document.getElementById('type').value,
-    year: document.getElementById('year').value.trim(),
-    technique: document.getElementById('technique').value.trim(),
-    dimensions: document.getElementById('dimensions').value.trim(),
-    image: document.getElementById('image').value.trim(),
-    roomId: roomSelect.value || null,
-    coords: {
-      x: Number(document.getElementById('coord-x').value) || 0,
-      y: Number(document.getElementById('coord-y').value) || 0
-    },
-    wikidataId: document.getElementById('wikidata-id').value.trim(),
-    artistWikidata: document.getElementById('artist-wikidata').value.trim(),
-    styleWikidata: document.getElementById('style-wikidata').value.trim(),
+    artwork: artworkSelect.value,
     language: document.getElementById('language').value,
-    license: document.getElementById('license').value,
-    price: Number(document.getElementById('price').value) || 0,
-    isPublic: document.getElementById('is-public').checked,
+    domains,
     tags: document.getElementById('tags').value
       .split(',')
       .map(t => t.trim())
@@ -223,18 +220,12 @@ async function handleSubmit(e) {
     texts: validTexts
   };
 
-  if (!payload.title) {
-    errorEl.textContent = 'Il titolo è obbligatorio.';
-    errorEl.hidden = false;
-    return;
-  }
-
   submitBtn.disabled = true;
   submitBtn.textContent = mode === 'create' ? 'Creazione…' : 'Salvataggio…';
 
   try {
     if (mode === 'create') {
-      await createItem({ ...payload, museum: museumId });
+      await createItem(payload);
     } else {
       await updateItem(itemId, payload);
     }

@@ -46,7 +46,7 @@ function renderMuseumCard(museum) {
   openBtn.className = 'primary';
   openBtn.textContent = 'Apri';
   openBtn.addEventListener('click', () => {
-    window.location.href = `visits?museum=${museum._id}`;
+    window.location.href = `contents?museum=${museum._id}`;
   });
 
   actions.appendChild(openBtn);

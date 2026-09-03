@@ -1,5 +1,37 @@
 import Visit from "../models/visit.js";
 import User from "../models/user.js";
+import Item from "../models/item.js";
+import Artwork from "../models/artwork.js";
+
+// Verifica che ogni step referenzi un Content la cui opera è
+// effettivamente accessibile a chi sta componendo la visita (gratuita
+// o già posseduta). Senza questo controllo, il filtro "cosa posso
+// aggiungere" applicato nel marketplace è solo estetico: chiamando
+// l'API direttamente si potrebbe infilare in una visita il content di
+// un'opera a pagamento altrui senza mai comprarla.
+// Ritorna null se tutto ok, altrimenti un messaggio d'errore.
+async function validateStepsAccessibility(steps, userId) {
+    if (!steps || steps.length === 0) return null;
+
+    const itemIds = steps.map(s => s.item);
+    const items = await Item.find({ _id: { $in: itemIds } }, 'artwork');
+    const artworkIds = [...new Set(items.map(i => i.artwork.toString()))];
+
+    const artworks = await Artwork.find({ _id: { $in: artworkIds } }, 'isPublic price owner');
+    const artworkById = new Map(artworks.map(a => [a._id.toString(), a]));
+
+    for (const item of items) {
+        const artwork = artworkById.get(item.artwork.toString());
+        if (!artwork) return "Uno degli step referenzia un'opera inesistente.";
+
+        const accessible = artwork.isPublic && (artwork.price === 0 || artwork.owner.toString() === userId);
+        if (!accessible) {
+            return "Uno degli step referenzia il content di un'opera a pagamento che non possiedi.";
+        }
+    }
+
+    return null;
+}
 
 // Lista visite, filtrabile per museo e visibilità pubblica
 // (marketplace: "contenuti esistenti - sia gratuiti sia in vendita -
@@ -40,7 +72,16 @@ export async function getVisitById(req, res) {
         const visit = await Visit.findById(req.params.id)
             .populate('museum')
             .populate('author', 'username')
-            .populate('steps.item');
+            .populate({
+                path: 'steps.item',
+                populate: {
+                    path: 'artwork',
+                    populate: [
+                        { path: 'author', select: 'name' },
+                        { path: 'style', select: 'name' }
+                    ]
+                }
+            });
 
         if (!visit) {
             return res.status(404).json({ error: "Visita non trovata." });
@@ -59,10 +100,15 @@ export async function getVisitById(req, res) {
 // a qualcun altro.
 export async function createVisit(req, res) {
     try {
-        const { title, description, museum, entranceInfo, steps, license, price, tags } = req.body;
+        const { title, description, museum, entranceInfo, steps, license, price, tags, pace } = req.body;
 
         if (!title || !museum || !steps || steps.length === 0) {
             return res.status(400).json({ error: "Titolo, museo e almeno un item nella sequenza sono obbligatori." });
+        }
+
+        const accessibilityError = await validateStepsAccessibility(steps, req.user.id);
+        if (accessibilityError) {
+            return res.status(403).json({ error: accessibilityError });
         }
 
         const newVisit = new Visit({
@@ -74,6 +120,7 @@ export async function createVisit(req, res) {
             license,
             price,
             tags,
+            pace,
             author: req.user.id
         });
 
@@ -102,7 +149,14 @@ export async function updateVisit(req, res) {
 
         // Campi effettivamente modificabili: non permettiamo di
         // riassegnare autore, adozioni o museo da qui.
-        const editableFields = ['title', 'description', 'entranceInfo', 'steps', 'license', 'price', 'isPublic', 'tags'];
+        if (req.body.steps !== undefined) {
+            const accessibilityError = await validateStepsAccessibility(req.body.steps, req.user.id);
+            if (accessibilityError) {
+                return res.status(403).json({ error: accessibilityError });
+            }
+        }
+
+        const editableFields = ['title', 'description', 'entranceInfo', 'steps', 'license', 'price', 'isPublic', 'tags', 'pace'];
         for (const field of editableFields) {
             if (req.body[field] !== undefined) {
                 visit[field] = req.body[field];

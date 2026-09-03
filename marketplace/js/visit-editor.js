@@ -1,6 +1,6 @@
 import { requireAuth } from './auth-guard.js';
 import {
-  getMuseumById, getItems, purchaseItem,
+  getMuseumById, getItems, purchaseArtwork,
   getVisitById, createVisit, updateVisit, deleteVisit
 } from './api.js';
 
@@ -20,8 +20,8 @@ const errorEl = document.getElementById('form-error');
 const submitBtn = document.getElementById('submit-btn');
 const deleteBtn = document.getElementById('delete-btn');
 const searchInput = document.getElementById('item-search');
-const typeFilter = document.getElementById('item-type-filter');
 const resultsEl = document.getElementById('item-results');
+const paceSelect = document.getElementById('pace');
 const stepsListEl = document.getElementById('steps-list');
 const stepsEmptyEl = document.getElementById('steps-empty');
 
@@ -54,10 +54,9 @@ async function main() {
   renderResults();
   renderSteps();
 
-  backLink.href = `visits?museum=${museumId}`;
+  backLink.href = `contents?museum=${museumId}`;
   form.addEventListener('submit', handleSubmit);
   searchInput.addEventListener('input', renderResults);
-  typeFilter.addEventListener('change', renderResults);
 }
 
 async function setupCreateMode() {
@@ -97,12 +96,12 @@ async function loadExistingVisit() {
     document.getElementById('price').value = visit.price ?? 0;
     document.getElementById('is-public').checked = !!visit.isPublic;
     document.getElementById('tags').value = (visit.tags ?? []).join(', ');
+    paceSelect.value = visit.pace ?? '15s';
 
     steps = (visit.steps ?? []).map(s => ({
       itemId: s.item?._id,
-      title: s.item?.title ?? '(item non trovato)',
+      title: s.item?.artwork?.title ?? '(opera non trovata)',
       language: s.item?.language,
-      type: s.item?.type,
       logisticNote: s.logisticNote ?? ''
     }));
   } catch {
@@ -136,12 +135,10 @@ async function loadItems() {
 
 function renderResults() {
   const query = searchInput.value.trim().toLowerCase();
-  const type = typeFilter.value;
 
   const filtered = allItems.filter(item => {
-    const matchesQuery = !query || item.title.toLowerCase().includes(query);
-    const matchesType = !type || item.type === type;
-    return matchesQuery && matchesType;
+    const title = item.artwork?.title ?? '';
+    return !query || title.toLowerCase().includes(query);
   });
 
   resultsEl.innerHTML = '';
@@ -162,55 +159,56 @@ function renderResults() {
 function renderItemResult(item) {
   const li = document.createElement('li');
   li.className = 'card';
- 
+
+  const artwork = item.artwork ?? {};
+  const title = artwork.title ?? '(opera non trovata)';
   const info = document.createElement('div');
   info.innerHTML = `
-    <strong>${item.title}</strong><br>
-    <span class="status-message">${item.language} · ${item.type}${item.price ? ` · ${item.price}€` : ''}</span>
+    <strong>${title}</strong><br>
+    <span class="status-message">${item.language}${artwork.price ? ` · ${artwork.price}€` : ''}</span>
   `;
- 
-  const isOwn = item.author === currentUser.id || item.author?._id === currentUser.id;
-  const isFree = !item.price || item.price === 0;
-  const alreadyPurchased = (currentUser.purchasedItems ?? []).some(
-    id => (id._id ?? id) === item._id
-  );
-  const needsPurchase = !isOwn && !isFree && !alreadyPurchased;
- 
+
+  // isOwn/price vivono ORA sull'artwork, non più sul content: comprare
+  // l'opera dà accesso a tutte le sue varianti linguistiche in una volta.
+  const ownerId = artwork.owner?._id ?? artwork.owner;
+  const isOwn = ownerId === currentUser.id;
+  const isFree = !artwork.price || artwork.price === 0;
+  const needsPurchase = !isOwn && !isFree;
+
   const actionBtn = document.createElement('button');
- 
+
   if (needsPurchase) {
-    actionBtn.textContent = `Acquista (${item.price}€)`;
-    actionBtn.addEventListener('click', () => handlePurchase(item, actionBtn));
+    actionBtn.textContent = `Acquista l'opera (${artwork.price}€)`;
+    actionBtn.addEventListener('click', () => handlePurchase(artwork, actionBtn));
   } else {
     actionBtn.textContent = '+ Aggiungi';
     actionBtn.addEventListener('click', () => {
       steps.push({
         itemId: item._id,
-        title: item.title,
+        title,
         language: item.language,
-        type: item.type,
         logisticNote: ''
       });
       renderSteps();
     });
   }
- 
+
   li.appendChild(info);
   li.appendChild(actionBtn);
   return li;
 }
- 
-async function handlePurchase(item, button) {
+
+async function handlePurchase(artwork, button) {
   button.disabled = true;
   button.textContent = 'Acquisto in corso…';
   try {
-    const result = await purchaseItem(item._id);
-    currentUser.purchasedItems = result.purchasedItems;
-    renderResults(); // ricostruisce la lista: ora questo item mostrerà "+ Aggiungi"
+    await purchaseArtwork(artwork._id);
+    await loadItems(); // ricarica: l'opera comprata ora ha owner = currentUser, per TUTTI i suoi content
+    renderResults(); // ricostruisce la lista: ora questi item mostreranno "+ Aggiungi"
   } catch (err) {
     window.alert(err.message || 'Impossibile completare l\'acquisto.');
     button.disabled = false;
-    button.textContent = `Acquista (${item.price}€)`;
+    button.textContent = `Acquista l'opera (${artwork.price}€)`;
   }
 }
 
@@ -232,7 +230,7 @@ function renderStepRow(step, index) {
   const header = document.createElement('div');
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
-  header.innerHTML = `<strong>${index + 1}. ${step.title}</strong> <span class="status-message">${step.language} · ${step.type}</span>`;
+  header.innerHTML = `<strong>${index + 1}. ${step.title}</strong> <span class="status-message">${step.language}</span>`;
 
   const noteInput = document.createElement('input');
   noteInput.type = 'text';
@@ -293,6 +291,7 @@ async function handleSubmit(e) {
     license: document.getElementById('license').value,
     price: Number(document.getElementById('price').value) || 0,
     isPublic: document.getElementById('is-public').checked,
+    pace: paceSelect.value,
     tags: document.getElementById('tags').value
       .split(',')
       .map(t => t.trim())

@@ -12,7 +12,7 @@
   </header>
 
   <main>
-    <p><a id="back-link" href="museums">&larr; Torna alle visite</a></p>
+    <p><a id="back-link" href="museums">&larr; Torna ai contenuti</a></p>
 
     <h1 id="page-title">Nuova visita</h1>
     <p id="status" class="status-message" hidden></p>
@@ -59,20 +59,23 @@
         <input type="text" id="tags" placeholder="es. famiglie, curiosità" />
       </label>
 
+      <label>
+        Ritmo della visita (durata del testo generale per ogni tappa)
+        <select id="pace">
+          <option value="3s">Rapidissima (3s)</option>
+          <option value="15s" selected>Veloce (15s)</option>
+          <option value="40s">Normale (40s)</option>
+          <option value="1min">Approfondita (1min)</option>
+          <option value="4min">Lunga (4min)</option>
+        </select>
+      </label>
+
       <h2>Tappe della visita</h2>
 
       <div>
         <label>
           Cerca opere del museo
           <input type="text" id="item-search" placeholder="Titolo…" />
-        </label>
-        <label>
-          Tipo
-          <select id="item-type-filter">
-            <option value="object" selected>Opere</option>
-            <option value="related">Contenuti correlati</option>
-            <option value="">Tutti</option>
-          </select>
         </label>
       </div>
       <ul id="item-results" class="card-list"></ul>

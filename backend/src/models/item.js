@@ -1,71 +1,22 @@
 import { Schema, model } from 'mongoose';
-
-const urlRegex = /^(https?:\/\/)?([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w\-\.\?=%&=]*)?$/;
+import { textEntrySchema } from './textEntry.js';
 
 /* --------------------------------------------------
- Sotto-schema: singolo testo con durata
+ Content (ex Item)
 
-  Un item ha più testi per la stessa opera, ognuno
-  pensato per essere letto in un tempo diverso.
-  Il Navigator sceglie quale leggere in base al
-  tempo che l'utente vuole dedicare all'opera.
+ Un testo — con varianti di durata — che descrive un
+ Artwork specifico. Puro contenitore di testo: niente più
+ license/isPublic/price/author/owner, tutti spostati su
+ Artwork. Un content viene interpellato solo per il testo,
+ in base a come viene richiesto (lingua, dominio); il
+ controllo commerciale e chi può modificarlo dipendono
+ interamente dall'Artwork a cui appartiene.
 ----------------------------------------------------- */
-const textEntrySchema = new Schema({
-  duration: {
-    type: String,
-    enum: ['3s', '15s', '40s', '1min', '4min'],
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  }
-}, { _id: false });
-
-// Schema principale: Item
-
 const itemSchema = new Schema({
-  title:      { type: String, required: true, trim: true },
-  year:       { type: String, default: 'Sconosciuto' },
-  technique:  { type: String, default: 'Sconosciuto' },
-  dimensions: { type: String, default: '' },
-
-  /* Immagine di riconoscimento (URL o path relativo /public/...)
-   Serve solo per identificare visivamente l'opera, non come contenuto */
-  image: {
-    type: String,
-    default: '',
-    validate: {
-      validator: v => v === '' || urlRegex.test(v),
-      message:   props => `${props.value} non è un URL valido`
-    }
-  },
-  /* ---- Identificatori Wikidata ----
-   * Permettono di collegare l'opera, l'autore storico
-   * e lo stile al knowledge graph di Wikidata.
-   * Utili per recuperare info aggiuntive e per
-   * riconoscere opere duplicate nel marketplace.
-   * Es: wikidataId: 'Q126599960' (Ritratto Bedoli)
-  ------------------------------------ */
-  wikidataId:       { type: String, default: '' },  // ID opera
-  artistWikidata:   { type: String, default: '' },  // ID autore storico (pittore, scultore...)
-  styleWikidata:    { type: String, default: '' },  // ID stile artistico
-
-  /* ---- Museo e posizione ---- */
-  museum: {
+  artwork: {
     type: Schema.Types.ObjectId,
-    ref: 'Museum',
+    ref: 'Artwork',
     required: true
-  },
-  // Coordinate sulla mappa del museo (0-100)
-  coords: {
-    x: { type: Number, default: 0 },
-    y: { type: Number, default: 0 }
-  },
-  // Sala in cui si trova l'opera (riferimento a Museum.rooms._id)
-  roomId: {
-    type: Schema.Types.ObjectId,
-    default: null
   },
 
   /* ---- Contenuto testuale ----
@@ -78,7 +29,7 @@ const itemSchema = new Schema({
     type: [textEntrySchema],
     validate: {
       validator: v => v && v.length > 0,
-      message: 'Un item deve avere almeno un testo'
+      message: 'Un content deve avere almeno un testo'
     }
   },
 
@@ -87,45 +38,18 @@ const itemSchema = new Schema({
     enum: ['infantile', 'elementare', 'medio', 'specialistico'],
     required: true
   },
-  author: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  license: {
-    type: String,
-    enum: ['CC0', 'CC-BY', 'CC-BY-SA', 'CC-BY-NC', 'private'],
-    default: 'CC-BY'
-  },
-
-  /* ---- Tipo di contenuto ----
-   * 'object'  → descrive direttamente un'opera esposta
-   * 'related' → contenuto correlato: artista, stile,
-   *             evento storico, materiali, ecc.
-   *             Viene usato come item opzionale nelle
-   *             visite, su richiesta del visitatore.
-   * --------------------------------- */
-  type: {
-    type: String,
-    enum: ['object', 'related'],
-    default: 'object'
-  },
 
   /* ---- Ambiti di interesse ----
    * Vocabolario fisso, ricalca gli esempi della slide "ArtAround:
-   * fondamenti" sotto "interessi specifici". Un item può appartenere
-   * a più ambiti. Usato per adattare l'esperienza al profilo utente
-   * (vedi User.interestWeights): gli item/contenuti opzionali negli
-   * ambiti più graditi vengono proposti con priorità.
+   * fondamenti" sotto "interessi specifici". Un content può
+   * appartenere a più ambiti. Usato per adattare l'esperienza al
+   * profilo utente (vedi User.interestWeights) e per il "dimmi di
+   * più" a topic del Navigator.
   ------------------------------------ */
   domains: [{
     type: String,
     enum: ['artista', 'architettura', 'stile', 'materiali', 'storia']
   }],
-
-  /* ---- Marketplace ---- */
-  isPublic:  { type: Boolean, default: true },
-  price:     { type: Number,  default: 0, min: 0 },
 
   // Tag liberi per la ricerca nel marketplace
   tags: [{ type: String, trim: true }]
@@ -135,14 +59,10 @@ const itemSchema = new Schema({
 /* --------------------------------------------------
  * Indici per le query più frequenti
  * -------------------------------------------------- */
-itemSchema.index({ museum: 1, language: 1 });// Per trovare gli item di un museo con lo stesso livello linguistico (per il Navigator)
-itemSchema.index({ wikidataId: 1 });         // Per trovare rapidamente item in base al loro wikidataId
-itemSchema.index({ author: 1 });             // Per trovare rapidamente tutti gli item di un autore
-itemSchema.index({ isPublic: 1, price: 1 }); // Per trovare rapidamente item pubblici e ordinati per prezzo
-itemSchema.index({ museum: 1, type: 1 });    // Per separare rapidamente item "object" (opere) da item "related" (contenuti opzionali) in un museo
+itemSchema.index({ artwork: 1, language: 1 }); // Per trovare, per un dato Artwork, le varianti nel livello linguistico richiesto (Navigator)
+itemSchema.index({ artwork: 1, domains: 1 });  // Per trovare, per un dato Artwork, i content di un certo dominio (topic del Navigator)
 
 // Middleware pre-save
-
 itemSchema.pre('save', function (next) {
   // Rimuove duplicati nei tag
   if (this.tags) this.tags = [...new Set(this.tags)];
