@@ -1,16 +1,46 @@
-/* Stile volutamente minimale per ora: la resa grafica definitiva
-   (palette, tipografia, eventuale Tailwind) è prevista in un secondo
-   giro, una volta che tutte le funzionalità sono a posto. */
+/* ==========================================================================
+   1. RESET & VARIABILI
+   ========================================================================== */
+:root {
+  --color-primary: #1565C0;
+  --color-danger: #b3261e;
+  --color-success: #2e7d32;
+  --color-status: #666;
+}
 
-* { box-sizing: border-box; }
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
 
 body {
-  margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   background: #f5f5f5;
   color: #1a1a1a;
+  line-height: 1.5;
 }
 
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* ==========================================================================
+   2. ELEMENTI TIPOGRAFICI E LINK
+   ========================================================================== */
+h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.status-message { color: var(--color-status); }
+.error-message { color: var(--color-danger); }
+
+/* ==========================================================================
+   3. STRUTTURE DI LAYOUT (Header & Toolbar)
+   ========================================================================== */
 header {
   display: flex;
   justify-content: space-between;
@@ -20,59 +50,98 @@ header {
   border-bottom: 1px solid #ddd;
 }
 
-main {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1.5rem;
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-h1 { font-size: 1.5rem; }
-h2 { font-size: 1.2rem; }
-
-a { color: #1565C0; }
-
+/* ==========================================================================
+   4. COMPONENTE: BOTTONI (Unificato e Fattorizzato)
+   ========================================================================== */
 button {
   font: inherit;
+  font-weight: 500;
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  border: 1px solid #1565C0;
+  border: 1px solid #ccc; /* Colore di fallback per evitare bug grafici */
   background: #fff;
-  color: #1565C0;
+  color: #333;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  user-select: none;
+  transition: all 0.2s ease-in-out;
 }
 
-button:hover { background: #eef4fc; }
-
-button.primary {
-  background: #1565C0;
-  color: #fff;
+button:hover { 
+  background: #f5f5f5; 
 }
-
-button.primary:hover { background: #0d4a94; }
-
-button.danger {
-  border-color: #b3261e;
-  color: #b3261e;
-}
-
-button.danger:hover { background: #fbeceb; }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* --- Varianti dei Bottoni --- */
+
+/* Outline / Secondario */
+button.outline {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+button.outline:hover { 
+  background: #eef4fc; 
+  transform: translateY(-1px);
+}
+
+/* Primario (Unificato con la logica che volevi nella card) */
+button.primary {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+button.primary:hover { 
+  background: var(--color-primary);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* Successo (Ottimo per la compravendita conclusa) */
+button.success {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+button.success:hover {
+  background: var(--color-success);
+  color: #fff;
+}
+
+/* Pericolo / Elimina */
+button.danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+button.danger:hover { 
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* ==========================================================================
+   5. COMPONENTE: LISTE E CARD
+   ========================================================================== */
 .card-list {
   list-style: none;
-  padding: 0;
   display: none;
   flex-direction: column;
   gap: 0.75rem;
 }
 
 .card-list.visible {
-    display: flex;
-  }
+  display: flex;
+}
 
 .card {
   background: #fff;
@@ -83,14 +152,34 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .card-actions {
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
+  align-items: center;
 }
 
+.primary-card-button { 
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary); 
+  text-align: center;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 20px; 
+  transition: all 0.2s ease-in-out;
+}
+.primary-card-button:hover { 
+  background: var(--color-primary); 
+  color: #fff;
+}/* 
+
+/* ==========================================================================
+   6. COMPONENTE: FORM E INPUT
+   ========================================================================== */
 form {
   display: flex;
   flex-direction: column;
@@ -103,6 +192,7 @@ label {
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
 input, select, textarea {
@@ -110,37 +200,56 @@ input, select, textarea {
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 6px;
+  background: #fff;
+  transition: border-color 0.15s ease;
 }
 
-.status-message { color: #666; }
-.error-message { color: #b3261e; }
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--color-primary); /* Sostituito con variabile */
 }
+
+/* ==========================================================================
+   7. COMPONENTE: SWITCH TABS (Riparato)
+   ========================================================================== */
 .switch {
+  position: relative; /* FONDAMENTALE per far funzionare il ::after */
+  --bg-offset: 0%;
+  overflow: hidden;
   display: flex;
-  gap: 8px;
-    margin-bottom: 20px;
-  }
-.switch button {
-    flex: 1;
-    padding: 10px 14px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    background: #f5f5f5;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-  .switch button:hover {
-    background: #ececec;
-  }
-  .switch button.active {
-    background: #222;
-    color: #fff;
-    border-color: #222;
-  }
+  margin-bottom: 20px;
+  border-radius: 6px; /* Evita che gli angoli del background escano dal box */
+  border: 1px solid #ccc;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Ombra ripulita e alleggerita per performance */
+}
+
+/* Questa è la slide animata che scorre dietro */
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--bg-offset);
+  width: 50%;
+  height: 100%;
+  background: #222; /* Spostato qui il colore dello stato attivo */
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.switch > button {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 14px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  z-index: 2; /* Porta il testo del bottone SOPRA lo sfondo scuro animato */
+  transition: color 0.3s ease;
+}
+
+/* Cambio colore testo quando il bottone è attivo */
+.switch > button.active {
+  color: #fff;
+  background: transparent;
+}

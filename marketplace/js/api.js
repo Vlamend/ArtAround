@@ -116,12 +116,12 @@ export function updateItem(id, payload) {
 export function deleteItem(id) {
   return request(`/items/${id}`, { method: 'DELETE' });
 }
-// NB: l'acquisto è ora su Artwork (purchaseArtwork, sotto), non più
-// per singolo content — comprare un'opera dà accesso a tutte le sue
-// varianti in una volta.
+// NB: l'adozione/acquisizione sono ora su Artwork (sotto), non più
+// per singolo content.
 
 // ---- Artwork (l'oggetto fisico del museo: posizione, sala, autore/stile,
-// e ORA anche il controllo commerciale: license/isPublic/price/owner) ----
+// e ORA anche il controllo commerciale: license/isPublic/adoptionPrice/
+// acquisitionPrice/owner) ----
 
 export function getArtworks(params = {}) {
   const qs = new URLSearchParams(params);
@@ -144,10 +144,16 @@ export function deleteArtwork(id) {
   return request(`/artworks/${id}`, { method: 'DELETE' });
 }
 
-// Acquisto: dà accesso a TUTTE le varianti linguistiche e i topic
-// dell'opera in un colpo solo (non più un acquisto per singolo content).
-export function purchaseArtwork(id) {
-  return request(`/artworks/${id}/purchase`, { method: 'POST' });
+// Adozione: licenzia l'uso non esclusivo del content nelle proprie
+// visite. NON dà diritti editoriali, NON cambia il proprietario.
+export function adoptArtwork(id) {
+  return request(`/artworks/${id}/adopt`, { method: 'POST' });
+}
+
+// Acquisizione: trasferisce i pieni diritti editoriali (modificare
+// l'opera, i suoi content, i due prezzi). Richiede ruolo autore/admin.
+export function acquireArtwork(id) {
+  return request(`/artworks/${id}/acquire`, { method: 'POST' });
 }
 
 // ---- Author / Style (catalogo riusabile tra opere e musei diversi) ----
@@ -166,4 +172,14 @@ export function getStyles() {
 
 export function createStyle(payload) {
   return request('/styles', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+// ---- Config del Navigator (solo admin può scriverla) ----
+
+export function getConfig() {
+  return request('/config');
+}
+
+export function updateConfig(payload) {
+  return request('/config', { method: 'PUT', body: JSON.stringify(payload) });
 }

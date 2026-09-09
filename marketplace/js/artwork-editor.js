@@ -83,7 +83,8 @@ async function loadExistingArtwork(currentUser) {
     document.getElementById('coord-x').value = artwork.coords?.x ?? 0;
     document.getElementById('coord-y').value = artwork.coords?.y ?? 0;
     document.getElementById('license').value = artwork.license ?? 'CC-BY';
-    document.getElementById('price').value = artwork.price ?? 0;
+    document.getElementById('adoption-price').value = artwork.adoptionPrice ?? 0;
+    document.getElementById('acquisition-price').value = artwork.acquisitionPrice ?? 0;
     document.getElementById('is-public').checked = !!artwork.isPublic;
     // Sala/autore/stile vanno selezionati DOPO che le rispettive
     // option sono state popolate (loadRooms/loadAuthors/loadStyles):
@@ -230,7 +231,8 @@ async function handleSubmit(e) {
     author: authorSelect.value || null,
     style: styleSelect.value || null,
     license: document.getElementById('license').value,
-    price: Number(document.getElementById('price').value) || 0,
+    adoptionPrice: Number(document.getElementById('adoption-price').value) || 0,
+    acquisitionPrice: Number(document.getElementById('acquisition-price').value) || 0,
     isPublic: document.getElementById('is-public').checked
   };
 

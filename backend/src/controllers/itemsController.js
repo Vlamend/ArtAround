@@ -1,6 +1,7 @@
 import Item from "../models/item.js";
 import User from "../models/user.js";
 import Artwork from "../models/artwork.js";
+import { getLicensedArtworkIds, accessibleOrClause, isItemUsedInAnyVisit } from "../utils/marketplaceAccess.js";
 
 const INTEREST_STEP = 1;
 const INTEREST_MAX = 10;
@@ -12,10 +13,9 @@ function clamp(value, min, max) {
 
 // Calcola quali Artwork sono accessibili a chi sta chiedendo, e
 // restituisce i loro id. Questo è ORA l'unico punto di controllo
-// commerciale sui content: essendo license/isPublic/price/owner
-// spostati su Artwork, un content è raggiungibile se e solo se lo è
-// la sua opera — non c'è più bisogno (né possibilità) di un controllo
-// separato per variante linguistica.
+// commerciale sui content: essendo license/isPublic/adoptionPrice/
+// acquisitionPrice/owner spostati su Artwork, un content è
+// raggiungibile se e solo se lo è la sua opera.
 async function findAccessibleArtworkIds({ museum, artwork, mine, userId }) {
     const filter = {};
     if (museum) filter.museum = museum;
@@ -23,18 +23,19 @@ async function findAccessibleArtworkIds({ museum, artwork, mine, userId }) {
 
     if (mine === 'true' && userId) {
         // "I miei content": quelli delle opere che possiedo ORA (non
-        // necessariamente quelle che ho scritto in origine).
+        // necessariamente quelle che ho scritto in origine). Le opere
+        // solo ADOTTATE non sono "mie" in questo senso: l'adozione dà
+        // diritto d'uso, non diritti editoriali — non compaiono qui.
         filter.owner = userId;
     } else {
         filter.isPublic = true;
-        // Gratis per chiunque, oppure a pagamento ma già posseduta da
-        // chi sta chiedendo. Un content la cui opera è a pagamento e
-        // non posseduta da chi chiede semplicemente non risulta mai
-        // tra i risultati: niente più swap linguistico o topic
-        // "dimmi di più" che regalano contenuto a pagamento.
-        filter.$or = userId
-            ? [{ price: 0 }, { owner: userId }]
-            : [{ price: 0 }];
+        // Gratis per chiunque, oppure già posseduta o già licenziata
+        // (adottata o acquisita) da chi sta chiedendo. Un'opera a
+        // pagamento senza nessuna di queste condizioni semplicemente
+        // non risulta mai tra i risultati: niente più swap linguistico
+        // o topic "dimmi di più" che regalano contenuto a pagamento.
+        const licensedIds = await getLicensedArtworkIds(userId);
+        filter.$or = accessibleOrClause(userId, licensedIds);
     }
 
     const artworks = await Artwork.find(filter, '_id');
@@ -181,6 +182,14 @@ export async function updateItem(req, res) {
 
 // Cancellazione di un content: stesso controllo sul proprietario
 // dell'artwork.
+// Cancellazione di un content: stesso controllo sul proprietario
+// dell'artwork. In più: bloccata se il content è usato nello step di
+// una Visit — di CHIUNQUE, non solo del proprietario attuale. Senza
+// questo, un'acquisizione seguita da una riscrittura dei content
+// romperebbe silenziosamente le visite di chi aveva già adottato
+// l'opera prima del cambio di proprietario — proprio il caso che
+// "un'adozione, una volta ottenuta, resta valida per sempre" promette
+// di evitare.
 export async function deleteItem(req, res) {
     try {
         const item = await Item.findById(req.params.id).populate('artwork', 'owner');
@@ -191,6 +200,11 @@ export async function deleteItem(req, res) {
 
         if (item.artwork.owner.toString() !== req.user.id) {
             return res.status(403).json({ error: "Non sei il proprietario dell'opera a cui appartiene questo content." });
+        }
+
+        const inUse = await isItemUsedInAnyVisit(item._id);
+        if (inUse) {
+            return res.status(409).json({ error: "Questo content è usato in almeno una visita (tua o di un altro autore che l'ha adottato) e non può essere eliminato." });
         }
 
         await item.deleteOne();

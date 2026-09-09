@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtAround Editor — Config Navigator</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <strong>ArtAround Editor</strong>
+  </header>
+
+  <main>
+    <p><a href="museums">&larr; Torna ai musei</a></p>
+
+    <h1>Configurazione del Navigator</h1>
+    <p class="status-message">Decide quale museo rappresenta questa istanza dell'app Navigator, il titolo e il logo mostrati. Il cambiamento si applica al prossimo caricamento della pagina per chi ha già l'app aperta, non in tempo reale.</p>
+
+    <p id="status" class="status-message" hidden></p>
+
+    <form id="config-form">
+      <label>
+        Museo
+        <select id="museum-slug" required>
+          <option value="">— caricamento musei… —</option>
+        </select>
+      </label>
+
+      <label>
+        Titolo mostrato nel Navigator
+        <input type="text" id="title" required />
+      </label>
+
+      <label>
+        URL logo
+        <input type="url" id="logo" placeholder="https://..." />
+      </label>
+
+      <p id="form-error" class="error-message" hidden></p>
+
+      <button type="submit" class="primary" id="submit-btn">Salva configurazione</button>
+    </form>
+  </main>
+
+  <script type="module" src="js/config-editor.js"></script>
+</body>
+</html>

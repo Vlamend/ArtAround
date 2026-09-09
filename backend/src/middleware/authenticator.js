@@ -39,6 +39,23 @@ export function requireAdmin(req, res, next) {
 }
 
 /*
+ * Permette l'accesso solo a chi ha uno dei ruoli indicati.
+ * Va usato dopo authenticateToken. Esempio: requireRole('autore', 'admin')
+ * per una route che 'visitatore' non può usare (es. creare opere) —
+ * admin include sempre le capacità di autore, va elencato esplicitamente
+ * ogni volta perché i ruoli non sono gerarchici a livello di codice,
+ * solo per convenzione di chi li assegna.
+ */
+export function requireRole(...allowedRoles) {
+    return function (req, res, next) {
+        if (!req.user || !allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ error: `Permessi insufficienti: richiede uno di questi ruoli: ${allowedRoles.join(', ')}.` });
+        }
+        next();
+    };
+}
+
+/*
  * Permette l'accesso sia agli utenti autenticati che a quelli anonimi.
  * Se il token è presente e valido, aggiunge req.user.
  * Se il token non è presente o non valido, prosegue come richiesta anonima.

@@ -25,8 +25,8 @@ const UserSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ['admin', 'user'],
-    default: 'user'
+    enum: ['admin', 'autore', 'visitatore'],
+    default: 'visitatore'
   },
 
   /* ---- Preferenze del profilo utente ----
@@ -64,18 +64,43 @@ const UserSchema = new mongoose.Schema({
     storia:        { type: Number, default: 0 }
   },
 
-  // NB: il possesso non vive più qui come array duplicato (rischio di
-  // disallineamento). La fonte di verità è Artwork.owner (non più
-  // Item.owner: license/isPublic/price/owner sono stati spostati da
-  // Content ad Artwork — un solo proprietario per opera, condiviso da
-  // tutte le sue varianti linguistiche). Per sapere cosa possiede un
-  // utente si fa Artwork.find({ owner: user._id }).
+  /* ---- Licenze acquisite ----
+   * Un'entry per ogni adozione o acquisizione ESPLICITA fatta da
+   * questo utente — non per il semplice uso di content gratuito con
+   * licenza CC, che resta libero e non genera nessuna entry (nessuna
+   * azione esplicita da tracciare, coerente con come funzionano le
+   * licenze CC nel mondo reale).
+   *
+   * A differenza del vecchio 'ownedItems' che avevamo rimosso: qui non
+   * c'è nessun secondo posto che dice la stessa cosa. 'owner' su
+   * Artwork resta l'UNICA fonte di verità per "chi è il proprietario
+   * adesso" (un'acquisizione aggiorna quello, non solo questo array).
+   * Questo array invece è l'UNICA fonte di verità per "quali licenze
+   * ha ottenuto questo utente nel tempo" — un fatto che non vive da
+   * nessun'altra parte, quindi non c'è nulla da sincronizzare.
+   *
+   * pricePaid è congelato al momento della transazione: se in seguito
+   * l'opera cambia proprietario o i prezzi cambiano, questa entry non
+   * si aggiorna né si invalida — un'adozione, una volta ottenuta,
+   * resta valida per sempre.
+   * --------------------------------- */
+  licenses: [{
+    artwork:   { type: mongoose.Schema.Types.ObjectId, ref: 'Artwork', required: true },
+    type:      { type: String, enum: ['adoption', 'acquisition'], required: true },
+    pricePaid: { type: Number, required: true, min: 0 },
+    date:      { type: Date, default: Date.now }
+  }],
 
 visitedVisits: [{
     visit: { type: mongoose.Schema.Types.ObjectId, ref: 'Visit' },
     completedAt: { type: Date, default: Date.now }
   }]
 }, { timestamps: true });
+
+// Query "al contrario" rispetto a come l'array è pensato: non "cosa
+// possiede questo utente" ma "chi ha licenziato quest'opera" — usata
+// lato venditore per "gestione delle adozioni/vendite".
+UserSchema.index({ 'licenses.artwork': 1 });
 
 // Middleware Mongoose per hashare la password prima di salvare
 UserSchema.pre('save', async function (next) {

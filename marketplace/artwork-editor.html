@@ -115,7 +115,7 @@
       </details>
 
       <h2>Pubblicazione</h2>
-      <p class="status-message">Comprare quest'opera dà accesso a TUTTI i suoi content (ogni lingua, ogni topic), non a uno alla volta.</p>
+      <p class="status-message">Due prezzi separati: <strong>adottare</strong> dà solo il diritto di usare il content nelle proprie visite; <strong>acquisire</strong> trasferisce i pieni diritti editoriali (modificare l'opera, i suoi content, questi stessi prezzi). Un'adozione, una volta ottenuta, resta valida per sempre — anche se l'opera cambia proprietario in seguito.</p>
 
       <label>
         Licenza
@@ -129,8 +129,13 @@
       </label>
 
       <label>
-        Prezzo (€, 0 = gratuito)
-        <input type="number" id="price" min="0" step="0.5" value="0" />
+        Prezzo adozione (€, 0 = uso libero)
+        <input type="number" id="adoption-price" min="0" step="0.5" value="0" />
+      </label>
+
+      <label>
+        Prezzo acquisizione (€, 0 = gratuita)
+        <input type="number" id="acquisition-price" min="0" step="0.5" value="0" />
       </label>
 
       <label style="flex-direction: row; align-items: center; gap: 0.5rem;">

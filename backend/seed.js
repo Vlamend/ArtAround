@@ -33,11 +33,19 @@ async function seed() {
     console.log("Collection pulite.");
 
     // ---------- Utenti demo ----------
+    // I 4 account richiesti dalla spec mantengono nome/password, ma ora
+    // hanno ruoli reali (prima erano tutti 'user', la differenza tra
+    // autore/visitatore era solo nel nome). Aggiunto un quinto account
+    // 'admin1' — nessuno dei 4 richiesti ha ruolo admin, e senza un
+    // account admin il flusso "modifica la config del Navigator" non
+    // sarebbe dimostrabile tramite l'interfaccia (la spec permette
+    // esplicitamente account aggiuntivi oltre ai 4 richiesti).
     const usersData = [
-        { username: "autore1", email: "autore1@artaround.test", password: "12345678", role: "user" },
-        { username: "autore2", email: "autore2@artaround.test", password: "12345678", role: "user" },
-        { username: "visitatore1", email: "visitatore1@artaround.test", password: "12345678", role: "user" },
-        { username: "visitatore2", email: "visitatore2@artaround.test", password: "12345678", role: "user" }
+        { username: "autore1", email: "autore1@artaround.test", password: "12345678", role: "autore" },
+        { username: "autore2", email: "autore2@artaround.test", password: "12345678", role: "autore" },
+        { username: "visitatore1", email: "visitatore1@artaround.test", password: "12345678", role: "visitatore" },
+        { username: "visitatore2", email: "visitatore2@artaround.test", password: "12345678", role: "visitatore" },
+        { username: "admin1", email: "admin1@artaround.test", password: "12345678", role: "admin" }
     ];
 
     const users = {};
@@ -247,16 +255,17 @@ async function seed() {
         const coords = pointInRoom(room, occurrence);
 
         // Proprietario alternato tra i due autori demo, solo per
-        // varietà: il prezzo resta 0 su tutte e 10 perché le visite
-        // 'classica' (curata da autore1) e 'famiglie' (curata da
-        // autore2) usano ENTRAMBE tutte e 10 le opere — con un solo
-        // proprietario per opera, una qualunque a pagamento posseduta
-        // da un solo autore farebbe fallire la validazione server-side
-        // della visita dell'altro. Per dimostrare un'opera VERAMENTE a
-        // pagamento serve un'opera dedicata, fuori da qualunque visita
-        // condivisa tra curatori diversi (non creata qui per non
-        // complicare il seed demo, ma il meccanismo è pronto: vedi
-        // artworksController.purchaseArtwork).
+        // varietà. adoptionPrice resta 0 su tutte e 10 perché le
+        // visite 'classica' (curata da autore1) e 'famiglie' (curata
+        // da autore2) usano ENTRAMBE tutte e 10 le opere — con un solo
+        // proprietario per opera, un'adozione a pagamento posseduta da
+        // un solo autore farebbe fallire la validazione server-side
+        // della visita dell'altro (l'accessibilità di uno step dipende
+        // solo da adoptionPrice, mai da acquisitionPrice).
+        // acquisitionPrice invece NON ha questo vincolo — diventare
+        // proprietario non serve per usare il content in una visita,
+        // quindi qui può avere un valore demo reale, a differenza di
+        // prima quando i due prezzi erano un campo unico.
         const owner = i % 2 === 0 ? users.autore1 : users.autore2;
 
         const artwork = await Artwork.create({
@@ -271,7 +280,8 @@ async function seed() {
             owner: owner._id,
             license: "CC-BY",
             isPublic: true,
-            price: 0
+            adoptionPrice: 0,
+            acquisitionPrice: 15
         });
 
         const elementareItem = await Item.create({

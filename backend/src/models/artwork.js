@@ -65,21 +65,20 @@ const artworkSchema = new Schema({
   },
 
   /* ---- Controllo commerciale ----
-   * Spostato qui da Content: prima license/isPublic/price/owner
-   * vivevano sul singolo Content, quindi due varianti linguistiche
-   * della STESSA opera potevano avere due proprietari diversi,
-   * due prezzi diversi, due licenze diverse — e chi cercava una
-   * variante nella propria lingua (adattamento al profilo) poteva
-   * ritrovarsi contenuto a pagamento di un venditore che non aveva
-   * mai pagato. Ora il controllo commerciale è UNO per opera,
-   * condiviso da tutti i Content che la referenziano: comprare
-   * un'opera dà accesso a tutte le sue varianti linguistiche e a
-   * tutti i suoi topic, non a una sola lingua alla volta.
-   *
-   * owner: chi ne detiene ORA i diritti commerciali. Cambia con
-   *   purchaseArtwork. Alla creazione coincide con chi crea l'opera.
-   * (Niente campo per "chi l'ha scritta in origine": nessuna query o
-   * vista lo usa — solo owner conta ai fini pratici del DB.)
+   * owner: chi ha i pieni diritti editoriali ORA — può modificare
+   *   l'opera, i suoi Content, i due prezzi qui sotto, cancellarla.
+   *   Cambia SOLO tramite un'acquisizione (mai un'adozione).
+   * license/isPublic: come prima — CC0..private, visibile o no nel
+   *   marketplace.
+   * adoptionPrice: costo per un ALTRO utente per licenziare l'uso non
+   *   esclusivo del content di quest'opera nelle proprie visite —
+   *   NON dà diritti editoriali, e una volta ottenuta non scade e non
+   *   viene mai revocata da una successiva acquisizione da parte di
+   *   qualcun altro.
+   * acquisitionPrice: costo per diventare il nuovo 'owner' — sostituisce
+   *   chi c'era prima, pieni diritti editoriali.
+   * Il proprietario attuale non paga né l'uno né l'altro (applicato
+   * nel controller, non qui).
    * --------------------------------- */
   owner: {
     type: Schema.Types.ObjectId,
@@ -91,14 +90,21 @@ const artworkSchema = new Schema({
     enum: ['CC0', 'CC-BY', 'CC-BY-SA', 'CC-BY-NC', 'private'],
     default: 'CC-BY'
   },
-  isPublic: { type: Boolean, default: true },
-  price:    { type: Number,  default: 0, min: 0 }
+  isPublic:         { type: Boolean, default: true },
+  adoptionPrice:    { type: Number,  default: 0, min: 0 },
+  acquisitionPrice: { type: Number,  default: 0, min: 0 }
 }, { timestamps: true });
 
-artworkSchema.index({ museum: 1 });
+// { museum, title } unique: previene il caso più comune di
+// duplicazione (due curatori catalogano indipendentemente la stessa
+// opera reale con lo stesso identico titolo). Non copre titoli scritti
+// in modo diverso per la stessa opera — mitigazione parziale, a costo
+// di una riga di indice, non una soluzione completa al problema.
+artworkSchema.index({ museum: 1, title: 1 }, { unique: true });
 artworkSchema.index({ author: 1 }); // ordinamento/filtro marketplace per autore
 artworkSchema.index({ style: 1 });  // ordinamento/filtro marketplace per stile
 artworkSchema.index({ owner: 1 }); // opere possedute ora da un utente
-artworkSchema.index({ isPublic: 1, price: 1 });
+artworkSchema.index({ isPublic: 1, adoptionPrice: 1 });
+artworkSchema.index({ isPublic: 1, acquisitionPrice: 1 });
 
 export default model('Artwork', artworkSchema);

@@ -14,9 +14,7 @@ export async function requireAuth() {
     const { user } = await getMe();
     renderHeader(user);
     return user;
-  } catch (err) {
-    console.error('requireAuth ha intercettato:', err); // TEMPORANEO: rimuovi dopo il debug
-    debugger; // TEMPORANEO: mette in pausa qui, prima del redirect - ispeziona "err" nella console
+  } catch {
     clearToken();
     window.location.href = 'login';
     return null;
@@ -29,7 +27,8 @@ function renderHeader(user) {
 
   const userInfo = document.createElement('div');
   userInfo.innerHTML = `
-    <span style="margin-right: 1rem;">${user.username}</span>
+    <span style="margin-right: 1rem;">${user.username} (${user.role})</span>
+    ${user.role === 'admin' ? '<a href="config-editor" style="margin-right: 1rem;">Config Navigator</a>' : ''}
     <button id="logout-btn">Esci</button>
   `;
   header.appendChild(userInfo);

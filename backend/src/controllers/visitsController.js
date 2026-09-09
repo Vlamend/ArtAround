@@ -2,13 +2,15 @@ import Visit from "../models/visit.js";
 import User from "../models/user.js";
 import Item from "../models/item.js";
 import Artwork from "../models/artwork.js";
+import { getLicensedArtworkIds } from "../utils/marketplaceAccess.js";
 
 // Verifica che ogni step referenzi un Content la cui opera è
-// effettivamente accessibile a chi sta componendo la visita (gratuita
-// o già posseduta). Senza questo controllo, il filtro "cosa posso
-// aggiungere" applicato nel marketplace è solo estetico: chiamando
-// l'API direttamente si potrebbe infilare in una visita il content di
-// un'opera a pagamento altrui senza mai comprarla.
+// effettivamente accessibile a chi sta componendo la visita (gratuita,
+// già posseduta, o già licenziata tramite adozione/acquisizione).
+// Senza questo controllo, il filtro "cosa posso aggiungere" applicato
+// nel marketplace è solo estetico: chiamando l'API direttamente si
+// potrebbe infilare in una visita il content di un'opera altrui mai
+// adottata né acquisita.
 // Ritorna null se tutto ok, altrimenti un messaggio d'errore.
 async function validateStepsAccessibility(steps, userId) {
     if (!steps || steps.length === 0) return null;
@@ -17,16 +19,22 @@ async function validateStepsAccessibility(steps, userId) {
     const items = await Item.find({ _id: { $in: itemIds } }, 'artwork');
     const artworkIds = [...new Set(items.map(i => i.artwork.toString()))];
 
-    const artworks = await Artwork.find({ _id: { $in: artworkIds } }, 'isPublic price owner');
+    const artworks = await Artwork.find({ _id: { $in: artworkIds } }, 'isPublic adoptionPrice owner');
     const artworkById = new Map(artworks.map(a => [a._id.toString(), a]));
+
+    const licensedIds = new Set(await getLicensedArtworkIds(userId));
 
     for (const item of items) {
         const artwork = artworkById.get(item.artwork.toString());
         if (!artwork) return "Uno degli step referenzia un'opera inesistente.";
 
-        const accessible = artwork.isPublic && (artwork.price === 0 || artwork.owner.toString() === userId);
+        const accessible = artwork.isPublic && (
+            artwork.adoptionPrice === 0 ||
+            artwork.owner.toString() === userId ||
+            licensedIds.has(artwork._id.toString())
+        );
         if (!accessible) {
-            return "Uno degli step referenzia il content di un'opera a pagamento che non possiedi.";
+            return "Uno degli step referenzia il content di un'opera che non hai adottato né acquisito.";
         }
     }
 
