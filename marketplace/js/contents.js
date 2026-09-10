@@ -1,5 +1,5 @@
 import { requireAuth } from './auth-guard.js';
-import { getMuseumById, getVisits, deleteVisit, getArtworks, deleteArtwork } from './api.js';
+import { getMuseumById, getVisits, deleteVisit, getArtworks, deleteArtwork, adoptArtwork, acquireArtwork } from './api.js';
 
 const titleEl = document.getElementById('museum-title');
 const statusEl = document.getElementById('status');
@@ -308,8 +308,8 @@ async function handleAcquire(artwork, button) {
 
 function showList(which) {
   const showA = which === 'a';
-  visitEl.classList.toggle('visible', showA);
-  artworkEL.classList.toggle('visible', !showA);
+  visitEl.classList.toggle('invisible', showA);
+  artworkEL.classList.toggle('invisible', !showA);
   btnA.classList.toggle('active', showA);
   btnB.classList.toggle('active', !showA);
   slideBg(showA ? 0 : 1);

@@ -134,13 +134,13 @@ button.danger:hover {
    ========================================================================== */
 .card-list {
   list-style: none;
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.card-list.visible {
-  display: flex;
+.card-list.invisible {
+  display: none;
 }
 
 .card {
@@ -252,4 +252,9 @@ input:focus, select:focus, textarea:focus {
 .switch > button.active {
   color: #fff;
   background: transparent;
+}
+
+.content-btn {
+  margin-top: 0.5rem;
+  align-self: flex-start;
 }
