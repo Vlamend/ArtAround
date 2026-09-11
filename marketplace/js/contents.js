@@ -1,5 +1,5 @@
 import { requireAuth } from './auth-guard.js';
-import { getMuseumById, getVisits, deleteVisit, getArtworks, deleteArtwork, adoptArtwork, acquireArtwork } from './api.js';
+import { getMuseumById, getVisits, deleteVisit, getArtworks, deleteArtwork, adoptArtwork, acquireArtwork, getLicenses } from './api.js';
 
 const titleEl = document.getElementById('museum-title');
 const statusEl = document.getElementById('status');
@@ -143,9 +143,10 @@ async function handleDelete(visit) {
 // economiche/gratuite da adottare.
 async function loadArtworks() {
   try {
-    const [mine, others] = await Promise.all([
+    const [mine, others, userLicenses] = await Promise.all([
       getArtworks({ museum: museumId, mine: 'true' }),
-      getArtworks({ museum: museumId, others: 'true' })
+      getArtworks({ museum: museumId, others: 'true' }),
+      getLicenses()
     ]);
  
     artworkEL.innerHTML = '';
@@ -180,10 +181,13 @@ async function loadArtworks() {
     if (others.length > 0) {
       artworkEL.appendChild(sectionHeader('Altre opere del museo'));
       for (const artwork of others) {
-        artworkEL.appendChild(renderOtherArtworkCard(artwork));
+        artworkEL.appendChild(renderOtherArtworkCard(artwork, userLicenses));
       }
+    }else{
+      console.log("Nessuna altra opera del museo");
     }
-  } catch {
+  } catch(err) {
+    console.error('Errore caricamento opere', err);
     // se le opere non si caricano, la sezione resta vuota — i
     // contenuti sotto restano comunque consultabili
   }
@@ -245,7 +249,7 @@ async function handleDeleteArtwork(artwork) {
 // già licenziate (a differenza del pannello "da adottare o acquisire"
 // di visit-editor, che le nasconde una volta ottenute): questa lista
 // serve a farsi un'idea di tutto il museo, non solo di cosa manca.
-function renderOtherArtworkCard(artwork) {
+function renderOtherArtworkCard(artwork, userLicensesData = {}) {
   const li = document.createElement('li');
   li.className = 'card';
  
@@ -258,15 +262,27 @@ function renderOtherArtworkCard(artwork) {
  
   const actions = document.createElement('div');
   actions.className = 'card-actions';
+
+  // Estraiamo in sicurezza l'array delle licenze dall'oggetto restituito dal backend
+  const licenses = userLicensesData?.licenses || [];
+  
+  // Eseguiamo il controllo sull'array reale
+  const hasAdopted = licenses.some(lic => 
+    lic.artwork?._id === artwork._id && lic.type === 'adoption'
+  );
  
   const adoptBtn = document.createElement('button');
-  adoptBtn.textContent = `Adotta`;
-  adoptBtn.addEventListener('click', () => handleAdopt(artwork, adoptBtn));
+  
+  if (hasAdopted) {
+    adoptBtn.textContent = `Già Adottata`;
+    adoptBtn.disabled = true;
+    adoptBtn.className = 'disabled-btn'; 
+  } else {
+    adoptBtn.textContent = `Adotta`;
+    adoptBtn.addEventListener('click', () => handleAdopt(artwork, adoptBtn));
+  }
   actions.appendChild(adoptBtn);
  
-  // Acquisire richiede ruolo autore/admin lato server (stessa
-  // restrizione di chi può creare opere): il bottone non si mostra
-  // nemmeno a un 'visitatore', invece di mostrarlo e farlo fallire.
   if (currentUser.role === 'autore' || currentUser.role === 'admin') {
     const acquireBtn = document.createElement('button');
     acquireBtn.className = 'success';

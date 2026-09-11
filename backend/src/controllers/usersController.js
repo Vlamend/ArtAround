@@ -126,8 +126,7 @@ export async function protectedRoute(req, res) {
                 preferredLanguageLevel: user.preferredLanguageLevel,
                 interfaceLanguage: user.interfaceLanguage,
                 interestWeights: user.interestWeights,
-                visitedVisits: user.visitedVisits,
-                purchasedItems: user.purchasedItems
+                visitedVisits: user.visitedVisits
             }
          });
  
@@ -179,13 +178,26 @@ export async function updateMe(req, res) {
                 preferredLanguageLevel: user.preferredLanguageLevel,
                 interfaceLanguage: user.interfaceLanguage,
                 interestWeights: user.interestWeights,
-                visitedVisits: user.visitedVisits,
-                purchasedItems: user.purchasedItems
+                visitedVisits: user.visitedVisits
             }
         });
  
     } catch (error) {
         console.error("Errore nell'aggiornamento delle preferenze:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
+export async function getLicenses (req, res) {
+    try {
+        const user = await User.findById(req.user.id)
+            .select("licenses")
+            .populate("licenses.artwork", "title museum");
+
+        res.json({ licenses: user.licenses });
+    }
+    catch (error) {
+        console.error("Errore nel recupero delle licenze:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }

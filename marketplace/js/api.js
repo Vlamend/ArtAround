@@ -183,3 +183,7 @@ export function getConfig() {
 export function updateConfig(payload) {
   return request('/config', { method: 'PUT', body: JSON.stringify(payload) });
 }
+
+export function getLicenses() {
+  return request('/users/licenses');
+}

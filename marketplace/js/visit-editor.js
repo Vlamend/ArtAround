@@ -397,7 +397,7 @@ async function handleSubmit(e) {
     } else {
       await updateVisit(visitId, payload);
     }
-    window.location.href = `visits?museum=${museumId}`;
+    window.location.href = `contents?museum=${museumId}`;
   } catch (err) {
     errorEl.textContent = err.message || 'Impossibile salvare la visita.';
     errorEl.hidden = false;
@@ -412,7 +412,7 @@ async function handleDelete() {
   }
   try {
     await deleteVisit(visitId);
-    window.location.href = `visits?museum=${museumId}`;
+    window.location.href = `contents?museum=${museumId}`;
   } catch (err) {
     window.alert(err.message || 'Impossibile eliminare la visita.');
   }
