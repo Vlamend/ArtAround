@@ -17,7 +17,7 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
   // Piano della tappa corrente (via la sua sala), usato come piano di
   // default quando si apre la mappa.
   const roomById = new Map(rooms.map(r => [r._id, r]));
-  const currentRoom = roomById.get(steps[currentIndex]?.item?.roomId);
+  const currentRoom = roomById.get(steps[currentIndex]?.artwork?.roomId);
   const [selectedFloor, setSelectedFloor] = useState(currentRoom?.floor ?? rooms[0]?.floor ?? 0);
 
   // Se l'utente naviga a un item su un altro piano mentre la mappa è
@@ -32,7 +32,7 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
 
   const stepsOnFloor = steps
     .map((step, i) => ({ step, i }))
-    .filter(({ step }) => roomById.get(step.item?.roomId)?.floor === selectedFloor);
+    .filter(({ step }) => roomById.get(step.artwork?.roomId)?.floor === selectedFloor);
 
   const poiOnFloor = pointsOfInterest.filter(poi => poi.floor === selectedFloor);
   const roomsOnFloor = rooms.filter(r => r.floor === selectedFloor);
@@ -93,15 +93,15 @@ function MapWithFloorPlan({ imageUrl, steps, currentIndex, pointsOfInterest, onS
       ))}
 
       {steps.map(({ step, i }) => {
-        const item = step.item;
+        const artwork = step.artwork;
         const isCurrent = i === currentIndex;
         return (
           <button
-            key={item?._id ?? i}
+            key={artwork?._id ?? i}
             className={isCurrent ? 'marker marker-step marker-step-current' : 'marker marker-step'}
-            style={{ left: `${item?.coords?.x ?? 0}%`, top: `${item?.coords?.y ?? 0}%` }}
+            style={{ left: `${artwork?.coords?.x ?? 0}%`, top: `${artwork?.coords?.y ?? 0}%` }}
             onClick={() => onSelectStep?.(i)}
-            title={item?.title}
+            title={artwork?.title}
           >
             {i + 1}
           </button>
@@ -135,12 +135,12 @@ function MapAbstract({ rooms, steps, currentIndex, pointsOfInterest, onSelectSte
       ))}
 
       {steps.map(({ step, i }) => {
-        const item = step.item;
+        const artwork = step.artwork;
         const isCurrent = i === currentIndex;
         return (
           <g
-            key={item?._id ?? i}
-            transform={`translate(${item?.coords?.x ?? 0}, ${item?.coords?.y ?? 0})`}
+            key={artwork?._id ?? i}
+            transform={`translate(${artwork?.coords?.x ?? 0}, ${artwork?.coords?.y ?? 0})`}
             className={isCurrent ? 'map-step map-step-current' : 'map-step'}
             onClick={() => onSelectStep?.(i)}
           >

@@ -1,6 +1,5 @@
 import Visit from "../models/visit.js";
 import User from "../models/user.js";
-import Item from "../models/item.js";
 import Artwork from "../models/artwork.js";
 import { getLicensedArtworkIds } from "../utils/marketplaceAccess.js";
 
@@ -15,17 +14,15 @@ import { getLicensedArtworkIds } from "../utils/marketplaceAccess.js";
 async function validateStepsAccessibility(steps, userId) {
     if (!steps || steps.length === 0) return null;
 
-    const itemIds = steps.map(s => s.item);
-    const items = await Item.find({ _id: { $in: itemIds } }, 'artwork');
-    const artworkIds = [...new Set(items.map(i => i.artwork.toString()))];
+    const artworkIds = steps.map(s => s.artwork);
 
     const artworks = await Artwork.find({ _id: { $in: artworkIds } }, 'isPublic adoptionPrice owner');
     const artworkById = new Map(artworks.map(a => [a._id.toString(), a]));
 
     const licensedIds = new Set(await getLicensedArtworkIds(userId));
 
-    for (const item of items) {
-        const artwork = artworkById.get(item.artwork.toString());
+    for (const step of steps) {
+        const artwork = artworkById.get(step.artwork.toString());
         if (!artwork) return "Uno degli step referenzia un'opera inesistente.";
 
         const accessible = artwork.isPublic && (
@@ -81,14 +78,11 @@ export async function getVisitById(req, res) {
             .populate('museum')
             .populate('author', 'username')
             .populate({
-                path: 'steps.item',
-                populate: {
-                    path: 'artwork',
-                    populate: [
-                        { path: 'author', select: 'name' },
-                        { path: 'style', select: 'name' }
-                    ]
-                }
+                path: 'steps.artwork',
+                populate: [
+                    { path: 'author', select: 'name' },
+                    { path: 'style', select: 'name' }
+                ]
             });
 
         if (!visit) {

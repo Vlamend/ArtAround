@@ -3,16 +3,16 @@ import { Schema, model } from 'mongoose';
 /* --------------------------------------------------
  Sotto-schema: singolo step della visita
 
-  Ogni passo collega un item (l'oggetto da presentare)
+  Ogni passo collega un artwork
   con l'indicazione logistica per raggiungerlo dal
   passo precedente ("proseguire a sinistra della scala
   verso la sala 12" ecc.). L'ordine nell'array 'steps' della
   visita determina la sequenza di visita.
 ----------------------------------------------------- */
 const visitStepSchema = new Schema({
-  item: {
+  artwork: {
     type: Schema.Types.ObjectId,
-    ref: 'Item',
+    ref: 'Artwork',
     required: true
   },
   // Indicazione logistica per raggiungere QUESTO step dal precedente.

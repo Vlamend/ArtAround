@@ -9,6 +9,7 @@ let mode; // 'create' | 'edit'
 let museumId;
 let visitId;
 let currentUser;
+let allArtworks = [];
 let allItems = [];            // content GIÀ usabili (propri, licenziati, o gratuiti) — getItems li filtra già così lato server
 let purchasableArtworks = []; // opere pubbliche non ancora adottate né acquisite
 let steps = [];     // { itemId, title, language, type, logisticNote }
@@ -52,7 +53,7 @@ async function main() {
     await setupCreateMode();
   }
 
-  await Promise.all([loadItems(), loadPurchasableArtworks()]);
+  await Promise.all([loadArtworks(), loadPurchasableArtworks()]);
   renderResults();
   renderPurchasable();
   renderSteps();
@@ -118,6 +119,23 @@ async function loadExistingVisit() {
   }
 }
 
+async function loadArtworks() {
+  try{
+    const [publicArtworks, ownArtworks] = await Promise.all([
+      getArtworks({ museum: museumId }),
+      getArtworks({ museum: museumId, mine: 'true' })
+    ]);
+
+    const byId = new Map();
+    for (const artwork of [...publicArtworks, ...ownArtworks]) {
+      byId.set(artwork._id, artwork);
+    }
+    allArtworks = [...byId.values()];
+  }catch {
+    allArtworks = [];
+  }
+}
+
 async function loadItems() {
   try {
     // Contenuti pubblici del museo + le proprie bozze non ancora
@@ -140,10 +158,11 @@ async function loadItems() {
 }
 
 function renderResults() {
+  console.log('Rendering artwork result:', allArtworks);
   const query = searchInput.value.trim().toLowerCase();
 
-  const filtered = allItems.filter(item => {
-    const title = item.artwork?.title ?? '';
+  const filtered = allArtworks.filter(artwork => {
+    const title = artwork.title ?? '';
     return !query || title.toLowerCase().includes(query);
   });
 
@@ -157,34 +176,25 @@ function renderResults() {
     return;
   }
 
-  for (const item of filtered.slice(0, 20)) { // limite per non appesantire la lista
-    resultsEl.appendChild(renderItemResult(item));
+  for (const artwork of filtered.slice(0, 20)) { // limite per non appesantire la lista
+    resultsEl.appendChild(renderArtworkResult(artwork));
   }
 }
 
-function renderItemResult(item) {
+function renderArtworkResult(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
 
-  const artwork = item.artwork ?? {};
   const title = artwork.title ?? '(opera non trovata)';
   const info = document.createElement('div');
   info.innerHTML = `
     <strong>${title}</strong><br>
-    <span class="status-message">${item.language}</span>
   `;
-
-  // Nessun controllo di accesso qui: getItems() restituisce SOLO
-  // content già usabili (propri, licenziati, o gratuiti) — il server
-  // ha già fatto il filtro, coerente con l'unico criterio di
-  // accessibilità condiviso da Navigator e marketplace.
   const actionBtn = document.createElement('button');
   actionBtn.textContent = '+ Aggiungi';
   actionBtn.addEventListener('click', () => {
     steps.push({
-      itemId: item._id,
       title,
-      language: item.language,
       logisticNote: ''
     });
     renderSteps();
@@ -290,7 +300,7 @@ async function handleAcquire(artwork, button) {
 // invece di aggiornare a mano lo stato locale, più semplice e meno
 // soggetto a disallinearsi dal server.
 async function refreshAfterLicenseChange() {
-  await Promise.all([loadItems(), loadPurchasableArtworks()]);
+  await Promise.all([loadArtworks(), loadPurchasableArtworks()]);
   renderResults();
   renderPurchasable();
 }

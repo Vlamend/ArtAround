@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  /* --- Palette Colori "Segnaletica da Galleria" --- */
+  --color-gallery: #F7F6F3;
+  --color-gallery-raised: #FFFFFF;
+  --color-ink: #1B1B1F;
+  --color-ink-soft: #55555C;
+  --color-cordone: #8C1C13;       /* Rosso ossido cordone di sala */
+  --color-cordone-soft: #F1DEDB;
+  --color-brass: #B08D57;         /* Ottone targhette */
+  --color-brass-soft: #EFE6D6;
+  --color-gallery-border: #DEDAD2;
+
+  /* --- Tipografia Museale --- */
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-body: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+
+  /* --- Arrotondamenti --- */
+  --radius-card: 18px;
+  --radius-btn: 12px;
+
+  /* --- Ombre --- */
+  --shadow-gallery-card: 0 8px 24px rgba(27, 27, 31, 0.08);
+}
+
+/* --- Stili Base (Reset e Scalabilità) --- */
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-gallery);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Focus accessibile e sofisticato color ottone */
+  :focus-visible {
+    outline: 3px solid var(--color-brass);
+    outline-offset: 2px;
+  }
+}
+
+/* --- Utility di Layout Rigide (Sostituiscono le vecchie classi globali) --- */
+@layer utilities {
+  /* Layout contenitore "Mobile-First" per la visita fisica */
+  .screen-container {
+    min-height: 100%;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1.5rem 1rem 2.5rem 1rem;
+  }
+}

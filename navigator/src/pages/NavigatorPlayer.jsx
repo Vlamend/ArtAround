@@ -3,10 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { getVisitById, getMe, getItems, giveFeedback, completeVisit } from '../api.js';
 import { useVoiceCommands } from '../useVoiceCommands.js';
 import { matchVoiceCommand } from '../voiceCommands.js';
-import { DOMAIN_LABELS, LANGUAGE_ORDER, buildTopicQueue, buildFrames, firstFrameIndexForDomain, pickText } from '../topics.js';
+import { DOMAIN_LABELS, LANGUAGE_ORDER, buildTopicQueue, buildFrames, firstFrameIndexForDomain, pickText, pickBaseItem } from '../topics.js';
 import MuseumMap from '../components/MuseumMap.jsx';
 import './NavigatorPlayer.css';
-
 
 export default function NavigatorPlayer() {
   const { visitId } = useParams();
@@ -18,26 +17,24 @@ export default function NavigatorPlayer() {
   const [lastHeard, setLastHeard] = useState(null);
 
   const [user, setUser] = useState(null);
-  const [displayedItem, setDisplayedItem] = useState(null);
+  // Tutti i Content dell'artwork corrente, scaricati in UNA sola
+  // richiesta per tappa (non più una per lingua): da qui si sceglie
+  // sia il testo di base sia i topic, senza ulteriori round-trip di
+  // rete quando cambia solo la lingua richiesta.
+  const [artworkItems, setArtworkItems] = useState([]);
   const [feedbackGiven, setFeedbackGiven] = useState(null);
   const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
+  const [itemLoading, setItemLoading] = useState(false);
 
-  // Livello linguistico "voluto per questa tappa": parte dal profilo
-  // (o dalla lingua scelta dal curatore, se l'utente non ha un
-  // profilo), ma "non capisco"/"troppo semplice" possono spostarlo
-  // per la tappa corrente senza toccare il profilo permanente
-  // dell'utente. null = "usa il default", si azzera ad ogni nuova
-  // tappa così il default del profilo torna a valere sulla prossima
-  // opera anche se qui lo si era scostato.
+  // Livello linguistico voluto per questa tappa
   const [languageOverride, setLanguageOverride] = useState(null);
 
-  // Coda dei topic (artista/stile/storia/materiali/architettura,
-  // ordinati per interesse dell'utente) per l'opera corrente, e
-  // sequenza piatta di frame da attraversare con "dimmi di più/meno".
+  // Coda dei topic per l'opera corrente e sequenza di frame
   const [topicQueue, setTopicQueue] = useState([]);
   const [frameIndex, setFrameIndex] = useState(0);
   const [topicsLoading, setTopicsLoading] = useState(false);
 
+  // Caricamento iniziale della visita
   useEffect(() => {
     getVisitById(visitId)
       .then(data => {
@@ -47,66 +44,72 @@ export default function NavigatorPlayer() {
       .catch(() => setStatus('error'));
   }, [visitId]);
 
+  // Caricamento del profilo utente per la personalizzazione. Se non
+  // c'è un utente autenticato, il livello linguistico target ricade
+  // su 'medio' (vedi targetLanguage sotto) — la visita non ha più un
+  // livello proprio, si adatta sempre a chi la esegue.
   useEffect(() => {
     getMe()
       .then(data => setUser(data.user))
-      .catch(() => setUser(null)); // se fallisce, semplicemente niente personalizzazione
+      .catch(() => setUser(null));
   }, []);
 
   const currentStep = visit?.steps?.[stepIndex];
-  const currentItem = currentStep?.item;
+  const currentArtwork = currentStep?.artwork;
 
-  // Nuova tappa: si riparte dal default di profilo, un eventuale
-  // scostamento manuale fatto sulla tappa precedente non si porta dietro.
+  // Reset degli stati di feedback e scostamento lingua al cambio tappa
   useEffect(() => {
     setFeedbackGiven(null);
     setLanguageOverride(null);
-  }, [currentItem]);
+  }, [stepIndex]);
 
-  const targetLanguage = languageOverride ?? user?.preferredLanguageLevel ?? currentItem?.language ?? null;
+  const targetLanguage = languageOverride ?? user?.preferredLanguageLevel ?? 'medio';
 
-  // Adattamento al livello linguistico: se esiste, per la stessa opera
-  // (stesso artwork._id), una variante nella lingua target (profilo,
-  // oppure lo scostamento manuale corrente), la si mostra al posto di
-  // quella scelta dal curatore.
+  // Un'unica richiesta di rete per tappa: tutti i Content dell'artwork
+  // corrente, senza filtro di lingua. Da qui in poi la scelta di quale
+  // testo mostrare (pickBaseItem, sotto) è puramente sincrona — cambiare
+  // lingua con "non capisco"/"troppo semplice" non richiede più
+  // ricaricare nulla dalla rete.
   useEffect(() => {
-    if (!currentItem) {
-      setDisplayedItem(null);
+    if (!currentArtwork?._id) {
+      setArtworkItems([]);
       return;
     }
 
-    const artworkId = currentItem.artwork?._id;
-    if (!targetLanguage || !artworkId || currentItem.language === targetLanguage) {
-      setDisplayedItem(currentItem);
-      return;
-    }
-
-    // Adattamento al profilo linguistico: getItems filtra già lato
-    // server le varianti accessibili (gratuite o possedute) — non
-    // c'è più bisogno di controllare qui prezzo/proprietario, perché
-    // license/isPublic/price/owner vivono sull'Artwork condiviso da
-    // tutte le sue varianti linguistiche: non può più capitare che
-    // una variante nella lingua richiesta sia "a pagamento e non
-    // pagata" mentre quella originale dello step non lo è.
     let cancelled = false;
-    getItems({ artwork: artworkId, language: targetLanguage })
-      .then(variants => {
-        if (cancelled) return;
-        setDisplayedItem(variants[0] ?? currentItem);
+    setItemLoading(true);
+
+    getItems({ artwork: currentArtwork._id })
+      .then(items => {
+        if (!cancelled) setArtworkItems(items ?? []);
       })
-      .catch(() => {
-        if (!cancelled) setDisplayedItem(currentItem);
+      .catch(err => {
+        console.error("❌ Errore nel caricamento dei content dell'opera:", err);
+        if (!cancelled) setArtworkItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setItemLoading(false);
       });
 
     return () => { cancelled = true; };
-  }, [currentItem, targetLanguage]);
+  }, [currentArtwork?._id]);
 
-  // Ricostruisce la coda dei topic ogni volta che si cambia opera (o
-  // arrivano/cambiano i pesi di interesse dell'utente), e riparte
-  // sempre dal testo generale (frame 0).
+  // Scelta sincrona del testo di base tra i Content già scaricati:
+  // preferisce quelli senza domini taggati (un content taggato
+  // 'materiali'/'storia'/ecc. è un approfondimento per il "dimmi di
+  // più" a topic, non il testo principale) e la lingua più vicina a
+  // quella target — vedi topics.js per il dettaglio del criterio.
+  const displayedItem = useMemo(
+    () => pickBaseItem(artworkItems, targetLanguage),
+    [artworkItems, targetLanguage]
+  );
+
+  // Ricostruisce la coda dei topic sugli stessi Content già scaricati
+  // per questa tappa — nessuna richiesta di rete propria per i topic
+  // "artista"/"stile" a parte, che restano fetch dedicate (Author/Style
+  // non sono Content, vivono in collezioni separate).
   useEffect(() => {
-    const artwork = displayedItem?.artwork;
-    if (!artwork) {
+    if (!currentArtwork?._id) {
       setTopicQueue([]);
       setFrameIndex(0);
       return;
@@ -114,9 +117,9 @@ export default function NavigatorPlayer() {
 
     let cancelled = false;
     setTopicsLoading(true);
-    buildTopicQueue(artwork, user?.interestWeights ?? {}, {
+    buildTopicQueue(currentArtwork, user?.interestWeights ?? {}, artworkItems, {
       excludeItemId: displayedItem?._id,
-      preferredLanguage: targetLanguage ?? displayedItem?.language
+      preferredLanguage: targetLanguage
     })
       .then(queue => {
         if (cancelled) return;
@@ -126,7 +129,7 @@ export default function NavigatorPlayer() {
       .finally(() => { if (!cancelled) setTopicsLoading(false); });
 
     return () => { cancelled = true; };
-  }, [displayedItem?.artwork?._id, user?.interestWeights]);
+  }, [currentArtwork?._id, artworkItems, user?.interestWeights, displayedItem?._id, targetLanguage]);
 
   const frames = useMemo(
     () => buildFrames(visit?.pace ?? '15s', topicQueue),
@@ -150,20 +153,41 @@ export default function NavigatorPlayer() {
     window.speechSynthesis.speak(utterance);
   }, []);
 
+  // Sincronizzazione vocale: evita letture spurie o anticipate durante i caricamenti di rete
   useEffect(() => {
+    if (itemLoading || topicsLoading) return;
     if (currentText) speak(currentText.content);
     return () => window.speechSynthesis?.cancel();
-  }, [currentText, speak]);
+  }, [currentText, speak, itemLoading, topicsLoading]);
 
-  // Segna la visita come completata al raggiungimento dell'ultimo step
-  // (adattamento "è la prima volta o sono già venuto?").
+  // Registrazione del completamento della visita museale
   useEffect(() => {
     if (!visit || hasMarkedComplete) return;
     if (stepIndex === visit.steps.length - 1) {
-      completeVisit(visitId).catch(() => {}); // non bloccante: se fallisce, non impedisce la visita
+      completeVisit(visitId).catch(() => {});
       setHasMarkedComplete(true);
     }
   }, [stepIndex, visit, visitId, hasMarkedComplete]);
+
+  // 🔍 LOG DI DEBUG IN CONSOLE PER IL TESTING
+  useEffect(() => {
+    if (itemLoading) {
+      console.log(`⏳ [DEBUG] Caricamento dei content per l'opera: "${currentArtwork?.title}"`);
+      return;
+    }
+    console.group("🎨 [DEBUG] Cambio di Stato / Tappa Museale");
+    console.log("📌 Titolo Opera  :", currentArtwork?.title);
+    console.log("🆔 ID Artwork    :", currentArtwork?._id);
+    console.log("🌐 Lingua Target :", targetLanguage);
+    console.log("📄 Item Mostrato :", displayedItem ? {
+      id: displayedItem._id,
+      language: displayedItem.language,
+      hasTexts: !!displayedItem.texts
+    } : "❌ NESSUNO (In attesa o errore)");
+    console.log("💬 Frame Corrente:", currentFrame ? { tipo: currentFrame.type, tier: currentFrame.tier, index: frameIndex } : "Nessuno");
+    console.log("📝 Anteprima Testo:", currentText ? `"${currentText.content.substring(0, 50)}..."` : "Nessun testo");
+    console.groupEnd();
+  }, [displayedItem, currentText, itemLoading, currentArtwork, targetLanguage, currentFrame, frameIndex]);
 
   function goNext() {
     if (!visit) return;
@@ -174,25 +198,14 @@ export default function NavigatorPlayer() {
     setStepIndex(i => Math.max(i - 1, 0));
   }
 
-  // "Dimmi di più": avanza di un frame nella sequenza base -> topic
-  // preferito (a un tier proporzionale all'interesse) -> via via più
-  // lungo -> topic successivo per interesse, e così via. I topic a
-  // interesse negativo restano in coda, non vengono esclusi.
   function tellMore() {
     setFrameIndex(i => Math.min(i + 1, frames.length - 1));
   }
 
-  // "Dimmi di meno": stesso percorso a ritroso.
   function tellLess() {
     setFrameIndex(i => Math.max(i - 1, 0));
   }
 
-  // "Non capisco" / "Troppo semplice": asse diverso da dimmi di
-  // più/meno, agiscono sul LIVELLO LINGUISTICO invece che sulla
-  // lunghezza. Solo sul testo generale (frame 'base'): le bio di
-  // Author/Style non hanno varianti di lingua, e i topic sui domini
-  // extra restano fuori scope per ora — si applica dove il curatore
-  // ha effettivamente scelto una lingua, cioè sul testo dell'opera.
   function makeSimpler() {
     const idx = LANGUAGE_ORDER.indexOf(targetLanguage);
     if (idx > 0) setLanguageOverride(LANGUAGE_ORDER[idx - 1]);
@@ -208,9 +221,6 @@ export default function NavigatorPlayer() {
     setShowMap(false);
   }
 
-  // Shortcut "Chi è l'autore" / "Qual è lo stile": saltano direttamente
-  // all'inizio di quel topic nella sequenza di frame, scavalcando
-  // l'ordine per interesse ma restando sulla stessa scala di tier.
   function jumpToDomain(domain) {
     const idx = firstFrameIndexForDomain(frames, topicQueue, domain);
     if (idx !== -1) setFrameIndex(idx);
@@ -218,11 +228,11 @@ export default function NavigatorPlayer() {
 
   async function handleFeedback(direction) {
     if (!displayedItem?._id) return;
-    setFeedbackGiven(direction); // ottimistico: aggiorna subito l'interfaccia
+    setFeedbackGiven(direction);
     try {
       await giveFeedback(displayedItem._id, direction);
     } catch {
-      setFeedbackGiven(null); // rollback se la richiesta fallisce
+      setFeedbackGiven(null);
     }
   }
 
@@ -255,9 +265,7 @@ export default function NavigatorPlayer() {
   if (status === 'error') return <div className="screen"><p className="error-message">Non riesco a caricare la visita.</p></div>;
   if (!visit?.steps?.length) return <div className="screen"><p className="status-message">Questa visita non ha ancora contenuti.</p></div>;
 
-  const artwork = displayedItem?.artwork;
-  const roomName = visit.museum?.rooms?.find(r => r._id === artwork?.roomId)?.name;
-  const wasSwapped = displayedItem && currentItem && displayedItem._id !== currentItem._id;
+  const roomName = visit.museum?.rooms?.find(r => r._id === currentArtwork?.roomId)?.name;
   const hasAuthorTopic = topicQueue.some(t => t.domain === 'artista');
   const hasStyleTopic = topicQueue.some(t => t.domain === 'stile');
 
@@ -271,15 +279,23 @@ export default function NavigatorPlayer() {
       </div>
 
       <div className="item-card">
-        <h1>{artwork?.title}</h1>
-        {artwork?.year && <p className="item-meta">{artwork.year}{artwork.technique ? ` · ${artwork.technique}` : ''}</p>}
-        {wasSwapped && (
-          <p className="swap-note">Livello linguistico: {displayedItem.language}{languageOverride ? ' (regolato manualmente)' : ' (dal tuo profilo)'}.</p>
+        {/* Visualizzazione immediata e stabile dell'artwork dello step corrente */}
+        <h1>{currentArtwork?.title}</h1>
+        {currentArtwork?.year && <p className="item-meta">{currentArtwork.year}{currentArtwork.technique ? ` ${currentArtwork.technique}` : ''}</p>}
+        
+        {itemLoading ? (
+          <p className="item-text status-message">Adattamento testo in corso…</p>
+        ) : (
+          <>
+            {displayedItem && (
+              <p className="swap-note">Livello linguistico: {displayedItem.language}{languageOverride ? ' (regolato manualmente)' : ' (dal tuo profilo)'}.</p>
+            )}
+            {currentTopic && (
+              <p className="topic-note">{DOMAIN_LABELS[currentTopic.domain] ?? currentTopic.title} — {currentTopic.title}</p>
+            )}
+            <p className="item-text">{currentText?.content ?? 'Nessun testo disponibile per questo livello.'}</p>
+          </>
         )}
-        {currentTopic && (
-          <p className="topic-note">{DOMAIN_LABELS[currentTopic.domain] ?? currentTopic.title} — {currentTopic.title}</p>
-        )}
-        <p className="item-text">{currentText?.content ?? 'Nessun testo disponibile per questo livello.'}</p>
 
         <div className="feedback-row">
           <span className="status-message">Ti interessa questo contenuto?</span>
@@ -287,11 +303,13 @@ export default function NavigatorPlayer() {
             className={feedbackGiven === 'up' ? 'feedback-btn feedback-btn-active' : 'feedback-btn'}
             onClick={() => handleFeedback('up')}
             aria-label="Interessante"
+            disabled={itemLoading}
           >👍</button>
           <button
             className={feedbackGiven === 'down' ? 'feedback-btn feedback-btn-active' : 'feedback-btn'}
             onClick={() => handleFeedback('down')}
             aria-label="Non interessante"
+            disabled={itemLoading}
           >👎</button>
         </div>
       </div>
@@ -306,7 +324,7 @@ export default function NavigatorPlayer() {
             <button
               className={isListening ? 'mic-button mic-button-listening' : 'mic-button'}
               onClick={startListening}
-              disabled={isListening}
+              disabled={isListening || itemLoading}
             >
               {isListening ? 'In ascolto…' : '\u{1F3A4} Parla'}
             </button>
@@ -324,24 +342,24 @@ export default function NavigatorPlayer() {
           </div>
         )}
         <div className="controls-row">
-          <button onClick={goPrev} disabled={stepIndex === 0}>Precedente</button>
-          <button onClick={goNext} disabled={stepIndex === visit.steps.length - 1}>Prossimo</button>
+          <button onClick={goPrev} disabled={stepIndex === 0 || itemLoading}>Precedente</button>
+          <button onClick={goNext} disabled={stepIndex === visit.steps.length - 1 || itemLoading}>Prossimo</button>
         </div>
         <div className="controls-row">
-          <button onClick={tellLess} disabled={frameIndex === 0}>Dimmi di meno</button>
-          <button onClick={tellMore} disabled={frameIndex >= frames.length - 1 || topicsLoading}>Dimmi di più</button>
+          <button onClick={tellLess} disabled={frameIndex === 0 || itemLoading}>Dimmi di meno</button>
+          <button onClick={tellMore} disabled={frameIndex >= frames.length - 1 || topicsLoading || itemLoading}>Dimmi di più</button>
         </div>
         <div className="controls-row">
-          <button onClick={makeSimpler} disabled={currentFrame?.type !== 'base' || LANGUAGE_ORDER.indexOf(targetLanguage) <= 0}>Non capisco</button>
-          <button onClick={makeHarder} disabled={currentFrame?.type !== 'base' || LANGUAGE_ORDER.indexOf(targetLanguage) >= LANGUAGE_ORDER.length - 1}>Troppo semplice</button>
+          <button onClick={makeSimpler} disabled={currentFrame?.type !== 'base' || LANGUAGE_ORDER.indexOf(targetLanguage) <= 0 || itemLoading}>Non capisco</button>
+          <button onClick={makeHarder} disabled={currentFrame?.type !== 'base' || LANGUAGE_ORDER.indexOf(targetLanguage) >= LANGUAGE_ORDER.length - 1 || itemLoading}>Troppo semplice</button>
         </div>
         <div className="controls-row">
-          <button onClick={() => speak(currentText?.content)}>Ripeti</button>
+          <button onClick={() => speak(currentText?.content)} disabled={itemLoading}>Ripeti</button>
           <button onClick={() => setShowPoi(v => !v)}>Dove...?</button>
         </div>
         <div className="controls-row">
-          <button onClick={() => jumpToDomain('artista')} disabled={!hasAuthorTopic}>Chi è l'autore</button>
-          <button onClick={() => jumpToDomain('stile')} disabled={!hasStyleTopic}>Qual è lo stile</button>
+          <button onClick={() => jumpToDomain('artista')} disabled={!hasAuthorTopic || itemLoading}>Chi è l'autore</button>
+          <button onClick={() => jumpToDomain('stile')} disabled={!hasStyleTopic || itemLoading}>Qual è lo stile</button>
         </div>
         <div className="controls-row">
           <button onClick={() => setShowMap(v => !v)}>Mappa</button>

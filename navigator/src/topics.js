@@ -1,4 +1,4 @@
-import { getAuthorById, getStyleById, getItems } from './api.js';
+import { getAuthorById, getStyleById } from './api.js';
 
 // Stessi 5 tier di durata usati in tutto lo schema (textEntry).
 export const DURATION_ORDER = ['3s', '15s', '40s', '1min', '4min'];
@@ -50,6 +50,42 @@ export function pickText(texts, tierIndex) {
   return null;
 }
 
+// Sceglie, tra un elenco di Content, quello più vicino alla lingua
+// target: lingua esatta, poi la più vicina nell'ordine di complessità
+// (mai a caso il "primo che càpita") — stesso principio di pickText,
+// applicato all'asse linguistico invece che a quello della durata.
+function pickNearestLanguage(items, targetLanguage) {
+  if (!items || items.length === 0) return null;
+  const byLanguage = new Map(items.map(i => [LANGUAGE_ORDER.indexOf(i.language), i]));
+  const targetIdx = LANGUAGE_ORDER.indexOf(targetLanguage);
+  const start = targetIdx === -1 ? 0 : targetIdx;
+
+  for (let l = start; l >= 0; l--) {
+    if (byLanguage.has(l)) return byLanguage.get(l);
+  }
+  for (let l = start + 1; l < LANGUAGE_ORDER.length; l++) {
+    if (byLanguage.has(l)) return byLanguage.get(l);
+  }
+  return null;
+}
+
+// Sceglie il Content "narrazione di base" di un'opera tra TUTTI i suoi
+// Content già scaricati in un'unica richiesta per artwork: preferisce
+// quelli SENZA domini taggati (un content taggato 'materiali'/'storia'/
+// ecc. è pensato come approfondimento per il "dimmi di più" a topic,
+// non come testo principale della tappa) — se non ce n'è nessuno così,
+// ripiega su tutti i content disponibili piuttosto che non mostrare
+// nulla.
+// NB: euristica lato client, non un flag esplicito nello schema — se
+// in backend esiste già un modo per distinguere base/approfondimento,
+// questa funzione va sostituita con quello.
+export function pickBaseItem(items, targetLanguage) {
+  if (!items || items.length === 0) return null;
+  const generalItems = items.filter(i => !i.domains || i.domains.length === 0);
+  const pool = generalItems.length > 0 ? generalItems : items;
+  return pickNearestLanguage(pool, targetLanguage);
+}
+
 // Costruisce la coda dei topic per l'artwork corrente, ordinata per
 // interestWeights decrescente (i pesi negativi restano in coda, non
 // vengono esclusi). Ogni voce include solo i tier per cui esiste
@@ -57,9 +93,11 @@ export function pickText(texts, tierIndex) {
 // "dimmi di più" non produce mai una pressione a vuoto.
 //
 // artista -> Author.bio, stile -> Style.description, gli altri tre
-// domini -> Content taggato su questo artwork (gratuito, non un
-// acquisto separato: vedi la scelta di rimuovere il tipo 'related').
-export async function buildTopicQueue(artwork, interestWeights = {}, options = {}) {
+// domini -> Content taggato su questo artwork, filtrato dagli 'items'
+// già scaricati per l'intera opera in un'unica richiesta (la stessa
+// usata per scegliere il testo di base, vedi pickBaseItem) — niente
+// più una seconda fetch di rete solo per i topic.
+export async function buildTopicQueue(artwork, interestWeights = {}, items = [], options = {}) {
   if (!artwork) return [];
   const { excludeItemId = null, preferredLanguage = null } = options;
 
@@ -71,22 +109,18 @@ export async function buildTopicQueue(artwork, interestWeights = {}, options = {
     .map(o => o.domain)
     .filter(d => d !== 'artista' && d !== 'stile');
 
-  let extraContents = [];
-  if (extraDomains.length > 0) {
-    try {
-      extraContents = await getItems({ artwork: artwork._id, domains: extraDomains.join(',') });
-    } catch {
-      extraContents = [];
-    }
-    // Il testo base (quello già in lettura come step corrente) non è
-    // un "approfondimento": va escluso, altrimenti "dimmi di più" può
-    // ripresentare esattamente lo stesso content appena letto, solo
-    // sotto etichetta diversa. Tra i candidati rimasti, se ce n'è più
-    // di uno per lo stesso dominio, si preferisce quello nella lingua
-    // dell'utente — altrimenti si salterebbe di registro linguistico
-    // in modo silenzioso rispetto al testo base appena mostrato.
-    extraContents = extraContents.filter(c => c._id !== excludeItemId);
-  }
+  // Stesso identico filtro che prima faceva il backend con
+  // ?domains=..., ora applicato lato client sugli item già in mano.
+  // Il testo base (quello scelto come step corrente) non è un
+  // "approfondimento": va escluso, altrimenti "dimmi di più" può
+  // ripresentare esattamente lo stesso content appena letto, solo
+  // sotto etichetta diversa. Tra i candidati rimasti, se ce n'è più
+  // di uno per lo stesso dominio, si preferisce quello nella lingua
+  // dell'utente — altrimenti si salterebbe di registro linguistico
+  // in modo silenzioso rispetto al testo base appena mostrato.
+  const extraContents = items
+    .filter(c => c.domains?.some(d => extraDomains.includes(d)))
+    .filter(c => c._id !== excludeItemId);
 
   function pickContentForDomain(domain) {
     const candidates = extraContents.filter(c => c.domains?.includes(domain));

@@ -245,6 +245,7 @@ async function seed() {
     }
 
     const itemsByArtwork = [];
+    const artworks = [];
 
     for (let i = 0; i < artworksData.length; i++) {
         const a = artworksData[i];
@@ -299,29 +300,29 @@ async function seed() {
         });
 
         itemsByArtwork.push({ artwork, elementare: elementareItem, medio: medioItem });
+        artworks.push(artwork);
     }
     console.log(`${artworksData.length} artwork create, con Content elementare + medio ciascuna.`);
     console.log("Licenza/proprietà ora vivono su Artwork (non più per singola lingua): comprare un'opera dà accesso a tutte le sue varianti in una volta.");
 
     // ---------- Visite (3 visite, almeno 10 opere ciascuna, sullo stesso museo) ----------
 
-    function buildSteps(items) {
-        return items.map((item, idx) => ({
-            item: item._id,
+    function buildStepsByArtwork(artworks) {
+        return artworks.map((artwork, idx) => ({
+            artwork: artwork._id,
             logisticNote: idx === 0
                 ? "Dall'ingresso, proseguire dritto verso la prima sala."
                 : "Proseguire nella sala successiva seguendo le indicazioni a pavimento."
         }));
     }
-
     const visitClassica = new Visit({
         title: "Percorso classico",
         description: "Un percorso standard attraverso le opere principali della Pinacoteca, con testi di livello medio.",
         museum: museum._id,
         entranceInfo: "Ingresso da via delle Belle Arti 56. Biglietto 6€, guardaroba gratuito.",
         pace: "40s",
-        steps: buildSteps(itemsByArtwork.map(a => a.medio)),
-        author: users.autore1._id,
+        steps: buildStepsByArtwork(artworks),
+        author: users.admin1._id,
         license: "CC-BY",
         isPublic: true,
         price: 0,
@@ -335,8 +336,8 @@ async function seed() {
         museum: museum._id,
         entranceInfo: "Ingresso da via delle Belle Arti 56. Biglietto 6€, ridotto 2€ per bambini.",
         pace: "15s",
-        steps: buildSteps(itemsByArtwork.map(a => a.elementare)),
-        author: users.autore2._id,
+        steps: buildStepsByArtwork(artworks),
+        author: users.admin1._id,
         license: "CC-BY",
         isPublic: true,
         price: 0,
@@ -350,8 +351,8 @@ async function seed() {
         museum: museum._id,
         entranceInfo: "Ingresso da via delle Belle Arti 56. Biglietto 6€, guardaroba gratuito.",
         pace: "1min",
-        steps: buildSteps(itemsByArtwork.map(a => a.medio)),
-        author: users.autore1._id,
+        steps: buildStepsByArtwork(artworks),
+        author: users.admin1._id,
         license: "CC-BY",
         isPublic: true,
         price: 2,
