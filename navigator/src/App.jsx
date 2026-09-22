@@ -5,7 +5,7 @@ import VisitList from './pages/VisitList.jsx';
 import NavigatorPlayer from './pages/NavigatorPlayer.jsx';
 import Settings from './pages/Settings.jsx';
 import { getToken, getMe, clearToken, getConfig, getMuseumBySlug } from './api.js';
-import { clearMuseumTheme, applyMuseumTheme} from './theme.js';
+import { clearMuseumTheme, applyMuseumTheme, initDarkMode} from './theme.js';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,12 +33,12 @@ export default function App() {
         setLoading(false);
       }
     }
+    initDarkMode();
     checkLogin();
   }, []);
 
   useEffect(() => {
       if (!isLoggedIn) return;
-
       setMuseumStatus('loading');
       getConfig()
         .then(config => getMuseumBySlug(config.museumSlug))

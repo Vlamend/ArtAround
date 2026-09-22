@@ -55,14 +55,15 @@ export default function Login({ onLogin }) {
                      </div>
                      
                      {error && 
-                     <div className="flex items-center justify-center flex-wrap gap-2 bg-rose-500/10 border-rose-500 border-1 text-rose-700 text-sm rounded-md p-2">
+                     <div className="flex items-center justify-center flex-wrap gap-2 bg-rose-500/10 border-rose-500 border text-rose-700 text-sm rounded-md p-2">
                       <p className="error-message">{error}</p>
                      </div>}
                      <button type="submit"
                         className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-indigo-600 bg-indigo-600 hover:bg-indigo-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         Accedi</button>
 
-                     <div className="text-slate-900 text-sm text-center dark:text-slate-50">Non hai un account? <a href="#"
+                     <div className="text-slate-900 text-sm text-center dark:text-slate-50">Non hai un account? 
+                        <a href="#"
                         className="text-indigo-700 hover:underline ml-1 font-medium dark:text-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">Sign
                         up</a>
                      </div>

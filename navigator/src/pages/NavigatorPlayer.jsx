@@ -269,13 +269,13 @@ export default function NavigatorPlayer() {
   const hasStyleTopic = topicQueue.some(t => t.domain === 'stile');
   return (
     <div className="min-h-screen bg-white text-slate-900 dark:bg-neutral-900 dark:text-white px-4 py-6 md:px-8">
-      <Link to="/visits" className="inline-flex items-center mb-6 text-sm font-medium text-slate-700 hover:text-violet-700 dark:text-slate-300 dark:hover:text-violet-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded">&larr; Cambia visita</Link>
+      <Link to="/visits" className="inline-flex items-center mb-6 text-sm font-medium text-slate-700 hover:text-primary dark:text-slate-300 dark:hover:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">&larr; Cambia visita</Link>
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-800">
         <span className="text-sm font-semibold text-slate-900 dark:text-white">Tappa {stepIndex + 1} di {visit.steps.length}</span>
         {roomName && <span className="text-sm text-slate-500 dark:text-slate-400">{roomName}</span>}
       </div>
       <div className="mx-auto w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 md:p-7">
-        {/* Visualizzazione immediata e stabile dell'artwork dello step corrente */}
+
         <h1>{currentArtwork?.title}</h1>
         {currentArtwork?.year && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{currentArtwork.year}{currentArtwork.technique ? ` ${currentArtwork.technique}` : ''}</p>}
         {itemLoading ? (
@@ -286,7 +286,7 @@ export default function NavigatorPlayer() {
               <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Livello linguistico: {displayedItem.language}{languageOverride ? ' (regolato manualmente)' : ' (dal tuo profilo)'}.</p>
             )}
             {currentTopic && (
-              <p className="mt-2 text-sm font-medium text-violet-700 dark:text-violet-400">{DOMAIN_LABELS[currentTopic.domain] ?? currentTopic.title} — {currentTopic.title}</p>
+              <p className="mt-2 text-sm font-medium text-primary dark:text-secondary">{DOMAIN_LABELS[currentTopic.domain] ?? currentTopic.title} — {currentTopic.title}</p>
             )}
             <p className="mt-4 text-base leading-7 text-slate-800 dark:text-slate-200">{currentText?.content ?? 'Nessun testo disponibile per questo livello.'}</p>
           </>
@@ -294,13 +294,13 @@ export default function NavigatorPlayer() {
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4 dark:border-neutral-700">
           <span className="text-sm text-slate-500 dark:text-slate-400">Ti interessa questo contenuto?</span>
           <button
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'up' ? 'ring-2 ring-violet-500 bg-violet-50 dark:bg-violet-950' : ''}`}
+            className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'up' ? 'ring-2 ring-primary bg-violet-50 dark:bg-violet-950' : ''}`}
             onClick={() => handleFeedback('up')}
             aria-label="Interessante"
             disabled={itemLoading}
           >👍</button>
           <button
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'down' ? 'ring-2 ring-violet-500 bg-violet-50 dark:bg-violet-950' : ''}`}
+            className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'down' ? 'ring-2 ring-primary bg-violet-50 dark:bg-violet-950' : ''}`}
             onClick={() => handleFeedback('down')}
             aria-label="Non interessante"
             disabled={itemLoading}
@@ -314,7 +314,7 @@ export default function NavigatorPlayer() {
         {voiceSupported && (
           <div className="flex flex-col gap-2 rounded-lg border items-center border-slate-200 bg-slate-50 p-3 dark:border-neutral-700 dark:bg-neutral-800">
             <button
-              className={`inline-flex w-fit items-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 ${isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-violet-700 hover:bg-violet-800 dark:bg-violet-600 dark:hover:bg-violet-700'}`}
+              className={`inline-flex w-fit items-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 ${isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary/70 dark:bg-secondary/70 dark:hover:bg-secondary cursor-pointer'}`}
               onClick={startListening}
               disabled={isListening || itemLoading}
             >
@@ -334,27 +334,27 @@ export default function NavigatorPlayer() {
           </div>
         )}
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={goPrev} disabled={stepIndex === 0 || itemLoading}>Precedente</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={goNext} disabled={stepIndex === visit.steps.length - 1 || itemLoading}>Prossimo</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={goPrev} disabled={stepIndex === 0 || itemLoading}>Precedente</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={goNext} disabled={stepIndex === visit.steps.length - 1 || itemLoading}>Prossimo</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={tellLess} disabled={frameIndex === 0 || itemLoading}>Dimmi di meno</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={tellMore} disabled={frameIndex >= frames.length - 1 || topicsLoading || itemLoading}>Dimmi di più</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={tellLess} disabled={frameIndex === 0 || itemLoading}>Dimmi di meno</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={tellMore} disabled={frameIndex >= frames.length - 1 || topicsLoading || itemLoading}>Dimmi di più</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={makeSimpler} disabled={currentFrame?.type !== 'base' || !canGoSimpler || itemLoading}>Non capisco</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={makeHarder} disabled={currentFrame?.type !== 'base' || !canGoHarder || itemLoading}>Troppo semplice</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={makeSimpler} disabled={currentFrame?.type !== 'base' || !canGoSimpler || itemLoading}>Non capisco</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={makeHarder} disabled={currentFrame?.type !== 'base' || !canGoHarder || itemLoading}>Troppo semplice</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => speak(currentText?.content)} disabled={itemLoading}>Ripeti</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => setShowPoi(v => !v)}>Dove...?</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => speak(currentText?.content)} disabled={itemLoading}>Ripeti</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => setShowPoi(v => !v)}>Dove...?</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => jumpToDomain('artista')} disabled={!hasAuthorTopic || itemLoading}>Chi è l'autore</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => jumpToDomain('stile')} disabled={!hasStyleTopic || itemLoading}>Qual è lo stile</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => jumpToDomain('artista')} disabled={!hasAuthorTopic || itemLoading}>Chi è l'autore</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => jumpToDomain('stile')} disabled={!hasStyleTopic || itemLoading}>Qual è lo stile</button>
         </div>
         <div className="grid grid-cols-1 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => setShowMap(v => !v)}>Mappa</button>
+          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700 cursor-pointer" onClick={() => setShowMap(v => !v)}>Mappa</button>
         </div>
       </div>
       {showPoi && (
@@ -375,6 +375,7 @@ export default function NavigatorPlayer() {
           pointsOfInterest={visit.museum?.pointsOfInterest}
           floorPlans={visit.museum?.floorPlans}
           onSelectStep={jumpToStep}
+          closeMap={setShowMap}
         />
       )}
     </div>

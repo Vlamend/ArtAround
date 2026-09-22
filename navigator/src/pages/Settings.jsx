@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getMe, updateMe } from '../api.js';
+import { toggleDarkMode } from '../theme.js';
 
 const DOMAIN_LABELS = {
   artista: "Storia dell'artista",
@@ -76,7 +77,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 dark:bg-neutral-900 dark:text-white">
+    <div className="min-h-screen bg-white text-slate-900 dark:bg-neutral-900 dark:text-white transition-colors duration-300">
 
       {/* NAVBAR */}
       <nav
@@ -92,7 +93,7 @@ export default function Settings() {
         "
         aria-label="Main navigation"
       >
-        <div className="mx-auto flex w-full max-w-7xl items-center">
+        <div className="mx-auto flex w-full max-w-7xl justify-between items-center">
           <Link
             to="/visits"
             className="
@@ -100,17 +101,61 @@ export default function Settings() {
               text-sm font-medium
               text-slate-700
               transition-colors
-              hover:text-violet-700
+              hover:text-primary
               focus:outline-none
               focus-visible:ring-2
-              focus-visible:ring-violet-500
+              focus-visible:ring-primary
               dark:text-slate-300
-              dark:hover:text-violet-400
+              dark:hover:text-secondary
             "
           >
             ← Torna alle visite
           </Link>
-        </div>
+        
+        <button
+  type="button"
+  onClick={toggleDarkMode}
+  aria-label="Cambia tema"
+  title="Cambia tema"
+  className="
+    relative
+    h-7 w-12
+    cursor-pointer
+    rounded-full
+    bg-slate-300
+    transition-colors
+    dark:bg-neutral-700
+    focus:outline-none
+    focus-visible:ring-2
+    focus-visible:ring-primary
+    dark:focus-visible:ring-secondary
+  "
+>
+  <span
+    className="
+      absolute left-1 top-1
+      flex h-5 w-5
+      items-center justify-center
+      rounded-full
+      bg-white
+      dark:bg-gray-800
+      text-xs
+      shadow-sm
+      transition-transform
+      
+      dark:translate-x-5
+    "
+    aria-hidden="true"
+  >
+    <span className="dark:hidden">
+      <svg className="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </span>
+    <span className="hidden dark:inline">
+      <svg className="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+    </span>
+  </span>
+</button>
+</div>
       </nav>
 
       {/* CONTENT */}
@@ -178,14 +223,14 @@ export default function Settings() {
                   shadow-sm
                   outline-none
                   transition
-                  focus:border-violet-500
+                  focus:border-primary
                   focus:ring-2
-                  focus:ring-violet-500/20
+                  focus:ring-primary/20
                   dark:border-neutral-600
                   dark:bg-neutral-800
                   dark:text-white
-                  dark:focus:border-violet-400
-                  dark:focus:ring-violet-400/20
+                  dark:focus:border-secondary
+                  dark:focus:ring-secondary/20
                 "
               >
                 {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
@@ -262,23 +307,27 @@ export default function Settings() {
                       appearance-none
                       rounded-lg
                       bg-slate-200
-                      accent-violet-600
+                      accent-primary
                       outline-none
                       focus-visible:ring-2
-                      focus-visible:ring-violet-500
+                      focus-visible:ring-primary
                       dark:bg-neutral-700
+                      dark:accent-secondary
+                      dark:focus-visible:ring-secondary
 
                       [&::-webkit-slider-thumb]:h-4
                       [&::-webkit-slider-thumb]:w-4
                       [&::-webkit-slider-thumb]:appearance-none
                       [&::-webkit-slider-thumb]:rounded-full
-                      [&::-webkit-slider-thumb]:bg-violet-700
+                      [&::-webkit-slider-thumb]:bg-primary
+                      [&::-webkit-slider-thumb]:dark:bg-secondary
 
                       [&::-moz-range-thumb]:h-4
                       [&::-moz-range-thumb]:w-4
                       [&::-moz-range-thumb]:rounded-full
                       [&::-moz-range-thumb]:border-0
-                      [&::-moz-range-thumb]:bg-violet-600
+                      [&::-moz-range-thumb]:bg-primary
+                      [&::-moz-range-thumb]:dark:bg-secondary
                     "
                   />
 
@@ -318,10 +367,10 @@ export default function Settings() {
                 border border-red-200
                 bg-red-50
                 px-4 py-3
-                text-sm text-red-700
-                dark:border-red-900
-                dark:bg-red-950/40
-                dark:text-red-400
+                text-sm text-primary
+                dark:border-secondary
+                dark:bg-secondary/40
+                dark:text-secondary
               "
               role="alert"
             >
@@ -336,22 +385,23 @@ export default function Settings() {
               disabled={saveStatus === 'saving'}
               className="
                 rounded-lg
-                bg-violet-700
+                bg-primary
                 px-5 py-2.5
                 text-sm font-semibold
                 text-white
                 shadow-sm
                 transition
-                hover:bg-violet-800
+                hover:bg-primary/90
                 focus:outline-none
                 focus-visible:ring-2
-                focus-visible:ring-violet-500
+                focus-visible:ring-primary
                 focus-visible:ring-offset-2
                 disabled:cursor-not-allowed
                 disabled:opacity-50
-                dark:bg-violet-600
-                dark:hover:bg-violet-700
+                dark:bg-secondary/55
+                dark:hover:bg-secondary/90
                 dark:focus-visible:ring-offset-neutral-900
+                cursor-pointer
               "
             >
               {saveStatus === 'saving'

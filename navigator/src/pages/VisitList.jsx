@@ -12,7 +12,6 @@ export default function VisitList({ museum, onLogout }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log(museum);
     if (!museum?._id) return;
 
     Promise.all([getVisits(museum._id), getMe()])
@@ -104,7 +103,7 @@ export default function VisitList({ museum, onLogout }) {
                   <li>
                      <Link
                         to="/settings"
-                        className="hover:text-violet-700 dark:hover:text-violet-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
+                        className="hover:text-primary dark:hover:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                         aria-current="page"
                      >
                         Impostazioni
@@ -113,7 +112,7 @@ export default function VisitList({ museum, onLogout }) {
                   <li>
                      <a
                         onClick={handleLogout}
-                        className="hover:cursor-pointer hover:text-violet-700 dark:hover:text-violet-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
+                        className="hover:cursor-pointer hover:text-primary dark:hover:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                      >
                         Esci
                      </a>
@@ -129,7 +128,7 @@ export default function VisitList({ museum, onLogout }) {
                   aria-haspopup="true"
                   id="toggleOpen"
                   onClick={openMenu}
-                  className="cursor-pointer lg:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded">
+                  className="cursor-pointer lg:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
                   <span className="sr-only">Open main menu</span>
                   <svg
                      className="size-7 fill-slate-900 dark:fill-slate-50"
@@ -160,7 +159,7 @@ export default function VisitList({ museum, onLogout }) {
          {visits.map(v => (
             <li key={v._id}>
                
-               <a onClick={() => navigate(`/visits/${v._id}`)} className="block p-4 border border-slate-300 dark:border-neutral-700 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500">
+               <a onClick={() => navigate(`/visits/${v._id}`)} className="block p-4 border cursor-pointer border-slate-300 dark:border-neutral-700 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <h5 className="mb-3 text-2xl font-semibold tracking-tight text-heading leading-8">{v.title}</h5>
                   {visitedIds.has(v._id) && <h6 >Già visitata</h6>}
                   {v.description && <p className="text-body">{v.description}</p>}
