@@ -14,12 +14,7 @@ export default function NavigatorPlayer() {
   const [showPoi, setShowPoi] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [lastHeard, setLastHeard] = useState(null);
-
   const [user, setUser] = useState(null);
-  // Tutti i Content dell'artwork corrente, scaricati in UNA sola
-  // richiesta per tappa (non più una per lingua): da qui si sceglie
-  // sia il testo di base sia i topic, senza ulteriori round-trip di
-  // rete quando cambia solo la lingua richiesta.
   const [artworkItems, setArtworkItems] = useState([]);
   const [feedbackGiven, setFeedbackGiven] = useState(null);
   const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
@@ -43,10 +38,7 @@ export default function NavigatorPlayer() {
       .catch(() => setStatus('error'));
   }, [visitId]);
 
-  // Caricamento del profilo utente per la personalizzazione. Se non
-  // c'è un utente autenticato, il livello linguistico target ricade
-  // su 'medio' (vedi targetLanguage sotto) — la visita non ha più un
-  // livello proprio, si adatta sempre a chi la esegue.
+  // Caricamento del profilo utente per la personalizzazione
   useEffect(() => {
     getMe()
       .then(data => setUser(data.user))
@@ -63,11 +55,7 @@ export default function NavigatorPlayer() {
 
   const targetLanguage = languageOverride ?? user?.preferredLanguageLevel ?? 'medio';
 
-  // Un'unica richiesta di rete per tappa: tutti i Content dell'artwork
-  // corrente, senza filtro di lingua. Da qui in poi la scelta di quale
-  // testo mostrare (pickBaseItem, sotto) è puramente sincrona — cambiare
-  // lingua con "non capisco"/"troppo semplice" non richiede più
-  // ricaricare nulla dalla rete.
+  // Un'unica richiesta di rete per tappa, scarico direttamente tutti i content
   useEffect(() => {
     if (!currentArtwork?._id) {
       setArtworkItems([]);
@@ -157,22 +145,13 @@ export default function NavigatorPlayer() {
     utterance.lang = 'it-IT';
     window.speechSynthesis.speak(utterance);
   }, []);
-  // Sincronizzazione vocale: evita letture spurie o anticipate durante
-  // i caricamenti di rete. lastSpokenRef evita un secondo effetto
-  // secondario del refactor di prima: topicsLoading si accende e si
-  // spegne ad ogni cambio di lingua anche quando il testo finale non
-  // cambia (es. il fallback ricade sullo stesso content) — senza
-  // questo controllo, lo spegnimento di topicsLoading da solo
-  // rilancerebbe una seconda lettura dello stesso identico testo.
-  const lastSpokenRef = useRef(null);
-  useEffect(() => {
-    if (itemLoading || topicsLoading) return;
-    if (!currentText) return;
-    if (lastSpokenRef.current === currentText.content) return;
-    lastSpokenRef.current = currentText.content;
-    speak(currentText.content);
-    return () => window.speechSynthesis?.cancel();
-  }, [currentText, speak, itemLoading, topicsLoading]);
+
+  useEffect(() => {
+    if (itemLoading) return;
+    if (!currentText) return;
+    speak(currentText.content);
+    return () => window.speechSynthesis?.cancel();
+  }, [ currentText ]);
   // Registrazione del completamento della visita museale
   useEffect(() => {
     if (!visit || hasMarkedComplete) return;
@@ -180,7 +159,7 @@ export default function NavigatorPlayer() {
       completeVisit(visitId).catch(() => {});
       setHasMarkedComplete(true);
     }
-  }, [stepIndex, visit, visitId, hasMarkedComplete]);
+  }, [currentText]);
   function goNext() {
     if (!visit) return;
     setStepIndex(i => Math.min(i + 1, visit.steps.length - 1));
@@ -334,24 +313,24 @@ export default function NavigatorPlayer() {
           </div>
         )}
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={goPrev} disabled={stepIndex === 0 || itemLoading}>Precedente</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={goNext} disabled={stepIndex === visit.steps.length - 1 || itemLoading}>Prossimo</button>
+          <button className="museum-button" onClick={goPrev} disabled={stepIndex === 0 || itemLoading}>Precedente</button>
+          <button className="museum-button" onClick={goNext} disabled={stepIndex === visit.steps.length - 1 || itemLoading}>Prossimo</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={tellLess} disabled={frameIndex === 0 || itemLoading}>Dimmi di meno</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={tellMore} disabled={frameIndex >= frames.length - 1 || topicsLoading || itemLoading}>Dimmi di più</button>
+          <button className="museum-button" onClick={tellLess} disabled={frameIndex === 0 || itemLoading}>Dimmi di meno</button>
+          <button className="museum-button" onClick={tellMore} disabled={frameIndex >= frames.length - 1 || topicsLoading || itemLoading}>Dimmi di più</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={makeSimpler} disabled={currentFrame?.type !== 'base' || !canGoSimpler || itemLoading}>Non capisco</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={makeHarder} disabled={currentFrame?.type !== 'base' || !canGoHarder || itemLoading}>Troppo semplice</button>
+          <button className="museum-button" onClick={makeSimpler} disabled={currentFrame?.type !== 'base' || !canGoSimpler || itemLoading}>Non capisco</button>
+          <button className="museum-button" onClick={makeHarder} disabled={currentFrame?.type !== 'base' || !canGoHarder || itemLoading}>Troppo semplice</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => speak(currentText?.content)} disabled={itemLoading}>Ripeti</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => setShowPoi(v => !v)}>Dove...?</button>
+          <button className="museum-button" onClick={() => speak(currentText?.content)} disabled={itemLoading}>Ripeti</button>
+          <button className="museum-button" onClick={() => setShowPoi(v => !v)}>Dove...?</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => jumpToDomain('artista')} disabled={!hasAuthorTopic || itemLoading}>Chi è l'autore</button>
-          <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700" onClick={() => jumpToDomain('stile')} disabled={!hasStyleTopic || itemLoading}>Qual è lo stile</button>
+          <button className="museum-button" onClick={() => jumpToDomain('artista')} disabled={!hasAuthorTopic || itemLoading}>Chi è l'autore</button>
+          <button className="museum-button" onClick={() => jumpToDomain('stile')} disabled={!hasStyleTopic || itemLoading}>Qual è lo stile</button>
         </div>
         <div className="grid grid-cols-1 gap-2">
           <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700 cursor-pointer" onClick={() => setShowMap(v => !v)}>Mappa</button>
