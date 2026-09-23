@@ -52,6 +52,7 @@ async function loadVisits() {
 
   try {
     const visits = await getVisits(museumId, { includeMine: true });
+    console.log(visits);
     visitEl.innerHTML = '';
     const createLi = document.createElement('li');
     createLi.className = 'card primary-card-button';
@@ -62,6 +63,7 @@ async function loadVisits() {
     });
     visitEl.appendChild(createLi);
     if (visits.length === 0) {
+      statusEl.hidden = true;
       const emptyLi = document.createElement('li');
       emptyLi.className = 'status-message';
       emptyLi.textContent = 'Non hai ancora creato visite per questo museo.';

@@ -36,7 +36,7 @@ export function accessibleOrClause(userId, licensedArtworkIds) {
 // disallinearsi da sé stessa, ed è comunque un controllo eseguito solo
 // al momento (raro) di una cancellazione, non ad ogni lettura.
 export async function isItemUsedInAnyVisit(itemId) {
-    return Visit.exists({ 'steps.item': itemId });
+    return Visit.exists({ 'steps.artwork': itemId });
 }
 
 // Stesso controllo, esteso a TUTTI i Content di una data Artwork —

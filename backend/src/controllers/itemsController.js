@@ -1,7 +1,7 @@
 import Item from "../models/item.js";
 import User from "../models/user.js";
 import Artwork from "../models/artwork.js";
-import { getLicensedArtworkIds, accessibleOrClause, isItemUsedInAnyVisit } from "../utils/marketplaceAccess.js";
+import { getLicensedArtworkIds, accessibleOrClause } from "../utils/marketplaceAccess.js";
 
 const INTEREST_STEP = 1;
 const INTEREST_MAX = 10;
@@ -200,11 +200,6 @@ export async function deleteItem(req, res) {
 
         if (item.artwork.owner.toString() !== req.user.id) {
             return res.status(403).json({ error: "Non sei il proprietario dell'opera a cui appartiene questo content." });
-        }
-
-        const inUse = await isItemUsedInAnyVisit(item._id);
-        if (inUse) {
-            return res.status(409).json({ error: "Questo content è usato in almeno una visita (tua o di un altro autore che l'ha adottato) e non può essere eliminato." });
         }
 
         await item.deleteOne();
