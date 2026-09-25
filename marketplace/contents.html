@@ -22,13 +22,55 @@
 
     <p id="status" class="status-message">Caricamento contenuti…</p>
     <div id="switch-container" class="switch">
-      <button id="btn-a" class="active">Contenuti</button>
+      <button id="btn-a" class="active">Opere</button>
       <button id="btn-b">Visite</button>
     </div>
-    <ul id="visit-list" class="card-list invisible">
-      <li id="new-visit-btn" class="card primary-card-button">+ Crea una nuova visita</li>
-    </ul>
-    <ul id="artwork-list" class="card-list"></ul>
+    <div class="organizer card">
+      <div class="organizer-header">
+        <div id="checkboxes" class="filter-checkboxes">
+          <label id="mine-check" class="filter-label">
+            <span>Miei</span>
+            <input type="checkbox" id="check-mine" checked>
+          </label>
+          <label id="others-check" class="filter-label">
+            <span>Altrui</span>
+            <input type="checkbox" id="check-others" checked>
+          </label>
+        </div>
+
+        <div class="filter-sort">
+          <label for="sort-select">Ordina per:</label>
+          <select id="sort-select" class="filter-dropdown">
+            <option value="property">Proprietari</option>
+            <option value="title-asc">Titolo (A-Z)</option>
+            <option value="title-desc">Titolo (Z-A)</option>
+            <option value="newest">Più recenti</option>
+          </select>
+        </div>
+        
+        <div class="filter-scale">
+          <label for="per-page-select">Mostra:</label>
+          <select id="per-page-select" class="filter-dropdown">
+            <option value="1">1</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <button class="primary-button" id="new-btn">+ Crea</button>
+      </div>
+
+      <ul id="visit-list" class="card-list invisible"></ul>
+      <ul id="artwork-list" class="card-list"></ul>
+      
+      <div class="organizer-footer">
+        <div id="pagination" class="pagination"></div>
+        <div id="pagination-info" class="pagination-info"></div>
+      </div>
+    </div>
   </main>
 
   <script type="module" src="js/contents.js"></script>

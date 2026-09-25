@@ -6,6 +6,10 @@
   --color-danger: #b3261e;
   --color-success: #2e7d32;
   --color-status: #666;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; 
 }
 
 * { 
@@ -137,6 +141,8 @@ button.danger:hover {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  padding: 1vh;
+  overflow:auto;
 }
 
 .card-list.invisible {
@@ -175,7 +181,7 @@ button.danger:hover {
 .primary-card-button:hover { 
   background: var(--color-primary); 
   color: #fff;
-}/* 
+} 
 
 /* ==========================================================================
    6. COMPONENTE: FORM E INPUT
@@ -210,18 +216,18 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   7. COMPONENTE: SWITCH TABS (Riparato)
+   7. COMPONENTE: SWITCH TABS
    ========================================================================== */
 .switch {
-  position: relative; /* FONDAMENTALE per far funzionare il ::after */
+  position: relative;
   --bg-offset: 0%;
   overflow: hidden;
   display: flex;
   margin-bottom: 20px;
-  border-radius: 6px; /* Evita che gli angoli del background escano dal box */
+  border-radius: 6px; 
   border: 1px solid #ccc;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Ombra ripulita e alleggerita per performance */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 /* Questa è la slide animata che scorre dietro */
@@ -257,4 +263,225 @@ input:focus, select:focus, textarea:focus {
 .content-btn {
   margin-top: 0.5rem;
   align-self: flex-start;
+}
+
+
+/* ==========================================================================
+ 8. COMPONENTE: ORGANIZER CON FILTRI
+========================================================================== */
+.organizer {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  flex-flow: column;
+  align-items: stretch;
+  height: 67vh;
+  gap: unset;
+}
+
+.organizer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 10px;
+  padding: 14px 18px;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+  gap: 24px;
+}
+
+/* Gruppi separati da un filo verticale, non solo da gap */
+.filter-checkboxes,
+.filter-sort,
+.filter-scale {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #555;
+  padding-right: 24px;
+  border-right: 1px solid #e0e0e0;
+}
+
+.filter-scale {
+  border-right: none;
+  padding-right: 0;
+  margin-left: auto; /* la scala si stacca a destra, i primi due restano raggruppati a sinistra */
+}
+
+/* Checkbox come "chip" cliccabili invece di quadratini nudi */
+.filter-label {
+  display: inline;
+  
+}
+
+/* Select coerenti con input/button del resto del sito */
+.filter-sort label,
+.filter-scale label {
+  color: #888;
+  font-weight: 500;
+}
+
+.filter-dropdown {
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.filter-dropdown:hover {
+  border-color: var(--color-primary);
+}
+
+.filter-dropdown:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.primary-button { 
+  border: 1px solid var(--color-primary);
+  padding: 0.4% 1vw;
+  color: var(--color-primary); 
+  text-align: center;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 20px; 
+  transition: all 0.2s ease-in-out;
+}
+.primary-button:hover { 
+  background: var(--color-primary); 
+  color: #fff;
+}
+
+.organizer-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  height: 8vh;
+  padding: 14px 18px;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+  gap: 24px;
+}
+
+.pagination-info{
+  font-size: small;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.page-numbers{
+  display: flex;
+}
+
+.pagination-button {
+  position: relative;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  color: #171717;
+  cursor: pointer;
+}
+
+.pagination-button span {
+  position: relative;
+  z-index: 2;
+}
+
+.pagination-border {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  pointer-events: none;
+
+  transform: rotate(-90deg);
+}
+
+.pagination-border circle {
+  fill: none;
+  stroke: #292929;
+  stroke-width: 1.5;
+
+  stroke-dasharray: 107;
+  stroke-dashoffset: 107;
+}
+
+.pagination-button:not(.disabled):hover .pagination-border circle {
+  animation: draw-border .5s ease-out forwards;
+}
+
+@keyframes draw-border {
+  from {
+    stroke-dashoffset: 107;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.pagination-button:hover {
+  background: #f0f0f0;
+  text-decoration: none;
+}
+
+.pagination-button.active {
+  background: #292929;
+  color: white;
+}
+
+.pagination-button:active {
+  transform: scale(0.94);
+}
+
+.pagination-button.disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.pagination-button.disabled:hover {
+  cursor: default;
+  opacity: 0.5;
+  cursor: not-allowed;
+  stroke: none;
+}
+
+.pagination-button.disabled > .pagination-border{
+  stroke: none;
+}
+
+.pagination-dots {
+  width: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #171717;
 }

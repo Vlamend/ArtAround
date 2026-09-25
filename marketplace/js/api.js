@@ -70,8 +70,6 @@ export function getMuseumById(id) {
 
 // ---- Visite ----
 
-// includeMine: se true e l'utente è autenticato, include anche le
-// proprie visite private/bozze (vedi backend: ?mine=true).
 export function getVisits(museumId, { includeMine = false } = {}) {
   const params = new URLSearchParams({ museum: museumId });
   if (includeMine) params.set('mine', 'true');
