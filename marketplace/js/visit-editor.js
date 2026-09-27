@@ -1,18 +1,27 @@
 import { requireAuth } from './auth-guard.js';
 import {
-  getMuseumById, getItems, getArtworks, adoptArtwork, acquireArtwork,
-  getVisitById, createVisit, updateVisit, deleteVisit
+  getMuseumById,
+  getArtworks,
+  adoptArtwork,
+  acquireArtwork,
+  getVisitById,
+  createVisit,
+  updateVisit,
+  deleteVisit
 } from './api.js';
 
-// Stato della pagina, popolato in main()
+// Stato della pagina, popolato in main().
 let mode; // 'create' | 'edit'
 let museumId;
 let visitId;
 let currentUser;
 let allArtworks = [];
-let allItems = [];            // content GIÀ usabili (propri, licenziati, o gratuiti) — getItems li filtra già così lato server
-let purchasableArtworks = []; // opere pubbliche non ancora adottate né acquisite
-let steps = [];     // { itemId, title, language, type, logisticNote }
+let purchasableArtworks = []; // opere pubbliche non ancora utilizzabili
+let steps = []; // { artworkId, title, logisticNote }
+
+let purchasableCurrentPage = 1;
+let purchasablePerPage = 25;
+let sortBy = 'property';
 
 const titleEl = document.getElementById('page-title');
 const statusEl = document.getElementById('status');
@@ -27,6 +36,12 @@ const purchasableResultsEl = document.getElementById('purchasable-results');
 const paceSelect = document.getElementById('pace');
 const stepsListEl = document.getElementById('steps-list');
 const stepsEmptyEl = document.getElementById('steps-empty');
+const checkMine = document.getElementById('check-mine');
+const checkOthers = document.getElementById('check-others');
+const sortSelect = document.getElementById('sort-select');
+const perPageSelect = document.getElementById('per-page-select');
+const paginationEl = document.getElementById('pagination');
+const paginationInfoEl = document.getElementById('pagination-info');
 
 main();
 
@@ -41,29 +56,49 @@ async function main() {
   }
 
   currentUser = await requireAuth();
-  if (!currentUser) {
-    return; // requireAuth ha già gestito il redirect al login
-  }
+  if (!currentUser) return;
 
   mode = visitId ? 'edit' : 'create';
 
-  if (mode === 'edit') {
-    await loadExistingVisit();
-  } else {
-    await setupCreateMode();
+  if (mode === 'edit') await loadExistingVisit();
+  else await setupCreateMode();
+
+  if (sortSelect) sortBy = sortSelect.value || 'property';
+  if (perPageSelect) {
+    const selectedPageSize = Number.parseInt(perPageSelect.value, 10);
+    if (Number.isFinite(selectedPageSize) && selectedPageSize > 0) {
+      purchasablePerPage = selectedPageSize;
+    }
   }
 
   await Promise.all([loadArtworks(), loadPurchasableArtworks()]);
-  renderResults();
-  renderPurchasable();
+  hydrateSteps();
+  renderObjects();
   renderSteps();
 
-  backLink.href = `contents?museum=${museumId}`;
+  backLink.href = `contents?museum=${encodeURIComponent(museumId)}`;
   form.addEventListener('submit', handleSubmit);
   searchInput.addEventListener('input', () => {
-    renderResults();
-    renderPurchasable();
+    purchasableCurrentPage = 1;
+    renderObjects();
   });
+
+  checkMine?.addEventListener('change', resetPurchasablePage);
+  checkOthers?.addEventListener('change', resetPurchasablePage);
+  sortSelect?.addEventListener('change', () => {
+    sortBy = sortSelect.value;
+    resetPurchasablePage();
+  });
+  perPageSelect?.addEventListener('change', () => {
+    const value = Number.parseInt(perPageSelect.value, 10);
+    if (Number.isFinite(value) && value > 0) purchasablePerPage = value;
+    resetPurchasablePage();
+  });
+}
+
+function resetPurchasablePage() {
+  purchasableCurrentPage = 1;
+  renderObjects();
 }
 
 async function setupCreateMode() {
@@ -74,7 +109,7 @@ async function setupCreateMode() {
     const museum = await getMuseumById(museumId);
     titleEl.textContent = `Nuova visita — ${museum.name}`;
   } catch {
-    // se il museo non si carica per il titolo, non è bloccante
+    // Il titolo può restare generico se il museo non è disponibile.
   }
 }
 
@@ -85,7 +120,7 @@ async function loadExistingVisit() {
     if (visit.author?._id !== currentUser.id) {
       statusEl.hidden = false;
       statusEl.className = 'error-message';
-      statusEl.textContent = 'Non sei l\'autore di questa visita: non puoi modificarla.';
+      statusEl.textContent = 'Non sei l’autore di questa visita: non puoi modificarla.';
       form.hidden = true;
       return;
     }
@@ -101,16 +136,18 @@ async function loadExistingVisit() {
     document.getElementById('entrance-info').value = visit.entranceInfo ?? '';
     document.getElementById('license').value = visit.license ?? 'CC-BY';
     document.getElementById('price').value = visit.price ?? 0;
-    document.getElementById('is-public').checked = !!visit.isPublic;
+    document.getElementById('is-public').checked = Boolean(visit.isPublic);
     document.getElementById('tags').value = (visit.tags ?? []).join(', ');
     paceSelect.value = visit.pace ?? '15s';
 
-    steps = (visit.steps ?? []).map(s => ({
-      itemId: s.item?._id,
-      title: s.item?.artwork?.title ?? '(opera non trovata)',
-      language: s.item?.language,
-      logisticNote: s.logisticNote ?? ''
-    }));
+    steps = (visit.steps ?? []).map(step => {
+      const artwork = step.artwork;
+      return {
+        artworkId: artwork?._id ?? artwork ?? null,
+        title: artwork && typeof artwork === 'object' ? artwork.title ?? '' : '',
+        logisticNote: step.logisticNote ?? ''
+      };
+    });
   } catch {
     statusEl.hidden = false;
     statusEl.className = 'error-message';
@@ -119,121 +156,193 @@ async function loadExistingVisit() {
   }
 }
 
+function hydrateSteps() {
+  for (const step of steps) {
+    const artwork = allArtworks.find(candidate => String(candidate._id) === String(step.artworkId));
+    if (artwork) step.title ||= artwork.title ?? '';
+    step.title ||= '(opera non trovata)';
+  }
+}
+
 async function loadArtworks() {
-  try{
+  try {
     const [publicArtworks, ownArtworks] = await Promise.all([
       getArtworks({ museum: museumId }),
       getArtworks({ museum: museumId, mine: 'true' })
     ]);
-
     const byId = new Map();
     for (const artwork of [...publicArtworks, ...ownArtworks]) {
-      byId.set(artwork._id, artwork);
+      if (artwork?._id) byId.set(artwork._id, artwork);
     }
     allArtworks = [...byId.values()];
-  }catch {
+  } catch {
     allArtworks = [];
   }
 }
 
-async function loadItems() {
-  try {
-    // Contenuti pubblici del museo + le proprie bozze non ancora
-    // pubbliche, uniti senza duplicati - il curatore deve poter
-    // comporre visite sia con contenuto proprio in lavorazione sia con
-    // contenuto già pubblicato di altri autori.
-    const [publicItems, ownItems] = await Promise.all([
-      getItems({ museum: museumId }),
-      getItems({ museum: museumId, mine: 'true' })
-    ]);
+function renderObjects() {
+  const query = searchInput.value.trim().toLocaleLowerCase();
+  const showLicensed = checkMine ? checkMine.checked : true;
+  const showPurchasable = checkOthers ? checkOthers.checked : true;
+  const objects = [];
 
-    const byId = new Map();
-    for (const item of [...publicItems, ...ownItems]) {
-      byId.set(item._id, item);
+  // “Miei” corrisponde alle opere per cui il museo/utente ha già la licenza.
+  if (showLicensed) {
+    for (const artwork of allArtworks) {
+      // Le tappe già inserite non compaiono e non contribuiscono al conteggio/paginazione.
+      if (!artwork._id || isArtworkAlreadyInSteps(artwork._id)) continue;
+      const title = artwork.title ?? '(opera senza titolo)';
+      if (query && !title.toLocaleLowerCase().includes(query)) continue;
+      objects.push({ category: 'licensed', value: artwork, title });
     }
-    allItems = [...byId.values()];
-  } catch {
-    allItems = [];
   }
+
+  // “Altrui” corrisponde alle opere non ancora utilizzabili, ma acquistabili.
+  if (showPurchasable) {
+    for (const artwork of purchasableArtworks) {
+      const title = artwork.title ?? '(opera senza titolo)';
+      if (query && !title.toLocaleLowerCase().includes(query)) continue;
+      objects.push({ category: 'purchasable', value: artwork, title });
+    }
+  }
+
+  const sorted = sortElements(objects);
+  const total = sorted.length;
+  const totalPages = Math.max(1, Math.ceil(total / purchasablePerPage));
+  purchasableCurrentPage = Math.min(purchasableCurrentPage, totalPages);
+  const start = (purchasableCurrentPage - 1) * purchasablePerPage;
+  const pageObjects = sorted.slice(start, start + purchasablePerPage);
+
+  resultsEl.replaceChildren();
+  purchasableResultsEl?.replaceChildren();
+  if (purchasableResultsEl && purchasableResultsEl !== resultsEl) {
+    purchasableResultsEl.hidden = true;
+  }
+
+  if (pageObjects.length === 0) {
+    appendMessage(resultsEl, 'Nessun oggetto trovato con i filtri selezionati.');
+  } else {
+    for (const object of pageObjects) {
+      const card = object.category === 'licensed'
+        ? renderArtworkResult(object.value)
+        : renderPurchasableCard(object.value);
+      resultsEl.appendChild(card);
+    }
+  }
+
+  renderPagination(total, totalPages);
+  return total;
 }
 
-function renderResults() {
-  console.log('Rendering artwork result:', allArtworks);
-  const query = searchInput.value.trim().toLowerCase();
-
-  const filtered = allArtworks.filter(artwork => {
-    const title = artwork.title ?? '';
-    return !query || title.toLowerCase().includes(query);
-  });
-
-  resultsEl.innerHTML = '';
-
-  if (filtered.length === 0) {
-    const li = document.createElement('li');
-    li.className = 'status-message';
-    li.textContent = 'Nessun risultato.';
-    resultsEl.appendChild(li);
-    return;
-  }
-
-  for (const artwork of filtered.slice(0, 20)) { // limite per non appesantire la lista
-    resultsEl.appendChild(renderArtworkResult(artwork));
-  }
+function isArtworkAlreadyInSteps(artworkId) {
+  const targetId = String(artworkId);
+  return steps.some(step => step.artworkId && String(step.artworkId) === targetId);
 }
 
 function renderArtworkResult(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
 
-  const title = artwork.title ?? '(opera non trovata)';
+  const title = artwork.title ?? '(opera senza titolo)';
   const info = document.createElement('div');
-  info.innerHTML = `
-    <strong>${title}</strong><br>
-  `;
+  const strong = document.createElement('strong');
+  strong.textContent = title;
+  info.appendChild(strong);
   const actionBtn = document.createElement('button');
-  actionBtn.textContent = '+ Aggiungi';
+  actionBtn.type = 'button';
+  const alreadyUsed = isArtworkAlreadyInSteps(artwork._id);
+  actionBtn.disabled = alreadyUsed;
+  actionBtn.textContent = alreadyUsed ? 'Già nella visita' : '+ Aggiungi';
   actionBtn.addEventListener('click', () => {
+    if (!artwork._id || isArtworkAlreadyInSteps(artwork._id)) return;
     steps.push({
+      artworkId: artwork._id,
       title,
       logisticNote: ''
     });
     renderSteps();
+    renderObjects();
   });
 
-  li.appendChild(info);
-  li.appendChild(actionBtn);
+  li.append(info, actionBtn);
   return li;
 }
 
-// Opere pubbliche non ancora usabili da questo utente (non possedute,
-// non licenziate, adozione a pagamento) — il complementare esatto di
-// allItems, calcolato lato server con lo stesso criterio.
+// Le opere acquistabili restano ottenute dall'API esistente e dal suo filtro.
 async function loadPurchasableArtworks() {
   try {
     purchasableArtworks = await getArtworks({ museum: museumId, purchasable: 'true' });
+    if (!Array.isArray(purchasableArtworks)) purchasableArtworks = [];
   } catch {
     purchasableArtworks = [];
   }
 }
 
-function renderPurchasable() {
-  const query = searchInput.value.trim().toLowerCase();
+function sortElements(objects) {
+  return [...objects].sort((a, b) => {
+    const titleA = a.title ?? '';
+    const titleB = b.title ?? '';
+    switch (sortBy) {
+      case 'title-asc': return titleA.localeCompare(titleB, 'it');
+      case 'title-desc': return titleB.localeCompare(titleA, 'it');
+      case 'newest': {
+        const dateA = a.value.updatedAt ?? a.value.createdAt ?? 0;
+        const dateB = b.value.updatedAt ?? b.value.createdAt ?? 0;
+        return new Date(dateB) - new Date(dateA);
+      }
+      case 'oldest': {
+        const dateA = a.value.updatedAt ?? a.value.createdAt ?? 0;
+        const dateB = b.value.updatedAt ?? b.value.createdAt ?? 0;
+        return new Date(dateA) - new Date(dateB);
+      }
+      default: return 0;
+    }
+  });
+}
 
-  const filtered = purchasableArtworks.filter(a => !query || a.title.toLowerCase().includes(query));
-
-  purchasableResultsEl.innerHTML = '';
-
-  if (filtered.length === 0) {
-    const li = document.createElement('li');
-    li.className = 'status-message';
-    li.textContent = 'Nessuna opera da adottare o acquisire.';
-    purchasableResultsEl.appendChild(li);
-    return;
+function renderPagination(total, totalPages) {
+  if (paginationInfoEl) {
+    const start = total === 0 ? 0 : (purchasableCurrentPage - 1) * purchasablePerPage + 1;
+    const end = Math.min(purchasableCurrentPage * purchasablePerPage, total);
+    paginationInfoEl.textContent = `${start}–${end} di ${total}`;
   }
+  if (!paginationEl) return;
 
-  for (const artwork of filtered.slice(0, 20)) { // stesso limite della lista sopra, per non appesantire
-    purchasableResultsEl.appendChild(renderPurchasableCard(artwork));
+  paginationEl.replaceChildren();
+  if (totalPages <= 1) return;
+
+  const addPageButton = (label, page, disabled = false, current = false) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.disabled = disabled;
+    if (current) button.setAttribute('aria-current', 'page');
+    button.addEventListener('click', () => {
+      purchasableCurrentPage = page;
+      renderObjects();
+    });
+    paginationEl.appendChild(button);
+  };
+
+  addPageButton('←', Math.max(1, purchasableCurrentPage - 1), purchasableCurrentPage === 1);
+  const pages = getPageNumbers(purchasableCurrentPage, totalPages);
+  for (const page of pages) {
+    if (page === '…') {
+      const span = document.createElement('span');
+      span.textContent = '…';
+      paginationEl.appendChild(span);
+    } else {
+      addPageButton(String(page), page, false, page === purchasableCurrentPage);
+    }
   }
+  addPageButton('→', Math.min(totalPages, purchasableCurrentPage + 1), purchasableCurrentPage === totalPages);
+}
+
+function getPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, '…', total];
+  if (current >= total - 3) return [1, '…', total - 4, total - 3, total - 2, total - 1, total];
+  return [1, '…', current - 1, current, current + 1, '…', total];
 }
 
 function renderPurchasableCard(artwork) {
@@ -241,31 +350,31 @@ function renderPurchasableCard(artwork) {
   li.className = 'card';
 
   const info = document.createElement('div');
-  info.innerHTML = `
-    <strong>${artwork.title}</strong><br>
-    <span class="status-message">adozione: ${artwork.adoptionPrice}€ · acquisizione: ${artwork.acquisitionPrice}€</span>
-  `;
+  const title = document.createElement('strong');
+  title.textContent = artwork.title ?? '(opera senza titolo)';
+  info.appendChild(title);
+  const prices = document.createElement('span');
+  prices.className = 'status-message';
+  prices.textContent = `adozione: ${artwork.adoptionPrice ?? 0}€ · acquisizione: ${artwork.acquisitionPrice ?? 0}€`;
+  info.append(document.createElement('br'), prices);
 
   const actions = document.createElement('div');
   actions.className = 'card-actions';
-
   const adoptBtn = document.createElement('button');
-  adoptBtn.textContent = `Adotta (${artwork.adoptionPrice}€)`;
+  adoptBtn.type = 'button';
+  adoptBtn.textContent = `Adotta (${artwork.adoptionPrice ?? 0}€)`;
   adoptBtn.addEventListener('click', () => handleAdopt(artwork, adoptBtn));
   actions.appendChild(adoptBtn);
 
-  // Acquisire richiede ruolo autore/admin lato server (stessa
-  // restrizione di chi può creare opere): il bottone non si mostra
-  // nemmeno a un 'visitatore', invece di mostrarlo e farlo fallire.
   if (currentUser.role === 'autore' || currentUser.role === 'admin') {
     const acquireBtn = document.createElement('button');
-    acquireBtn.textContent = `Acquisisci (${artwork.acquisitionPrice}€)`;
+    acquireBtn.type = 'button';
+    acquireBtn.textContent = `Acquisisci (${artwork.acquisitionPrice ?? 0}€)`;
     acquireBtn.addEventListener('click', () => handleAcquire(artwork, acquireBtn));
     actions.appendChild(acquireBtn);
   }
 
-  li.appendChild(info);
-  li.appendChild(actions);
+  li.append(info, actions);
   return li;
 }
 
@@ -276,9 +385,9 @@ async function handleAdopt(artwork, button) {
     await adoptArtwork(artwork._id);
     await refreshAfterLicenseChange();
   } catch (err) {
-    window.alert(err.message || 'Impossibile completare l\'adozione.');
+    window.alert(err.message || 'Impossibile completare l’adozione.');
     button.disabled = false;
-    button.textContent = `Adotta (${artwork.adoptionPrice}€)`;
+    button.textContent = `Adotta (${artwork.adoptionPrice ?? 0}€)`;
   }
 }
 
@@ -289,29 +398,22 @@ async function handleAcquire(artwork, button) {
     await acquireArtwork(artwork._id);
     await refreshAfterLicenseChange();
   } catch (err) {
-    window.alert(err.message || 'Impossibile completare l\'acquisizione.');
+    window.alert(err.message || 'Impossibile completare l’acquisizione.');
     button.disabled = false;
-    button.textContent = `Acquisisci (${artwork.acquisitionPrice}€)`;
+    button.textContent = `Acquisisci (${artwork.acquisitionPrice ?? 0}€)`;
   }
 }
 
-// Dopo un'adozione o un'acquisizione, l'opera passa dal pannello
-// "da adottare/acquisire" a quello "disponibili" — ricarico entrambi
-// invece di aggiornare a mano lo stato locale, più semplice e meno
-// soggetto a disallinearsi dal server.
 async function refreshAfterLicenseChange() {
   await Promise.all([loadArtworks(), loadPurchasableArtworks()]);
-  renderResults();
-  renderPurchasable();
+  purchasableCurrentPage = 1;
+  renderObjects();
 }
 
 function renderSteps() {
-  stepsListEl.innerHTML = '';
+  stepsListEl.replaceChildren();
   stepsEmptyEl.hidden = steps.length > 0;
-
-  steps.forEach((step, index) => {
-    stepsListEl.appendChild(renderStepRow(step, index));
-  });
+  steps.forEach((step, index) => stepsListEl.appendChild(renderStepRow(step, index)));
 }
 
 function renderStepRow(step, index) {
@@ -323,39 +425,34 @@ function renderStepRow(step, index) {
   const header = document.createElement('div');
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
-  header.innerHTML = `<strong>${index + 1}. ${step.title}</strong> <span class="status-message">${step.language}</span>`;
+  const heading = document.createElement('strong');
+  heading.textContent = `${index + 1}. ${step.title}`;
+  header.appendChild(heading);
 
   const noteInput = document.createElement('input');
   noteInput.type = 'text';
   noteInput.placeholder = 'Indicazione per raggiungere questa tappa…';
   noteInput.value = step.logisticNote;
-  noteInput.addEventListener('input', () => {
-    step.logisticNote = noteInput.value;
-  });
+  noteInput.addEventListener('input', () => { step.logisticNote = noteInput.value; });
 
   const actions = document.createElement('div');
   actions.className = 'card-actions';
-
   const upBtn = document.createElement('button');
+  upBtn.type = 'button';
   upBtn.textContent = '↑';
   upBtn.disabled = index === 0;
   upBtn.addEventListener('click', () => moveStep(index, -1));
-
   const downBtn = document.createElement('button');
+  downBtn.type = 'button';
   downBtn.textContent = '↓';
   downBtn.disabled = index === steps.length - 1;
   downBtn.addEventListener('click', () => moveStep(index, 1));
-
   const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
   removeBtn.className = 'danger';
   removeBtn.textContent = 'Rimuovi';
-  removeBtn.addEventListener('click', () => {
-    steps.splice(index, 1);
-    renderSteps();
-  });
-
+  removeBtn.addEventListener('click', () => { steps.splice(index, 1); renderSteps(); });
   actions.append(upBtn, downBtn, removeBtn);
-
   li.append(header, noteInput, actions);
   return li;
 }
@@ -367,12 +464,17 @@ function moveStep(index, delta) {
   renderSteps();
 }
 
-async function handleSubmit(e) {
-  e.preventDefault();
+async function handleSubmit(event) {
+  event.preventDefault();
   errorEl.hidden = true;
 
   if (steps.length === 0) {
     errorEl.textContent = 'Aggiungi almeno una tappa alla visita.';
+    errorEl.hidden = false;
+    return;
+  }
+  if (steps.some(step => !step.artworkId)) {
+    errorEl.textContent = 'Una o più tappe non hanno un’opera valida. Rimuovile e aggiungile di nuovo.';
     errorEl.hidden = false;
     return;
   }
@@ -385,11 +487,8 @@ async function handleSubmit(e) {
     price: Number(document.getElementById('price').value) || 0,
     isPublic: document.getElementById('is-public').checked,
     pace: paceSelect.value,
-    tags: document.getElementById('tags').value
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean),
-    steps: steps.map(s => ({ item: s.itemId, logisticNote: s.logisticNote }))
+    tags: document.getElementById('tags').value.split(',').map(tag => tag.trim()).filter(Boolean),
+    steps: steps.map(step => ({ artwork: step.artworkId, logisticNote: step.logisticNote }))
   };
 
   if (!payload.title) {
@@ -400,14 +499,10 @@ async function handleSubmit(e) {
 
   submitBtn.disabled = true;
   submitBtn.textContent = mode === 'create' ? 'Creazione…' : 'Salvataggio…';
-
   try {
-    if (mode === 'create') {
-      await createVisit({ ...payload, museum: museumId });
-    } else {
-      await updateVisit(visitId, payload);
-    }
-    window.location.href = `contents?museum=${museumId}`;
+    if (mode === 'create') await createVisit({ ...payload, museum: museumId });
+    else await updateVisit(visitId, payload);
+    window.location.href = `contents?museum=${encodeURIComponent(museumId)}`;
   } catch (err) {
     errorEl.textContent = err.message || 'Impossibile salvare la visita.';
     errorEl.hidden = false;
@@ -417,13 +512,18 @@ async function handleSubmit(e) {
 }
 
 async function handleDelete() {
-  if (!window.confirm('Eliminare questa visita? L\'operazione non è reversibile.')) {
-    return;
-  }
+  if (!window.confirm('Eliminare questa visita? L’operazione non è reversibile.')) return;
   try {
     await deleteVisit(visitId);
-    window.location.href = `contents?museum=${museumId}`;
+    window.location.href = `contents?museum=${encodeURIComponent(museumId)}`;
   } catch (err) {
     window.alert(err.message || 'Impossibile eliminare la visita.');
   }
+}
+
+function appendMessage(list, message) {
+  const li = document.createElement('li');
+  li.className = 'status-message';
+  li.textContent = message;
+  list.appendChild(li);
 }

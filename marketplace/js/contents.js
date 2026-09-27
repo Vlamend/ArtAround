@@ -33,7 +33,6 @@ let opereCorrenti = 1;
 let cacheVisits = [];
 let cacheMineArtworks = [];
 let cacheOthersArtworks = [];
-let cacheUserLicenses = {};
 
 let showMine = true;
 let showOthers = true;
@@ -92,7 +91,7 @@ async function main() {
   if (!currentUser) {
     return; // requireAuth ha già gestito il redirect al login
   }
-
+  (currentUser.role === 'autore' || currentUser.role === 'admin') ? checkBoxes.style.display = "flex" : checkBoxes.style.display = "none";
   try {
     const museum = await getMuseumById(museumId);
     titleEl.textContent = `${museum.name}`;
@@ -200,8 +199,8 @@ function renderVisitCard(visit) {
   li.className = 'card';
 
   const isMine = visit.author?._id === currentUser.id;
-
   const info = document.createElement('div');
+  
   info.innerHTML = `
     <strong>${visit.title}</strong>
     ${!visit.isPublic ? 
@@ -393,7 +392,6 @@ async function loadArtworksData() {
     ]);
     cacheMineArtworks = mine;
     cacheOthersArtworks = others;
-    cacheUserLicenses = userLicenses;
   } catch(err) {
     console.error('Errore caricamento opere', err);
   }
@@ -536,7 +534,7 @@ function showList(which) {
   else {
     const totale = renderArtworksUI();
     renderPagination(totale, opereCorrenti);
-    checkBoxes.style.display = "flex";
+    (currentUser.role === 'autore' || currentUser.role === 'admin') ? checkBoxes.style.display = "flex" : checkBoxes.style.display = "none";
   }
   visitEl.classList.toggle('invisible', showA);
   artworkEL.classList.toggle('invisible', !showA);

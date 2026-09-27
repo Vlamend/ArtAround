@@ -80,12 +80,51 @@
       </div>
 
       <h3>Contenuti disponibili</h3>
-      <p class="status-message">Tue opere, licenze già ottenute, o ad uso libero: puoi aggiungerle subito.</p>
-      <ul id="item-results" class="card-list"></ul>
+      <p class="status-message">Tue opere o di cui possiedi la licenza, oppure hai la possibilità di acquisire la licenza di nuovi contenuti.</p>
+      <div class="organizer card">
+        <div class="organizer-header">
+          <div id="checkboxes" class="filter-checkboxes">
+            <label id="mine-check" class="filter-label">
+              <span>Miei</span>
+              <input type="checkbox" id="check-mine" checked>
+            </label>
+            <label id="others-check" class="filter-label">
+              <span>Altrui</span>
+              <input type="checkbox" id="check-others" checked>
+            </label>
+          </div>
 
-      <h3>Opere da adottare o acquisire</h3>
-      <p class="status-message">Non ancora usabili: adotta per licenziarne l'uso, o acquisisci per diventarne proprietario.</p>
-      <ul id="purchasable-results" class="card-list"></ul>
+          <div class="filter-sort">
+            <label for="sort-select">Ordina per:</label>
+            <select id="sort-select" class="filter-dropdown">
+              <option value="property">Proprietari</option>
+              <option value="title-asc">Titolo (A-Z)</option>
+              <option value="title-desc">Titolo (Z-A)</option>
+              <option value="newest">Più recenti</option>
+            </select>
+          </div>
+          
+          <div class="filter-scale">
+            <label for="per-page-select">Mostra:</label>
+            <select id="per-page-select" class="filter-dropdown">
+              <option value="1">1</option>
+              <option value="3">3</option>
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+        <ul id="item-results" class="card-list"></ul>
+        <ul id="purchasable-results" class="card-list"></ul>
+        
+        <div class="organizer-footer">
+          <div id="pagination" class="pagination"></div>
+          <div id="pagination-info" class="pagination-info"></div>
+        </div>
+      </div>
 
       <h3>Sequenza attuale</h3>
       <p id="steps-empty" class="status-message">Nessuna tappa aggiunta. Cerca un'opera qui sopra.</p>

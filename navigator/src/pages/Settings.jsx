@@ -320,14 +320,14 @@ export default function Settings() {
                       [&::-webkit-slider-thumb]:appearance-none
                       [&::-webkit-slider-thumb]:rounded-full
                       [&::-webkit-slider-thumb]:bg-primary
-                      [&::-webkit-slider-thumb]:dark:bg-secondary
+                      dark:[&::-webkit-slider-thumb]:bg-secondary
 
                       [&::-moz-range-thumb]:h-4
                       [&::-moz-range-thumb]:w-4
                       [&::-moz-range-thumb]:rounded-full
                       [&::-moz-range-thumb]:border-0
                       [&::-moz-range-thumb]:bg-primary
-                      [&::-moz-range-thumb]:dark:bg-secondary
+                      dark:[&::-moz-range-thumb]:bg-secondary
                     "
                   />
 

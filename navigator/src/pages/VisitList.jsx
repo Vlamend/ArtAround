@@ -7,9 +7,47 @@ export default function VisitList({ museum, onLogout }) {
   const [visitedIds, setVisitedIds] = useState(new Set());
   const [status, setStatus] = useState('loading');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [visitsOnScreen, setVisitsOnScreen] = useState(3);
+  const [actualPage, setActualPage] = useState(1);
+
+  const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState('default');
+
   const menuRef = useRef(null);
   const lastFocusedElementRef = useRef(null);
   const navigate = useNavigate();
+
+  const filteredVisits = [...visits]
+    .filter(v =>
+        v.title.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+        switch (sortOrder) {
+            case 'title-asc':
+                return a.title.localeCompare(b.title);
+
+            case 'title-desc':
+                return b.title.localeCompare(a.title);
+
+            case 'price-asc':
+                return a.price - b.price;
+
+            case 'price-desc':
+                return b.price - a.price;
+
+            default:
+                return 0;
+        }
+    });
+
+  const maxPages = Math.ceil(filteredVisits.length / visitsOnScreen);
+
+   const startIndex = (actualPage - 1) * visitsOnScreen;
+   const endIndex = startIndex + visitsOnScreen;
+   const visibleVisits = filteredVisits.slice(startIndex, endIndex);
+
+   const firstVisible = filteredVisits.length === 0 ? 0 : startIndex + 1;
+   const lastVisible = Math.min(endIndex, filteredVisits.length);
 
   useEffect(() => {
     if (!museum?._id) return;
@@ -23,7 +61,8 @@ export default function VisitList({ museum, onLogout }) {
       })
       .catch(() => setStatus('error'));
   }, [museum]);
-
+  useEffect(() => {
+  }, [visits]);
   useEffect(() => {
       const handleEscapeKey = (e) => {
          if (e.key === 'Escape' && isMenuOpen) {
@@ -61,6 +100,15 @@ export default function VisitList({ museum, onLogout }) {
          lastFocusedElementRef.current?.focus();
       }, 0);
    };
+
+   function goToPreviousPage() {
+    setActualPage(page => Math.max(1, page - 1));
+   }
+
+   function goToNextPage() {
+      setActualPage(page => Math.min(maxPages, page + 1));
+   }
+
   return (
     <div className="bg-white dark:bg-neutral-900 dark:text-white min-h-screen">
       <nav
@@ -146,27 +194,157 @@ export default function VisitList({ museum, onLogout }) {
             </div>
          </div>
       </nav>
-      <div className="flex flex-col gap-4 max-w-7xl mx-auto py-8 px-4 md:px-8">
+      <div className="flex flex-col max-w-7xl mx-auto py-8 px-4 md:px-8">
          <h1 className=" text-2xl font-bold">Scegli la visita</h1>
+         <div className="flex h-full gap-4 flex-col overflow-hidden rounded-lg border border-slate-300 dark:border-neutral-700">
+            <nav className="flex flex-row justify-between shrink-0 border-b border-slate-300 px-4 py-3 dark:border-neutral-700">
+               <div className="flex items-center gap-2 w-full max-w-sm">
+                  <div className="flex items-center gap-2 px-3 h-8 relative rounded-full bg-white dark:bg-neutral-800 outline-1 -outline-offset-1 outline-slate-300 dark:outline-neutral-700 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-primary/650">
+                     <label htmlFor="search" className="sr-only">Search</label>
+                     <input 
+                        type="search"
+                        id="search"
+                        placeholder="Cerca visita..."
+                        value={search}
+                        onChange={(e) => {
+                           setSearch(e.target.value);
+                           setActualPage(1);
+                        }}
+                        className="text-xs text-slate-900 dark:text-slate-50 w-full outline-none bg-transparent" 
+                     />
+                  </div>
+               </div>
+               <div className="relative shrink-0">
+                  <label htmlFor="sortOrder" className="sr-only">Category</label>
+                  <select
+                     id="sortOrder"
+                     value={sortOrder}
+                     onChange={(e) => {
+                        setSortOrder(e.target.value);
+                        setActualPage(1);
+                     }}
+                     className="h-8 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/650 focus:border-transparent"
+                  >
+                     <option value="default">Ordina per...</option>
+                     <option value="title-asc">Nome: A-Z</option>
+                     <option value="title-desc">Nome: Z-A</option>
+                     <option value="price-asc">Prezzo: crescente</option>
+                     <option value="price-desc">Prezzo: decrescente</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-500 dark:text-neutral-400">
+                     <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                     </svg>
+                  </div>
+               </div>
+               <div className="relative shrink-0">
+                  <label htmlFor="pagerSize" className="sr-only">Page size:</label>
+                  <select
+                     id="pagerSize"
+                     className="h-8 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/650 focus:border-transparent"
+                     value={visitsOnScreen}
+                     onChange={(e) => {
+                        setVisitsOnScreen(Number(e.target.value));
+                        setActualPage(1);
+                     }}
+                  >
+                     <option value="1">1</option>
+                     <option value="3">3</option>
+                     <option value="5">5</option>
+                     <option value="10">10</option>
+                     <option value="25">25</option>
+                     <option value="50">50</option>
+                     <option value="100">100</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-500 dark:text-neutral-400">
+                     <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                     </svg>
+                  </div>
+               </div>
+            </nav>
 
-         {status === 'loading' && <p className="status-message">Caricamento visite…</p>}
-         {status === 'error' && <p className="error-message">Non riesco a caricare le visite. Riprova più tardi.</p>}
-         {status === 'ready' && visits.length === 0 && (
-         <p className="status-message">Nessuna visita disponibile per questo museo.</p>
-         )}
+            {status === 'loading' && <p className="status-message">Caricamento visite…</p>}
+            {status === 'error' && <p className="error-message">Non riesco a caricare le visite. Riprova più tardi.</p>}
+            {status === 'ready' && visits.length === 0 && (
+            <p className="status-message">Nessuna visita disponibile per questo museo.</p>
+            )}
 
-         <ul className="flex flex-col gap-4">
-         {visits.map(v => (
-            <li key={v._id}>
-               
-               <a onClick={() => navigate(`/visits/${v._id}`)} className="block p-4 border cursor-pointer border-slate-300 dark:border-neutral-700 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <h5 className="mb-3 text-2xl font-semibold tracking-tight text-heading leading-8">{v.title}</h5>
-                  {visitedIds.has(v._id) && <h6 >Già visitata</h6>}
-                  {v.description && <p className="text-body">{v.description}</p>}
-               </a>
-            </li>
-         ))}
-         </ul>
+            <ul className="flex flex-col flex-nowrap place-content-between min-h-0 flex-1 max-h-100 overflow-y-auto p-4 gap-3">
+            {visibleVisits.map(v => (
+               <li key={v._id}>
+                  <a onClick={() => navigate(`/visits/${v._id}`)} className="block p-4 border cursor-pointer border-slate-300 dark:border-neutral-700 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                     <h5 className="text-2xl font-semibold tracking-tight text-heading leading-8">{v.title}</h5>
+                     {visitedIds.has(v._id) && <h6 className="text-sm text-slate-600 dark:text-slate-400">Già visitata</h6>}
+                     {v.description && <p className="text-body">{v.description}</p>}
+                  </a>
+               </li>
+            ))}
+            </ul>
+
+            {/* Footer */}
+            <div className="flex shrink-0 items-center justify-between border-t border-slate-300 px-4 py-3 dark:border-neutral-700">
+               {maxPages !== 1 &&
+               <nav aria-label="Pagination" className="flex space-x-4 justify-center mt-8">
+                  <button
+                     type="button"
+                     onClick={goToPreviousPage}
+                     disabled={actualPage === 1}
+                     aria-label="Previous page"
+                     className="flex items-center justify-center shrink-0 bg-gray-200 w-9 h-9 rounded-md disabled:opacity-50 disabled:cursor-default hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 dark:hover:bg-neutral-700"
+                  >
+                  <svg xmlns="http://www.w3.org/2000/svg"
+                        className="fill-slate-400 size-3 rotate-180 overflow-visible dark:fill-slate-600" viewBox="0 0 451.846 451.847"
+                        aria-hidden="true">
+                        <path
+                           d="M345.441 248.292 151.154 442.573c-12.359 12.365-32.397 12.365-44.75 0-12.354-12.354-12.354-32.391 0-44.744L278.318 225.92 106.409 54.017c-12.354-12.359-12.354-32.394 0-44.748 12.354-12.359 32.391-12.359 44.75 0l194.287 194.284c6.177 6.18 9.262 14.271 9.262 22.366 0 8.099-3.091 16.196-9.267 22.373"
+                           data-original="#000000" />
+                     </svg>
+                  </button>
+                  {Array.from({ length: maxPages }, (_, index) => {
+                     const page = index + 1;
+
+                     return (
+                        <button
+                              key={page}
+                              type="button"
+                              onClick={() => setActualPage(page)}
+                              aria-current={actualPage === page ? "page" : undefined}
+                              className={
+                                 actualPage === page
+                                    ? "flex items-center justify-center shrink-0 text-sm font-semibold text-white w-9 h-9 rounded-md bg-primary dark:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/500"
+                                    : "flex items-center justify-center shrink-0 text-sm font-semibold text-slate-900 w-9 h-9 rounded-md hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 dark:hover:bg-neutral-700"
+                              }
+                        >
+                              {page}
+                        </button>
+                     );
+                  })}
+                  <button
+                     type="button"
+                     onClick={goToNextPage}
+                     disabled={actualPage === maxPages}
+                     aria-label="Next page"
+                     className="flex items-center justify-center shrink-0 bg-gray-200 w-9 h-9 rounded-md disabled:opacity-50 disabled:cursor-default hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 dark:hover:bg-neutral-700"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="fill-slate-600 size-3 overflow-visible dark:fill-slate-50"
+                        viewBox="0 0 451.846 451.847" aria-hidden="true">
+                        <path
+                           d="M345.441 248.292 151.154 442.573c-12.359 12.365-32.397 12.365-44.75 0-12.354-12.354-12.354-32.391 0-44.744L278.318 225.92 106.409 54.017c-12.354-12.359-12.354-32.394 0-44.748 12.354-12.359 32.391-12.359 44.75 0l194.287 194.284c6.177 6.18 9.262 14.271 9.262 22.366 0 8.099-3.091 16.196-9.267 22.373"
+                           data-original="#000000" />
+                     </svg>
+                  </button>
+               </nav>
+               }
+               <div className="text-sm text-slate-600 dark:text-slate-400 self-end">
+                  <span className="font-medium mx-1">{firstVisible}</span>
+                  -
+                  <span className="font-medium mx-1">{lastVisible}</span>
+                  di
+                  <span className="font-medium mx-1">{filteredVisits.length}</span>
+               </div>
+            </div>
+         </div>
       </div>
     </div>
   );
