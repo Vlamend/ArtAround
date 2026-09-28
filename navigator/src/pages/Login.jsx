@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { login } from '../api.js';
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+   const [email, setEmail] = useState('');
+   const [password, setPassword] = useState('');
+   const [error, setError] = useState('');
 
    async function handleSubmit(e) {
       e.preventDefault();
@@ -17,8 +17,8 @@ export default function Login({ onLogin }) {
       }
    }
 
-  return (
-    <main className="bg-gray-50 px-4 md:px-8 dark:bg-neutral-900">
+   return (
+      <main className="bg-gray-50 px-4 md:px-8 dark:bg-neutral-900">
          <div className="min-h-screen flex flex-col items-center justify-center">
             <div className="max-w-md w-full">
                <div
@@ -29,38 +29,38 @@ export default function Login({ onLogin }) {
                      <div>
                         <label htmlFor="email"
                            className="mb-2 text-slate-900 font-medium text-sm inline-block dark:text-slate-50">Email</label>
-                        <input 
-                          type="email" 
-                          id="email"
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          autoComplete="email"
-                          className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary/70 dark:focus:outline-secondary/70 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
+                        <input
+                           type="email"
+                           id="email"
+                           value={email}
+                           onChange={e => setEmail(e.target.value)}
+                           autoComplete="email"
+                           className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary/70 dark:focus:outline-secondary/70 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                      </div>
                      <div>
                         <label htmlFor="password"
                            className="mb-2 text-slate-900 font-medium text-sm inline-block dark:text-slate-50">Password</label>
-                        <input 
-                          type="password" 
-                          id="password" 
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                          required
-                          autoComplete="current-password"
-                          className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary/70 dark:focus:outline-secondary/70 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
+                        <input
+                           type="password"
+                           id="password"
+                           value={password}
+                           onChange={e => setPassword(e.target.value)}
+                           required
+                           autoComplete="current-password"
+                           className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary/70 dark:focus:outline-secondary/70 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                      </div>
-                     
-                     {error && 
-                     <div className="flex items-center justify-center flex-wrap gap-2 bg-rose-500/10 border-rose-500 border text-rose-700 text-sm rounded-md p-2">
-                      <p className="error-message">{error}</p>
-                     </div>}
+
+                     {error &&
+                        <div className="flex items-center justify-center flex-wrap gap-2 bg-rose-500/10 border-rose-500 border text-rose-700 text-sm rounded-md p-2">
+                           <p className="error-message">{error}</p>
+                        </div>}
                      <button type="submit"
                         className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-primary dark:border-secondary bg-primary dark:bg-secondary dark:hover:bg-secondary/30 hover:bg-primary/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                         Accedi</button>
 
-                     <div className="text-slate-900 text-sm text-center dark:text-slate-50">Non hai un account? 
+                     <div className="text-slate-900 text-sm text-center dark:text-slate-50">Non hai un account?
                         <a href="/signup"
-                        className="text-primary dark:text-secondary hover:underline ml-1 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-secondary rounded">
+                           className="text-primary dark:text-secondary hover:underline ml-1 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-secondary rounded">
                            Registrati</a>
                      </div>
                   </form>
@@ -68,5 +68,5 @@ export default function Login({ onLogin }) {
             </div>
          </div>
       </main>
-  );
+   );
 }

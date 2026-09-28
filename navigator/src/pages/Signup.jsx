@@ -2,29 +2,29 @@ import { useState } from 'react';
 import { signup } from '../api.js';
 
 export default function Signup({ onSignup }) {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [parsePassword, setParsingPassword] = useState('');
-  const [error, setError] = useState('');
-  
-  async function handleSubmit(e) {
-        e.preventDefault();
-        setError('');
-        if(password === parsePassword){
-            try {
+   const [username, setUsername] = useState('');
+   const [email, setEmail] = useState('');
+   const [password, setPassword] = useState('');
+   const [parsePassword, setParsingPassword] = useState('');
+   const [error, setError] = useState('');
+
+   async function handleSubmit(e) {
+      e.preventDefault();
+      setError('');
+      if (password === parsePassword) {
+         try {
             await signup(username, email, password);
             onSignup();
-            } catch (err) {
+         } catch (err) {
             setError(err.message || 'Credenziali non valide.');
-            }
-        }else{
-            setError('Le password non coincidono.');
-            return;
-        }
-    }
+         }
+      } else {
+         setError('Le password non coincidono.');
+         return;
+      }
+   }
 
-  return (
+   return (
       <main className="px-4 md:px-8 min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-neutral-900">
          <div className="max-w-md w-full">
             <div
@@ -35,26 +35,26 @@ export default function Signup({ onSignup }) {
                   <div>
                      <label htmlFor="username"
                         className="mb-2 text-slate-900 font-medium text-sm inline-block dark:text-slate-50">Username</label>
-                     <input type="text" id="username" name="username"placeholder='BigBoss' value={ username } onChange={ (e) => setUsername(e.target.value)} required autoComplete='username'
+                     <input type="text" id="username" name="username" placeholder='BigBoss' value={username} onChange={(e) => setUsername(e.target.value)} required autoComplete='username'
                         className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary dark:focus:outline-secondary dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                   </div>
                   <div>
                      <label htmlFor="email"
                         className="mb-2 text-slate-900 font-medium text-sm inline-block dark:text-slate-50">Email</label>
-                     <input type="email" id="email" name="email" placeholder="john@artaround.test" value={ email } onChange={ (e) => setEmail(e.target.value)} required
+                     <input type="email" id="email" name="email" placeholder="john@artaround.test" value={email} onChange={(e) => setEmail(e.target.value)} required
                         className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary dark:focus:outline-secondary dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                   </div>
                   <div>
                      <label htmlFor="password"
                         className="mb-2 text-slate-900 font-medium text-sm inline-block dark:text-slate-50">Password</label>
-                     <input type="password" id="password" name="password" placeholder="••••••••" value={ password } onChange={ (e) => setPassword(e.target.value)} required autoComplete='new-password'
+                     <input type="password" id="password" name="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete='new-password'
                         className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary dark:focus:outline-secondary dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                   </div>
                   <div>
                      <label htmlFor="confirm-password"
                         className="mb-2 text-slate-900 font-medium text-sm inline-block dark:text-slate-50">Conferma
                         password</label>
-                     <input type="password" id="confirm-password" name="confirm-password" placeholder="••••••••" required value={ parsePassword } onChange={ (e) => setParsingPassword(e.target.value)} autoComplete='new-password'
+                     <input type="password" id="confirm-password" name="confirm-password" placeholder="••••••••" required value={parsePassword} onChange={(e) => setParsingPassword(e.target.value)} autoComplete='new-password'
                         className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary dark:focus:outline-secondary dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                   </div>
 
@@ -84,19 +84,19 @@ export default function Signup({ onSignup }) {
                         Terms and Conditions
                      </a>
                   </div>
-                    {error && 
+                  {error &&
                      <div className="flex items-center justify-center flex-wrap gap-2 bg-rose-500/10 border-rose-500 border text-rose-700 text-sm rounded-md p-2">
-                      <p className="error-message">{error}</p>
+                        <p className="error-message">{error}</p>
                      </div>}
                   <button type="submit"
                      className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-primary dark:border-secondary bg-primary dark:bg-secondary hover:bg-primary/40 dark:hover:bg-secondary/40 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                      Create an account</button>
                </form>
 
-               <div className="mt-6 text-slate-900 text-sm text-center dark:text-slate-50">Hai già un account? 
-                <a href="/login"
-                  className="text-primary hover:underline ml-1 font-medium dark:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:focus-visible:ring-secondary/40 rounded">
-                  Vai al login</a>
+               <div className="mt-6 text-slate-900 text-sm text-center dark:text-slate-50">Hai già un account?
+                  <a href="/login"
+                     className="text-primary hover:underline ml-1 font-medium dark:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:focus-visible:ring-secondary/40 rounded">
+                     Vai al login</a>
                </div>
             </div>
          </div>

@@ -86,8 +86,8 @@ const visitSchema = new Schema({
     enum: ['CC0', 'CC-BY', 'CC-BY-SA', 'CC-BY-NC', 'private'],
     default: 'CC-BY'
   },
-  isPublic:  { type: Boolean, default: true },
-  price:     { type: Number,  default: 0, min: 0 },
+  isPublic: { type: Boolean, default: true },
+  price: { type: Number, default: 0, min: 0 },
 
   // Tag liberi per la ricerca nel marketplace
   tags: [{ type: String, trim: true }]

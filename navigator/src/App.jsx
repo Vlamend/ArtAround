@@ -6,7 +6,7 @@ import NavigatorPlayer from './pages/NavigatorPlayer.jsx';
 import Settings from './pages/Settings.jsx';
 import Signup from './pages/Signup.jsx';
 import { getToken, getMe, clearToken, getConfig, getMuseumBySlug } from './api.js';
-import { applyMuseumTheme, initDarkMode} from './theme.js';
+import { applyMuseumTheme, initDarkMode } from './theme.js';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -27,7 +27,7 @@ export default function App() {
           applyMuseumTheme(data);
           setMuseumStatus('ready');
         })
-      .catch(() => setMuseumStatus('error'));
+        .catch(() => setMuseumStatus('error'));
       const token = getToken();
       if (!token) {
         setIsLoggedIn(false);
@@ -40,7 +40,7 @@ export default function App() {
       } catch {
         clearToken();
         setIsLoggedIn(false);
-      }finally {
+      } finally {
         setLoading(false);
       }
     }
@@ -51,7 +51,7 @@ export default function App() {
   if (stillLoading) {
     return (<div className="screen">
       <p className="status-message">Loading...</p>
-      </div>
+    </div>
     );
   }
 
@@ -74,40 +74,40 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={< Navigate to="/visits" />}/>
-
-        <Route 
-        path="/login" 
-        element={!isLoggedIn ? 
-        <Login onLogin={() => setIsLoggedIn(true)} /> : <Navigate to="/visits" replace/>}/>
-        
-        <Route 
-        path="/signup" 
-        element={!isLoggedIn ? 
-        <Signup onSignup={() => setIsLoggedIn(true)} /> : <Navigate to="/visits" replace/>}/>
+        <Route path="/" element={< Navigate to="/visits" />} />
 
         <Route
-        path="/settings"
-        element={isLoggedIn ? 
-        <Settings /> : <Navigate to="/login" replace />}
+          path="/login"
+          element={!isLoggedIn ?
+            <Login onLogin={() => setIsLoggedIn(true)} /> : <Navigate to="/visits" replace />} />
+
+        <Route
+          path="/signup"
+          element={!isLoggedIn ?
+            <Signup onSignup={() => setIsLoggedIn(true)} /> : <Navigate to="/visits" replace />} />
+
+        <Route
+          path="/settings"
+          element={isLoggedIn ?
+            <Settings /> : <Navigate to="/login" replace />}
         />
 
-        <Route 
-        path="/visits" 
-        element={isLoggedIn ? (
-          <MuseumGate status={museumStatus}>
-            <VisitList
-              museum={museum}
-              onLogout={() => {
-                setIsLoggedIn(false);
-              }}
-            />
-          </MuseumGate>
-        ) : <Navigate to="/login" replace/>}/> 
-        
-        <Route 
-        path="/visits/:visitId" 
-        element={isLoggedIn ? <NavigatorPlayer /> : <Navigate to="/login" replace/>}/> 
+        <Route
+          path="/visits"
+          element={isLoggedIn ? (
+            <MuseumGate status={museumStatus}>
+              <VisitList
+                museum={museum}
+                onLogout={() => {
+                  setIsLoggedIn(false);
+                }}
+              />
+            </MuseumGate>
+          ) : <Navigate to="/login" replace />} />
+
+        <Route
+          path="/visits/:visitId"
+          element={isLoggedIn ? <NavigatorPlayer /> : <Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );

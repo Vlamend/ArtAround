@@ -57,11 +57,11 @@ const UserSchema = new mongoose.Schema({
   },
 
   interestWeights: {
-    artista:       { type: Number, default: 0 },
-    architettura:  { type: Number, default: 0 },
-    stile:         { type: Number, default: 0 },
-    materiali:     { type: Number, default: 0 },
-    storia:        { type: Number, default: 0 }
+    artista: { type: Number, default: 0 },
+    architettura: { type: Number, default: 0 },
+    stile: { type: Number, default: 0 },
+    materiali: { type: Number, default: 0 },
+    storia: { type: Number, default: 0 }
   },
 
   /* ---- Licenze acquisite ----
@@ -85,13 +85,13 @@ const UserSchema = new mongoose.Schema({
    * resta valida per sempre.
    * --------------------------------- */
   licenses: [{
-    artwork:   { type: mongoose.Schema.Types.ObjectId, ref: 'Artwork', required: true },
-    type:      { type: String, enum: ['adoption', 'acquisition'], required: true },
+    artwork: { type: mongoose.Schema.Types.ObjectId, ref: 'Artwork', required: true },
+    type: { type: String, enum: ['adoption', 'acquisition'], required: true },
     pricePaid: { type: Number, required: true, min: 0 },
-    date:      { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now }
   }],
 
-visitedVisits: [{
+  visitedVisits: [{
     visit: { type: mongoose.Schema.Types.ObjectId, ref: 'Visit' },
     completedAt: { type: Date, default: Date.now }
   }]

@@ -59,8 +59,8 @@ export async function getVisits(req, res) {
         }
 
         const visits = await Visit.find(filter)
-        .populate('museum', 'name slug')
-        .populate('author', 'username');
+            .populate('museum', 'name slug')
+            .populate('author', 'username');
 
         res.json(visits);
 
@@ -206,24 +206,24 @@ export async function deleteVisit(req, res) {
 export async function completeVisit(req, res) {
     try {
         const visit = await Visit.findById(req.params.id);
- 
+
         if (!visit) {
             return res.status(404).json({ error: "Visita non trovata." });
         }
- 
+
         const user = await User.findById(req.user.id);
- 
+
         const alreadyCompleted = user.visitedVisits.some(
             v => v.visit.toString() === req.params.id
         );
- 
+
         if (!alreadyCompleted) {
             user.visitedVisits.push({ visit: req.params.id, completedAt: new Date() });
             await user.save();
         }
- 
+
         res.json({ message: "Visita segnata come completata." });
- 
+
     } catch (error) {
         console.error("Errore nel segnare la visita come completata:", error);
         res.status(500).json({ error: "Errore del server." });

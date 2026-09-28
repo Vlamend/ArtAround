@@ -97,14 +97,14 @@ async function seed() {
         },
         services: ["guardaroba", "bookshop", "audioguide"],
         rooms: [
-            { name: "Sala 1 - Duecento e Trecento",              floor: 1, bounds: { x: 5,  y: 10, width: 20, height: 80 } },
-            { name: "Sala 2 - Quattrocento",                      floor: 1, bounds: { x: 27, y: 10, width: 20, height: 80 } },
-            { name: "Sala 3 - Rinascimento maturo",               floor: 1, bounds: { x: 49, y: 10, width: 20, height: 80 } },
-            { name: "Sala 4 - Manierismo",                        floor: 1, bounds: { x: 71, y: 10, width: 24, height: 80 } },
-            { name: "Sala 5 - I Carracci e la riforma naturalistica", floor: 2, bounds: { x: 5,  y: 10, width: 22, height: 80 } },
+            { name: "Sala 1 - Duecento e Trecento", floor: 1, bounds: { x: 5, y: 10, width: 20, height: 80 } },
+            { name: "Sala 2 - Quattrocento", floor: 1, bounds: { x: 27, y: 10, width: 20, height: 80 } },
+            { name: "Sala 3 - Rinascimento maturo", floor: 1, bounds: { x: 49, y: 10, width: 20, height: 80 } },
+            { name: "Sala 4 - Manierismo", floor: 1, bounds: { x: 71, y: 10, width: 24, height: 80 } },
+            { name: "Sala 5 - I Carracci e la riforma naturalistica", floor: 2, bounds: { x: 5, y: 10, width: 22, height: 80 } },
             { name: "Sala 6 - Il classicismo di Reni e Domenichino", floor: 2, bounds: { x: 29, y: 10, width: 22, height: 80 } },
             { name: "Sala 7 - Guercino e il naturalismo luministico", floor: 2, bounds: { x: 53, y: 10, width: 20, height: 80 } },
-            { name: "Sala 8 - Il Settecento bolognese",           floor: 2, bounds: { x: 75, y: 10, width: 20, height: 80 } }
+            { name: "Sala 8 - Il Settecento bolognese", floor: 2, bounds: { x: 75, y: 10, width: 20, height: 80 } }
         ],
         floorPlans: [
             { floor: 1, imageUrl: "/assets/floorplans/piano1.svg" },
@@ -115,60 +115,80 @@ async function seed() {
     const rooms = museum.rooms; // rooms[0..7], nell'ordine sopra
 
     museum.pointsOfInterest = [
-        { type: "entrance",  name: "Ingresso principale", floor: 1, coords: { x: 2,  y: 50 } },
-        { type: "exit",      name: "Uscita",              floor: 2, coords: { x: 98, y: 50 } },
-        { type: "restroom",  name: "Bagni piano terra",   floor: 1, roomId: rooms[1]._id, coords: { x: 30, y: 90 } },
-        { type: "restroom",  name: "Bagni primo piano",   floor: 2, roomId: rooms[5]._id, coords: { x: 30, y: 90 } },
-        { type: "bar",       name: "Caffetteria",         floor: 1, coords: { x: 10, y: 95 } },
-        { type: "shop",      name: "Bookshop",            floor: 1, coords: { x: 90, y: 95 } },
-        { type: "elevator",  name: "Ascensore",           floor: 1, coords: { x: 50, y: 95 } },
-        { type: "obstacle",  name: "Gradino sala 4",      floor: 1, roomId: rooms[3]._id, coords: { x: 25, y: 50 } }
+        { type: "entrance", name: "Ingresso principale", floor: 1, coords: { x: 2, y: 50 } },
+        { type: "exit", name: "Uscita", floor: 2, coords: { x: 98, y: 50 } },
+        { type: "restroom", name: "Bagni piano terra", floor: 1, roomId: rooms[1]._id, coords: { x: 30, y: 90 } },
+        { type: "restroom", name: "Bagni primo piano", floor: 2, roomId: rooms[5]._id, coords: { x: 30, y: 90 } },
+        { type: "bar", name: "Caffetteria", floor: 1, coords: { x: 10, y: 95 } },
+        { type: "shop", name: "Bookshop", floor: 1, coords: { x: 90, y: 95 } },
+        { type: "elevator", name: "Ascensore", floor: 1, coords: { x: 50, y: 95 } },
+        { type: "obstacle", name: "Gradino sala 4", floor: 1, roomId: rooms[3]._id, coords: { x: 25, y: 50 } }
     ];
     await museum.save();
     console.log("Museo creato con 8 sale, planimetrie e punti di interesse.");
 
     // ---------- Stili (8, uno per grande fase storica) ----------
     const stylesData = [
-        { key: "gotico", name: "Gotico bolognese", period: "XIII-XIV secolo", description: [
-            { duration: "15s", content: "Pittura del Duecento e Trecento bolognese: fondi oro, linearismo elegante, figure allungate ancora debitrici della tradizione bizantina." },
-            { duration: "40s", content: "Nel Duecento e nel Trecento la pittura bolognese assimila la lezione bizantina e la rielabora con un linearismo elegante e affettuoso, diverso sia dal rigore senese sia dal naturalismo che di lì a poco esploderà a Firenze. Fondi oro, aureole a rilievo e figure allungate restano a lungo la norma, anche quando singoli maestri, come Vitale da Bologna, iniettano nella tradizione un dinamismo quasi espressionista." }
-        ]},
-        { key: "rinascimento-bolognese", name: "Rinascimento bolognese", period: "XV secolo", description: [
-            { duration: "15s", content: "Pittura del Quattrocento bolognese, a metà strada tra la tradizione tardogotica locale e le novità prospettiche giunte da Firenze e Ferrara." },
-            { duration: "40s", content: "Il Quattrocento bolognese assorbe con qualche ritardo le conquiste prospettiche fiorentine, filtrandole attraverso i contatti con la vicina scuola ferrarese. Ne nasce una pittura di transizione, ancora legata a una certa preziosità decorativa tardogotica ma già capace di costruire spazi credibili e figure solidamente modellate, con Francesco Francia come protagonista assoluto del passaggio al secolo successivo." }
-        ]},
-        { key: "cinquecento-maturo", name: "Rinascimento maturo", period: "primo XVI secolo", description: [
-            { duration: "15s", content: "Pittura bolognese del primo Cinquecento, in dialogo diretto con Raffaello e con la grande stagione del classicismo romano e fiorentino." },
-            { duration: "40s", content: "Nel primo Cinquecento Bologna guarda a Roma e Firenze: la presenza in città di opere di Raffaello, come l'Estasi di Santa Cecilia commissionata per San Giovanni in Monte, segna profondamente i pittori locali. Francesco Francia negli ultimi anni e Amico Aspertini con la sua vena più eccentrica misurano in modi diversi l'eredità del classicismo raffaellesco." }
-        ]},
-        { key: "manierismo", name: "Manierismo emiliano", period: "XVI secolo", description: [
-            { duration: "15s", content: "Il Manierismo emiliano privilegia l'eleganza formale e l'artificio compositivo rispetto alla resa naturalistica, con Parmigianino e il suo cerchio come riferimento principale." },
-            { duration: "40s", content: "Sviluppatosi dopo la piena maturità rinascimentale, il Manierismo predilige la sofisticazione formale: proporzioni allungate, pose complesse, luce artificiale e spazi compressi, in un'elaborazione più intellettuale che naturalistica del soggetto. In Emilia trova in Parmigianino e nel suo cerchio, compreso il cugino Girolamo Mazzola Bedoli, alcuni degli interpreti più raffinati; a Bologna, Prospero Fontana e Bartolomeo Passarotti ne declinano una versione più aggiornata, che farà da terreno di formazione, e poi di reazione, per i Carracci." }
-        ]},
-        { key: "riforma-carracci", name: "Riforma naturalistica dei Carracci", period: "fine XVI-inizio XVII secolo", description: [
-            { duration: "15s", content: "Ludovico, Annibale e Agostino Carracci reagiscono all'artificiosità tardo-manierista con un ritorno allo studio dal vero e a una composizione più chiara e naturale." },
-            { duration: "40s", content: "Fondando l'Accademia degli Incamminati, i tre cugini Carracci promuovono un ritorno allo studio dal vero, alla resa naturale degli affetti e a una composizione più chiara e leggibile, in reazione all'artificiosità della tarda maniera cinquecentesca. È la riforma da cui nascerà, nei decenni successivi, gran parte della pittura barocca italiana." }
-        ]},
-        { key: "classicismo-barocco", name: "Classicismo barocco bolognese", period: "primo XVII secolo", description: [
-            { duration: "15s", content: "Guido Reni e Domenichino portano la lezione dei Carracci verso un ideale di bellezza levigata e composta, tra i vertici del classicismo secentesco italiano." },
-            { duration: "40s", content: "Formatisi nell'Accademia dei Carracci, Guido Reni e Domenichino sviluppano un classicismo raffinato e levigato, fatto di colori chiari, composizioni equilibrate e un'idealizzazione della figura umana lontana sia dal naturalismo crudo sia dagli eccessi tardo-manieristi. Sarà uno dei modelli di riferimento più influenti per la pittura europea del Seicento." }
-        ]},
-        { key: "naturalismo-luministico", name: "Naturalismo luministico", period: "XVII secolo", description: [
-            { duration: "15s", content: "Guercino ed Elisabetta Sirani lavorano su forti contrasti di luce e ombra e su un naturalismo più diretto rispetto al classicismo di Reni." },
-            { duration: "40s", content: "Accanto al classicismo di Reni e Domenichino, una linea più naturalistica e luministica attraversa la pittura bolognese secentesca: Guercino, giunto da Cento, costruisce le sue prime opere su forti contrasti chiaroscurali, mentre Elisabetta Sirani, tra le pittrici professioniste più note d'Europa nel suo tempo, unisce rapidità d'esecuzione e intensità espressiva in una carriera brevissima ma straordinariamente prolifica." }
-        ]},
-        { key: "settecento", name: "Settecento bolognese", period: "XVIII secolo", description: [
-            { duration: "15s", content: "Nel Settecento la pittura bolognese oscilla tra il classicismo elegante di Donato Creti e il naturalismo quasi domestico di Giuseppe Maria Crespi." },
-            { duration: "40s", content: "Il Settecento bolognese si muove tra due poli: da un lato il classicismo levigato ed elegante di Donato Creti e Marcantonio Franceschini, erede diretto della tradizione di Reni; dall'altro il naturalismo informale e a tratti irriverente di Giuseppe Maria Crespi, che introduce nella grande pittura temi di vita quotidiana fino ad allora relegati ai margini. Gaetano Gandolfi, più avanti nel secolo, sintetizza le due anime in una maniera brillante e già aperta al gusto neoclassico." }
-        ]},
+        {
+            key: "gotico", name: "Gotico bolognese", period: "XIII-XIV secolo", description: [
+                { duration: "15s", content: "Pittura del Duecento e Trecento bolognese: fondi oro, linearismo elegante, figure allungate ancora debitrici della tradizione bizantina." },
+                { duration: "40s", content: "Nel Duecento e nel Trecento la pittura bolognese assimila la lezione bizantina e la rielabora con un linearismo elegante e affettuoso, diverso sia dal rigore senese sia dal naturalismo che di lì a poco esploderà a Firenze. Fondi oro, aureole a rilievo e figure allungate restano a lungo la norma, anche quando singoli maestri, come Vitale da Bologna, iniettano nella tradizione un dinamismo quasi espressionista." }
+            ]
+        },
+        {
+            key: "rinascimento-bolognese", name: "Rinascimento bolognese", period: "XV secolo", description: [
+                { duration: "15s", content: "Pittura del Quattrocento bolognese, a metà strada tra la tradizione tardogotica locale e le novità prospettiche giunte da Firenze e Ferrara." },
+                { duration: "40s", content: "Il Quattrocento bolognese assorbe con qualche ritardo le conquiste prospettiche fiorentine, filtrandole attraverso i contatti con la vicina scuola ferrarese. Ne nasce una pittura di transizione, ancora legata a una certa preziosità decorativa tardogotica ma già capace di costruire spazi credibili e figure solidamente modellate, con Francesco Francia come protagonista assoluto del passaggio al secolo successivo." }
+            ]
+        },
+        {
+            key: "cinquecento-maturo", name: "Rinascimento maturo", period: "primo XVI secolo", description: [
+                { duration: "15s", content: "Pittura bolognese del primo Cinquecento, in dialogo diretto con Raffaello e con la grande stagione del classicismo romano e fiorentino." },
+                { duration: "40s", content: "Nel primo Cinquecento Bologna guarda a Roma e Firenze: la presenza in città di opere di Raffaello, come l'Estasi di Santa Cecilia commissionata per San Giovanni in Monte, segna profondamente i pittori locali. Francesco Francia negli ultimi anni e Amico Aspertini con la sua vena più eccentrica misurano in modi diversi l'eredità del classicismo raffaellesco." }
+            ]
+        },
+        {
+            key: "manierismo", name: "Manierismo emiliano", period: "XVI secolo", description: [
+                { duration: "15s", content: "Il Manierismo emiliano privilegia l'eleganza formale e l'artificio compositivo rispetto alla resa naturalistica, con Parmigianino e il suo cerchio come riferimento principale." },
+                { duration: "40s", content: "Sviluppatosi dopo la piena maturità rinascimentale, il Manierismo predilige la sofisticazione formale: proporzioni allungate, pose complesse, luce artificiale e spazi compressi, in un'elaborazione più intellettuale che naturalistica del soggetto. In Emilia trova in Parmigianino e nel suo cerchio, compreso il cugino Girolamo Mazzola Bedoli, alcuni degli interpreti più raffinati; a Bologna, Prospero Fontana e Bartolomeo Passarotti ne declinano una versione più aggiornata, che farà da terreno di formazione, e poi di reazione, per i Carracci." }
+            ]
+        },
+        {
+            key: "riforma-carracci", name: "Riforma naturalistica dei Carracci", period: "fine XVI-inizio XVII secolo", description: [
+                { duration: "15s", content: "Ludovico, Annibale e Agostino Carracci reagiscono all'artificiosità tardo-manierista con un ritorno allo studio dal vero e a una composizione più chiara e naturale." },
+                { duration: "40s", content: "Fondando l'Accademia degli Incamminati, i tre cugini Carracci promuovono un ritorno allo studio dal vero, alla resa naturale degli affetti e a una composizione più chiara e leggibile, in reazione all'artificiosità della tarda maniera cinquecentesca. È la riforma da cui nascerà, nei decenni successivi, gran parte della pittura barocca italiana." }
+            ]
+        },
+        {
+            key: "classicismo-barocco", name: "Classicismo barocco bolognese", period: "primo XVII secolo", description: [
+                { duration: "15s", content: "Guido Reni e Domenichino portano la lezione dei Carracci verso un ideale di bellezza levigata e composta, tra i vertici del classicismo secentesco italiano." },
+                { duration: "40s", content: "Formatisi nell'Accademia dei Carracci, Guido Reni e Domenichino sviluppano un classicismo raffinato e levigato, fatto di colori chiari, composizioni equilibrate e un'idealizzazione della figura umana lontana sia dal naturalismo crudo sia dagli eccessi tardo-manieristi. Sarà uno dei modelli di riferimento più influenti per la pittura europea del Seicento." }
+            ]
+        },
+        {
+            key: "naturalismo-luministico", name: "Naturalismo luministico", period: "XVII secolo", description: [
+                { duration: "15s", content: "Guercino ed Elisabetta Sirani lavorano su forti contrasti di luce e ombra e su un naturalismo più diretto rispetto al classicismo di Reni." },
+                { duration: "40s", content: "Accanto al classicismo di Reni e Domenichino, una linea più naturalistica e luministica attraversa la pittura bolognese secentesca: Guercino, giunto da Cento, costruisce le sue prime opere su forti contrasti chiaroscurali, mentre Elisabetta Sirani, tra le pittrici professioniste più note d'Europa nel suo tempo, unisce rapidità d'esecuzione e intensità espressiva in una carriera brevissima ma straordinariamente prolifica." }
+            ]
+        },
+        {
+            key: "settecento", name: "Settecento bolognese", period: "XVIII secolo", description: [
+                { duration: "15s", content: "Nel Settecento la pittura bolognese oscilla tra il classicismo elegante di Donato Creti e il naturalismo quasi domestico di Giuseppe Maria Crespi." },
+                { duration: "40s", content: "Il Settecento bolognese si muove tra due poli: da un lato il classicismo levigato ed elegante di Donato Creti e Marcantonio Franceschini, erede diretto della tradizione di Reni; dall'altro il naturalismo informale e a tratti irriverente di Giuseppe Maria Crespi, che introduce nella grande pittura temi di vita quotidiana fino ad allora relegati ai margini. Gaetano Gandolfi, più avanti nel secolo, sintetizza le due anime in una maniera brillante e già aperta al gusto neoclassico." }
+            ]
+        },
         // Stili usati nel secondo museo (Galleria Estense di Modena).
-        { key: "corte-estense", name: "Rinascimento alla corte estense", period: "XVI secolo", description: [
-            { duration: "15s", content: "Pittura del Cinquecento ferrarese e parmense legata al mecenatismo della famiglia Este, con Correggio e Dosso Dossi tra i protagonisti." },
-            { duration: "40s", content: "Alla corte estense, tra Ferrara e Parma, si sviluppa nel Cinquecento una pittura raffinata e colta, sostenuta dal mecenatismo della famiglia Este. Correggio elabora soluzioni luministiche e spaziali di straordinaria modernità, mentre Dosso Dossi coltiva un gusto più fantastico e coloristico, con soggetti mitologici e allegorici pensati per gli appartamenti privati della corte." }
-        ]},
-        { key: "scultura-barocca-romana", name: "Barocco scultoreo romano", period: "XVII secolo", description: [
-            { duration: "15s", content: "La scultura barocca romana, con Gian Lorenzo Bernini come protagonista assoluto, cerca nel marmo un movimento e un'espressività quasi pittorici." }
-        ]}
+        {
+            key: "corte-estense", name: "Rinascimento alla corte estense", period: "XVI secolo", description: [
+                { duration: "15s", content: "Pittura del Cinquecento ferrarese e parmense legata al mecenatismo della famiglia Este, con Correggio e Dosso Dossi tra i protagonisti." },
+                { duration: "40s", content: "Alla corte estense, tra Ferrara e Parma, si sviluppa nel Cinquecento una pittura raffinata e colta, sostenuta dal mecenatismo della famiglia Este. Correggio elabora soluzioni luministiche e spaziali di straordinaria modernità, mentre Dosso Dossi coltiva un gusto più fantastico e coloristico, con soggetti mitologici e allegorici pensati per gli appartamenti privati della corte." }
+            ]
+        },
+        {
+            key: "scultura-barocca-romana", name: "Barocco scultoreo romano", period: "XVII secolo", description: [
+                { duration: "15s", content: "La scultura barocca romana, con Gian Lorenzo Bernini come protagonista assoluto, cerca nel marmo un movimento e un'espressività quasi pittorici." }
+            ]
+        }
     ];
     const styles = {};
     for (const s of stylesData) styles[s.key] = await Style.create({ name: s.name, period: s.period, description: s.description });
@@ -176,107 +196,165 @@ async function seed() {
 
     // ---------- Autori (24, tutti realmente attivi a Bologna/Emilia) ----------
     const authorsData = [
-        { key: "maestro-sangiacomo", name: "Maestro di San Giacomo", styleKey: "gotico", birthYear: "attivo XIII sec.", deathYear: "", bio: [
-            { duration: "15s", content: "Pittore anonimo attivo a Bologna nel pieno Duecento, convenzionalmente identificato dalla pala per cui è oggi noto." }
-        ]},
-        { key: "vitale-da-bologna", name: "Vitale da Bologna", styleKey: "gotico", birthYear: "1309 ca.", deathYear: "1360 ca.", bio: [
-            { duration: "15s", content: "Il maggiore pittore bolognese del Trecento, noto per un linearismo vivace e quasi nervoso che anima le sue figure di un dinamismo insolito per l'epoca." },
-            { duration: "40s", content: "Vitale da Bologna è la personalità più forte della pittura trecentesca emiliana. Rispetto alla compostezza della tradizione bizantineggiante, le sue figure si muovono con un dinamismo quasi frenetico, i panneggi si arricciano in pieghe nervose e i volti si caricano di un'espressività diretta e popolare, che gli sarà valsa fama ben oltre i confini di Bologna." }
-        ]},
-        { key: "simone-crocifissi", name: "Simone dei Crocifissi", styleKey: "gotico", birthYear: "1330 ca.", deathYear: "1399", bio: [
-            { duration: "15s", content: "Pittore bolognese specializzato in croci dipinte e pale devozionali, da cui deriva il soprannome con cui è conosciuto." }
-        ]},
-        { key: "lippo-dalmasio", name: "Lippo di Dalmasio", styleKey: "gotico", birthYear: "1352 ca.", deathYear: "1410 ca.", bio: [
-            { duration: "15s", content: "Detto \"Lippo delle Madonne\" per la dolcezza con cui dipinse ripetutamente il tema della Vergine col Bambino." }
-        ]},
-        { key: "jacopo-di-paolo", name: "Jacopo di Paolo", styleKey: "gotico", birthYear: "1360 ca.", deathYear: "1426 ca.", bio: [
-            { duration: "15s", content: "Pittore bolognese attivo tra fine Trecento e primo Quattrocento, tra gli ultimi interpreti della tradizione tardogotica cittadina." }
-        ]},
-        { key: "francesco-francia", name: "Francesco Francia", styleKey: "rinascimento-bolognese", birthYear: "1447 ca.", deathYear: "1517", bio: [
-            { duration: "15s", content: "Orafo e pittore, il protagonista assoluto della pittura bolognese tra Quattrocento e primo Cinquecento." },
-            { duration: "40s", content: "Formatosi come orafo prima ancora che come pittore, Francesco Francia diventa nel giro di pochi anni la figura di riferimento della pittura bolognese di fine Quattrocento, capace di fondere la precisione del disegno con una tavolozza luminosa e una compostezza compositiva che guarda già al classicismo del secolo successivo." }
-        ]},
-        { key: "amico-aspertini", name: "Amico Aspertini", styleKey: "cinquecento-maturo", birthYear: "1474", deathYear: "1552", bio: [
-            { duration: "15s", content: "Pittore bolognese dallo stile eccentrico e irregolare, lontano dalla compostezza classica dei contemporanei." }
-        ]},
-        { key: "raffaello", name: "Raffaello Sanzio", styleKey: "cinquecento-maturo", birthYear: "1483", deathYear: "1520", bio: [
-            { duration: "3s",  content: "Pittore e architetto, tra i massimi protagonisti del Rinascimento italiano." },
-            { duration: "15s", content: "Attivo tra Urbino, Firenze e Roma, Raffaello realizzò per Bologna una delle sue opere più celebri, commissionata per la cappella di famiglia di Elena Duglioli in San Giovanni in Monte." },
-            { duration: "40s", content: "Raffaello Sanzio è una delle figure centrali del Rinascimento maturo, capace di sintetizzare la lezione di Leonardo e Michelangelo in un linguaggio di equilibrio, grazia e chiarezza compositiva che diverrà modello per generazioni di pittori. La sua Estasi di Santa Cecilia, dipinta per Bologna, univa da subito fama internazionale e un legame diretto con la città." }
-        ]},
-        { key: "parmigianino", name: "Parmigianino", styleKey: "manierismo", birthYear: "1503", deathYear: "1540", bio: [
-            { duration: "15s", content: "Francesco Mazzola, detto Parmigianino, tra i creatori dello stile manierista emiliano; cugino e maestro diretto di Girolamo Mazzola Bedoli." }
-        ]},
-        { key: "bedoli", name: "Girolamo Mazzola Bedoli", styleKey: "manierismo", birthYear: "1500 ca.", deathYear: "1569", bio: [
-            { duration: "3s",  content: "Pittore manierista emiliano del Cinquecento." },
-            { duration: "15s", content: "Pittore emiliano attivo nel Cinquecento, allievo e collaboratore del Parmigianino, di cui riprese l'eleganza formale e la ricerca cromatica." },
-            { duration: "40s", content: "Girolamo Mazzola Bedoli fu tra i protagonisti del manierismo emiliano. Cugino e collaboratore del Parmigianino, ne assimilò l'eleganza formale e la costruzione rarefatta dello spazio, sviluppando uno stile personale fatto di figure allungate, luce fredda e selettiva, e una tavolozza controllata dominata da bianchi e neri. La sua produzione, prevalentemente religiosa, coniuga rigore compositivo e intensità spirituale." }
-        ]},
-        { key: "prospero-fontana", name: "Prospero Fontana", styleKey: "manierismo", birthYear: "1512", deathYear: "1597", bio: [
-            { duration: "15s", content: "Pittore manierista bolognese e maestro di una intera generazione di allievi, tra cui i giovani Carracci." }
-        ]},
-        { key: "passarotti", name: "Bartolomeo Passarotti", styleKey: "manierismo", birthYear: "1529", deathYear: "1592", bio: [
-            { duration: "15s", content: "Pittore bolognese noto soprattutto per una ritrattistica incisiva e per scene di genere insolite per il suo tempo." }
-        ]},
-        { key: "calvaert", name: "Denys Calvaert", styleKey: "manierismo", birthYear: "1540 ca.", deathYear: "1619", bio: [
-            { duration: "15s", content: "Pittore fiammingo trasferitosi a Bologna, dove aprì una bottega che formò, tra gli altri, Guido Reni e Domenichino." }
-        ]},
-        { key: "ludovico-carracci", name: "Ludovico Carracci", styleKey: "riforma-carracci", birthYear: "1555", deathYear: "1619", bio: [
-            { duration: "15s", content: "Pittore bolognese, tra i fondatori dell'Accademia degli Incamminati, promotore di un ritorno al naturalismo dopo la stagione manierista." },
-            { duration: "40s", content: "Ludovico Carracci fu, insieme ai cugini Annibale e Agostino, il principale animatore della riforma pittorica bolognese di fine Cinquecento. In reazione all'artificiosità tardo-manierista, i Carracci promossero un ritorno allo studio dal vero, alla resa naturale degli affetti e a una composizione più chiara e leggibile, ponendo le basi per la pittura barocca del secolo successivo." }
-        ]},
-        { key: "annibale-carracci", name: "Annibale Carracci", styleKey: "riforma-carracci", birthYear: "1560", deathYear: "1609", bio: [
-            { duration: "15s", content: "Il più celebre dei tre cugini Carracci, attivo tra Bologna e Roma, dove affrescò la celebre Galleria di Palazzo Farnese." }
-        ]},
-        { key: "agostino-carracci", name: "Agostino Carracci", styleKey: "riforma-carracci", birthYear: "1557", deathYear: "1602", bio: [
-            { duration: "15s", content: "Pittore e incisore, il più colto dei tre Carracci, attivo tra teoria dell'arte e pratica pittorica." }
-        ]},
-        { key: "guido-reni", name: "Guido Reni", styleKey: "classicismo-barocco", birthYear: "1575", deathYear: "1642", bio: [
-            { duration: "3s",  content: "Il maggiore pittore bolognese del Seicento." },
-            { duration: "15s", content: "Formatosi presso Denys Calvaert e poi nell'Accademia dei Carracci, Guido Reni sviluppò uno stile classicista raffinato che influenzò profondamente la pittura europea del suo tempo." },
-            { duration: "40s", content: "Guido Reni è considerato il vertice del classicismo secentesco bolognese. Dopo la formazione presso Denys Calvaert e l'esperienza decisiva nell'Accademia dei Carracci, sviluppò uno stile fatto di colori chiari e levigati, composizioni equilibrate e figure di una bellezza idealizzata, capace di conciliare intensità spirituale e perfezione formale: un modello di riferimento per generazioni di pittori in tutta Europa." }
-        ]},
-        { key: "domenichino", name: "Domenichino", styleKey: "classicismo-barocco", birthYear: "1581", deathYear: "1641", bio: [
-            { duration: "15s", content: "Domenico Zampieri, detto Domenichino, tra i massimi esponenti del classicismo carraccesco, attivo tra Bologna, Roma e Napoli." }
-        ]},
-        { key: "tiarini", name: "Alessandro Tiarini", styleKey: "classicismo-barocco", birthYear: "1577", deathYear: "1668", bio: [
-            { duration: "15s", content: "Pittore bolognese, allievo dei Carracci, noto per una resa intensa e drammatica dei soggetti sacri." }
-        ]},
-        { key: "canuti", name: "Domenico Maria Canuti", styleKey: "classicismo-barocco", birthYear: "1620", deathYear: "1684", bio: [
-            { duration: "15s", content: "Pittore bolognese specializzato in grandi decorazioni ad affresco, tra cui la celebre Apoteosi di Ercole a Palazzo Pepoli." }
-        ]},
-        { key: "guercino", name: "Guercino", styleKey: "naturalismo-luministico", birthYear: "1591", deathYear: "1666", bio: [
-            { duration: "15s", content: "Giovanni Francesco Barbieri, detto Guercino per uno strabismo di gioventù, pittore di Cento noto per un naturalismo dai forti contrasti di luce." },
-            { duration: "40s", content: "Attivo prevalentemente a Cento e poi a Bologna, Guercino costruisce le sue prime opere su un naturalismo intenso e drammatico, con contrasti di luce e ombra ancora debitori della lezione caravaggesca filtrata attraverso l'ambiente emiliano; nella maturità la sua tavolozza si schiarisce, avvicinandosi progressivamente al classicismo di Guido Reni." }
-        ]},
-        { key: "sirani", name: "Elisabetta Sirani", styleKey: "naturalismo-luministico", birthYear: "1638", deathYear: "1665", bio: [
-            { duration: "15s", content: "Pittrice bolognese, tra le artiste professioniste più note d'Europa nel suo tempo, con una carriera brevissima ma straordinariamente prolifica." }
-        ]},
-        { key: "crespi", name: "Giuseppe Maria Crespi", styleKey: "settecento", birthYear: "1665", deathYear: "1747", bio: [
-            { duration: "15s", content: "Pittore bolognese noto per aver introdotto nella grande pittura temi di vita quotidiana, con un naturalismo informale e a tratti irriverente." }
-        ]},
-        { key: "creti", name: "Donato Creti", styleKey: "settecento", birthYear: "1671", deathYear: "1749", bio: [
-            { duration: "15s", content: "Pittore bolognese erede della tradizione classicista di Guido Reni, noto per un'eleganza compositiva raffinata e levigata." }
-        ]},
-        { key: "franceschini", name: "Marcantonio Franceschini", styleKey: "settecento", birthYear: "1648", deathYear: "1729", bio: [
-            { duration: "15s", content: "Pittore bolognese di formazione classicista, attivo in numerose decorazioni religiose e profane tra Sei e Settecento." }
-        ]},
-        { key: "gandolfi", name: "Gaetano Gandolfi", styleKey: "settecento", birthYear: "1734", deathYear: "1802", bio: [
-            { duration: "15s", content: "Pittore bolognese di fine Settecento, con una maniera brillante che guarda già al gusto neoclassico." }
-        ]},
+        {
+            key: "maestro-sangiacomo", name: "Maestro di San Giacomo", styleKey: "gotico", birthYear: "attivo XIII sec.", deathYear: "", bio: [
+                { duration: "15s", content: "Pittore anonimo attivo a Bologna nel pieno Duecento, convenzionalmente identificato dalla pala per cui è oggi noto." }
+            ]
+        },
+        {
+            key: "vitale-da-bologna", name: "Vitale da Bologna", styleKey: "gotico", birthYear: "1309 ca.", deathYear: "1360 ca.", bio: [
+                { duration: "15s", content: "Il maggiore pittore bolognese del Trecento, noto per un linearismo vivace e quasi nervoso che anima le sue figure di un dinamismo insolito per l'epoca." },
+                { duration: "40s", content: "Vitale da Bologna è la personalità più forte della pittura trecentesca emiliana. Rispetto alla compostezza della tradizione bizantineggiante, le sue figure si muovono con un dinamismo quasi frenetico, i panneggi si arricciano in pieghe nervose e i volti si caricano di un'espressività diretta e popolare, che gli sarà valsa fama ben oltre i confini di Bologna." }
+            ]
+        },
+        {
+            key: "simone-crocifissi", name: "Simone dei Crocifissi", styleKey: "gotico", birthYear: "1330 ca.", deathYear: "1399", bio: [
+                { duration: "15s", content: "Pittore bolognese specializzato in croci dipinte e pale devozionali, da cui deriva il soprannome con cui è conosciuto." }
+            ]
+        },
+        {
+            key: "lippo-dalmasio", name: "Lippo di Dalmasio", styleKey: "gotico", birthYear: "1352 ca.", deathYear: "1410 ca.", bio: [
+                { duration: "15s", content: "Detto \"Lippo delle Madonne\" per la dolcezza con cui dipinse ripetutamente il tema della Vergine col Bambino." }
+            ]
+        },
+        {
+            key: "jacopo-di-paolo", name: "Jacopo di Paolo", styleKey: "gotico", birthYear: "1360 ca.", deathYear: "1426 ca.", bio: [
+                { duration: "15s", content: "Pittore bolognese attivo tra fine Trecento e primo Quattrocento, tra gli ultimi interpreti della tradizione tardogotica cittadina." }
+            ]
+        },
+        {
+            key: "francesco-francia", name: "Francesco Francia", styleKey: "rinascimento-bolognese", birthYear: "1447 ca.", deathYear: "1517", bio: [
+                { duration: "15s", content: "Orafo e pittore, il protagonista assoluto della pittura bolognese tra Quattrocento e primo Cinquecento." },
+                { duration: "40s", content: "Formatosi come orafo prima ancora che come pittore, Francesco Francia diventa nel giro di pochi anni la figura di riferimento della pittura bolognese di fine Quattrocento, capace di fondere la precisione del disegno con una tavolozza luminosa e una compostezza compositiva che guarda già al classicismo del secolo successivo." }
+            ]
+        },
+        {
+            key: "amico-aspertini", name: "Amico Aspertini", styleKey: "cinquecento-maturo", birthYear: "1474", deathYear: "1552", bio: [
+                { duration: "15s", content: "Pittore bolognese dallo stile eccentrico e irregolare, lontano dalla compostezza classica dei contemporanei." }
+            ]
+        },
+        {
+            key: "raffaello", name: "Raffaello Sanzio", styleKey: "cinquecento-maturo", birthYear: "1483", deathYear: "1520", bio: [
+                { duration: "3s", content: "Pittore e architetto, tra i massimi protagonisti del Rinascimento italiano." },
+                { duration: "15s", content: "Attivo tra Urbino, Firenze e Roma, Raffaello realizzò per Bologna una delle sue opere più celebri, commissionata per la cappella di famiglia di Elena Duglioli in San Giovanni in Monte." },
+                { duration: "40s", content: "Raffaello Sanzio è una delle figure centrali del Rinascimento maturo, capace di sintetizzare la lezione di Leonardo e Michelangelo in un linguaggio di equilibrio, grazia e chiarezza compositiva che diverrà modello per generazioni di pittori. La sua Estasi di Santa Cecilia, dipinta per Bologna, univa da subito fama internazionale e un legame diretto con la città." }
+            ]
+        },
+        {
+            key: "parmigianino", name: "Parmigianino", styleKey: "manierismo", birthYear: "1503", deathYear: "1540", bio: [
+                { duration: "15s", content: "Francesco Mazzola, detto Parmigianino, tra i creatori dello stile manierista emiliano; cugino e maestro diretto di Girolamo Mazzola Bedoli." }
+            ]
+        },
+        {
+            key: "bedoli", name: "Girolamo Mazzola Bedoli", styleKey: "manierismo", birthYear: "1500 ca.", deathYear: "1569", bio: [
+                { duration: "3s", content: "Pittore manierista emiliano del Cinquecento." },
+                { duration: "15s", content: "Pittore emiliano attivo nel Cinquecento, allievo e collaboratore del Parmigianino, di cui riprese l'eleganza formale e la ricerca cromatica." },
+                { duration: "40s", content: "Girolamo Mazzola Bedoli fu tra i protagonisti del manierismo emiliano. Cugino e collaboratore del Parmigianino, ne assimilò l'eleganza formale e la costruzione rarefatta dello spazio, sviluppando uno stile personale fatto di figure allungate, luce fredda e selettiva, e una tavolozza controllata dominata da bianchi e neri. La sua produzione, prevalentemente religiosa, coniuga rigore compositivo e intensità spirituale." }
+            ]
+        },
+        {
+            key: "prospero-fontana", name: "Prospero Fontana", styleKey: "manierismo", birthYear: "1512", deathYear: "1597", bio: [
+                { duration: "15s", content: "Pittore manierista bolognese e maestro di una intera generazione di allievi, tra cui i giovani Carracci." }
+            ]
+        },
+        {
+            key: "passarotti", name: "Bartolomeo Passarotti", styleKey: "manierismo", birthYear: "1529", deathYear: "1592", bio: [
+                { duration: "15s", content: "Pittore bolognese noto soprattutto per una ritrattistica incisiva e per scene di genere insolite per il suo tempo." }
+            ]
+        },
+        {
+            key: "calvaert", name: "Denys Calvaert", styleKey: "manierismo", birthYear: "1540 ca.", deathYear: "1619", bio: [
+                { duration: "15s", content: "Pittore fiammingo trasferitosi a Bologna, dove aprì una bottega che formò, tra gli altri, Guido Reni e Domenichino." }
+            ]
+        },
+        {
+            key: "ludovico-carracci", name: "Ludovico Carracci", styleKey: "riforma-carracci", birthYear: "1555", deathYear: "1619", bio: [
+                { duration: "15s", content: "Pittore bolognese, tra i fondatori dell'Accademia degli Incamminati, promotore di un ritorno al naturalismo dopo la stagione manierista." },
+                { duration: "40s", content: "Ludovico Carracci fu, insieme ai cugini Annibale e Agostino, il principale animatore della riforma pittorica bolognese di fine Cinquecento. In reazione all'artificiosità tardo-manierista, i Carracci promossero un ritorno allo studio dal vero, alla resa naturale degli affetti e a una composizione più chiara e leggibile, ponendo le basi per la pittura barocca del secolo successivo." }
+            ]
+        },
+        {
+            key: "annibale-carracci", name: "Annibale Carracci", styleKey: "riforma-carracci", birthYear: "1560", deathYear: "1609", bio: [
+                { duration: "15s", content: "Il più celebre dei tre cugini Carracci, attivo tra Bologna e Roma, dove affrescò la celebre Galleria di Palazzo Farnese." }
+            ]
+        },
+        {
+            key: "agostino-carracci", name: "Agostino Carracci", styleKey: "riforma-carracci", birthYear: "1557", deathYear: "1602", bio: [
+                { duration: "15s", content: "Pittore e incisore, il più colto dei tre Carracci, attivo tra teoria dell'arte e pratica pittorica." }
+            ]
+        },
+        {
+            key: "guido-reni", name: "Guido Reni", styleKey: "classicismo-barocco", birthYear: "1575", deathYear: "1642", bio: [
+                { duration: "3s", content: "Il maggiore pittore bolognese del Seicento." },
+                { duration: "15s", content: "Formatosi presso Denys Calvaert e poi nell'Accademia dei Carracci, Guido Reni sviluppò uno stile classicista raffinato che influenzò profondamente la pittura europea del suo tempo." },
+                { duration: "40s", content: "Guido Reni è considerato il vertice del classicismo secentesco bolognese. Dopo la formazione presso Denys Calvaert e l'esperienza decisiva nell'Accademia dei Carracci, sviluppò uno stile fatto di colori chiari e levigati, composizioni equilibrate e figure di una bellezza idealizzata, capace di conciliare intensità spirituale e perfezione formale: un modello di riferimento per generazioni di pittori in tutta Europa." }
+            ]
+        },
+        {
+            key: "domenichino", name: "Domenichino", styleKey: "classicismo-barocco", birthYear: "1581", deathYear: "1641", bio: [
+                { duration: "15s", content: "Domenico Zampieri, detto Domenichino, tra i massimi esponenti del classicismo carraccesco, attivo tra Bologna, Roma e Napoli." }
+            ]
+        },
+        {
+            key: "tiarini", name: "Alessandro Tiarini", styleKey: "classicismo-barocco", birthYear: "1577", deathYear: "1668", bio: [
+                { duration: "15s", content: "Pittore bolognese, allievo dei Carracci, noto per una resa intensa e drammatica dei soggetti sacri." }
+            ]
+        },
+        {
+            key: "canuti", name: "Domenico Maria Canuti", styleKey: "classicismo-barocco", birthYear: "1620", deathYear: "1684", bio: [
+                { duration: "15s", content: "Pittore bolognese specializzato in grandi decorazioni ad affresco, tra cui la celebre Apoteosi di Ercole a Palazzo Pepoli." }
+            ]
+        },
+        {
+            key: "guercino", name: "Guercino", styleKey: "naturalismo-luministico", birthYear: "1591", deathYear: "1666", bio: [
+                { duration: "15s", content: "Giovanni Francesco Barbieri, detto Guercino per uno strabismo di gioventù, pittore di Cento noto per un naturalismo dai forti contrasti di luce." },
+                { duration: "40s", content: "Attivo prevalentemente a Cento e poi a Bologna, Guercino costruisce le sue prime opere su un naturalismo intenso e drammatico, con contrasti di luce e ombra ancora debitori della lezione caravaggesca filtrata attraverso l'ambiente emiliano; nella maturità la sua tavolozza si schiarisce, avvicinandosi progressivamente al classicismo di Guido Reni." }
+            ]
+        },
+        {
+            key: "sirani", name: "Elisabetta Sirani", styleKey: "naturalismo-luministico", birthYear: "1638", deathYear: "1665", bio: [
+                { duration: "15s", content: "Pittrice bolognese, tra le artiste professioniste più note d'Europa nel suo tempo, con una carriera brevissima ma straordinariamente prolifica." }
+            ]
+        },
+        {
+            key: "crespi", name: "Giuseppe Maria Crespi", styleKey: "settecento", birthYear: "1665", deathYear: "1747", bio: [
+                { duration: "15s", content: "Pittore bolognese noto per aver introdotto nella grande pittura temi di vita quotidiana, con un naturalismo informale e a tratti irriverente." }
+            ]
+        },
+        {
+            key: "creti", name: "Donato Creti", styleKey: "settecento", birthYear: "1671", deathYear: "1749", bio: [
+                { duration: "15s", content: "Pittore bolognese erede della tradizione classicista di Guido Reni, noto per un'eleganza compositiva raffinata e levigata." }
+            ]
+        },
+        {
+            key: "franceschini", name: "Marcantonio Franceschini", styleKey: "settecento", birthYear: "1648", deathYear: "1729", bio: [
+                { duration: "15s", content: "Pittore bolognese di formazione classicista, attivo in numerose decorazioni religiose e profane tra Sei e Settecento." }
+            ]
+        },
+        {
+            key: "gandolfi", name: "Gaetano Gandolfi", styleKey: "settecento", birthYear: "1734", deathYear: "1802", bio: [
+                { duration: "15s", content: "Pittore bolognese di fine Settecento, con una maniera brillante che guarda già al gusto neoclassico." }
+            ]
+        },
         // I tre autori seguenti sono usati nel secondo museo (Galleria Estense di
         // Modena, vedi più sotto), non nella Pinacoteca di Bologna.
-        { key: "correggio", name: "Antonio Allegri, detto il Correggio", styleKey: "corte-estense", birthYear: "1489 ca.", deathYear: "1534", bio: [
-            { duration: "15s", content: "Pittore parmense tra i massimi del Rinascimento emiliano, noto per gli affreschi illusionistici delle cupole di Parma e per una luce morbida e avvolgente." },
-            { duration: "40s", content: "Antonio Allegri, detto il Correggio dal nome del suo paese natale, sviluppa uno stile personalissimo fatto di sfumature morbide, scorci audaci e una luce calda e avvolgente. I suoi affreschi illusionistici nelle cupole di Parma anticipano soluzioni spaziali che saranno riprese dal Barocco un secolo più tardi, mentre le sue opere da cavalletto uniscono grazia formale e intensità emotiva." }
-        ]},
-        { key: "dossodossi", name: "Dosso Dossi", styleKey: "corte-estense", birthYear: "1489 ca.", deathYear: "1542", bio: [
-            { duration: "15s", content: "Pittore ferrarese, per anni artista di corte degli Este, noto per una tavolozza ricca e per soggetti mitologici e fantastici." }
-        ]},
-        { key: "bernini", name: "Gian Lorenzo Bernini", styleKey: "scultura-barocca-romana", birthYear: "1598", deathYear: "1680", bio: [
-            { duration: "15s", content: "Scultore e architetto romano, il protagonista assoluto del Barocco italiano." },
-            { duration: "40s", content: "Gian Lorenzo Bernini è la figura dominante della scultura e dell'architettura barocca a Roma nel Seicento. Il suo marmo ha una capacità quasi teatrale di rendere il movimento e l'espressione, trasformando la materia inerte in carne, panneggi e sguardi vividi. Il busto del duca Francesco I d'Este, oggi alla Galleria Estense di Modena, è tra le sue prove più celebri nel genere del ritratto scolpito." }
-        ]}
+        {
+            key: "correggio", name: "Antonio Allegri, detto il Correggio", styleKey: "corte-estense", birthYear: "1489 ca.", deathYear: "1534", bio: [
+                { duration: "15s", content: "Pittore parmense tra i massimi del Rinascimento emiliano, noto per gli affreschi illusionistici delle cupole di Parma e per una luce morbida e avvolgente." },
+                { duration: "40s", content: "Antonio Allegri, detto il Correggio dal nome del suo paese natale, sviluppa uno stile personalissimo fatto di sfumature morbide, scorci audaci e una luce calda e avvolgente. I suoi affreschi illusionistici nelle cupole di Parma anticipano soluzioni spaziali che saranno riprese dal Barocco un secolo più tardi, mentre le sue opere da cavalletto uniscono grazia formale e intensità emotiva." }
+            ]
+        },
+        {
+            key: "dossodossi", name: "Dosso Dossi", styleKey: "corte-estense", birthYear: "1489 ca.", deathYear: "1542", bio: [
+                { duration: "15s", content: "Pittore ferrarese, per anni artista di corte degli Este, noto per una tavolozza ricca e per soggetti mitologici e fantastici." }
+            ]
+        },
+        {
+            key: "bernini", name: "Gian Lorenzo Bernini", styleKey: "scultura-barocca-romana", birthYear: "1598", deathYear: "1680", bio: [
+                { duration: "15s", content: "Scultore e architetto romano, il protagonista assoluto del Barocco italiano." },
+                { duration: "40s", content: "Gian Lorenzo Bernini è la figura dominante della scultura e dell'architettura barocca a Roma nel Seicento. Il suo marmo ha una capacità quasi teatrale di rendere il movimento e l'espressione, trasformando la materia inerte in carne, panneggi e sguardi vividi. Il busto del duca Francesco I d'Este, oggi alla Galleria Estense di Modena, è tra le sue prove più celebri nel genere del ritratto scolpito." }
+            ]
+        }
     ];
     const authors = {};
     for (const a of authorsData) authors[a.key] = await Author.create({ name: a.name, bio: a.bio, birthYear: a.birthYear, deathYear: a.deathYear });
@@ -284,7 +362,7 @@ async function seed() {
 
     // ---------- Generazione delle 200 opere ----------
 
-    const MARY_SAINTS  = ["Petronio", "Domenico", "Francesco d'Assisi", "Giovanni Battista", "Agostino", "Nicola da Tolentino", "Giacomo Maggiore", "Michele Arcangelo", "Bernardo", "Antonio da Padova", "Rocco", "Giorgio"];
+    const MARY_SAINTS = ["Petronio", "Domenico", "Francesco d'Assisi", "Giovanni Battista", "Agostino", "Nicola da Tolentino", "Giacomo Maggiore", "Michele Arcangelo", "Bernardo", "Antonio da Padova", "Rocco", "Giorgio"];
     const MARY_SAINTS_F = ["Caterina d'Alessandria", "Lucia", "Apollonia", "Chiara", "Agata", "Barbara", "Maria Maddalena"];
     const MARTYR_SAINTS = ["San Sebastiano", "San Lorenzo", "Santa Caterina d'Alessandria", "Sant'Agata", "Sant'Apollonia", "San Bartolomeo", "San Giorgio", "Santa Barbara", "San Vitale", "San Procolo"];
     const NOBLE_NAMES = [
@@ -365,120 +443,120 @@ async function seed() {
     const TEXT_BANK = {
         madonna: {
             elementare: (f) => [
-                { duration: "3s",  content: `Maria con in braccio Gesù bambino, dipinta da ${f.authorName}.` },
+                { duration: "3s", content: `Maria con in braccio Gesù bambino, dipinta da ${f.authorName}.` },
                 { duration: "15s", content: `In questo quadro Maria tiene in braccio il piccolo Gesù. Intorno a loro ci sono dei santi che li accompagnano. I colori sono caldi e la scena trasmette calma e affetto.` },
                 { duration: "40s", content: `Guarda come Maria tiene delicatamente in braccio Gesù bambino: è un momento di grande tenerezza, dipinto da ${f.authorName} intorno al ${f.year}. I santi ai lati non parlano, ma la loro presenza racconta che questa immagine serviva per pregare, non solo per essere ammirata. Prova a cercare con lo sguardo i dettagli dei vestiti e delle mani: ogni particolare è stato pensato con cura.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `Tema devozionale tra i più diffusi della pittura religiosa: la Vergine in trono o in piedi con il Bambino, affiancata da santi che ne rafforzano il carattere di pala d'altare. Datazione: ${f.year} ca., ${f.technique.toLowerCase()}.` },
                 { duration: "40s", content: `L'opera, realizzata da ${f.authorName} (${f.authorSpan}) intorno al ${f.year}, appartiene al filone iconografico della Sacra Conversazione, particolarmente diffuso nella pittura devozionale bolognese. Lo stile ${f.styleName.toLowerCase()} si riconosce nel modellato delle figure e nell'impianto compositivo, coerente con le opere coeve esposte nella ${f.roomName}. Come molti dipinti della collezione, potrebbe provenire da una delle chiese soppresse a Bologna tra fine Settecento e Ottocento, come ${pickChurch()}.` }
             ]
         },
         assunta: {
             elementare: (f) => [
-                { duration: "3s",  content: `Maria che sale in cielo, dipinta da ${f.authorName}.` },
+                { duration: "3s", content: `Maria che sale in cielo, dipinta da ${f.authorName}.` },
                 { duration: "15s", content: `Questo quadro racconta un momento speciale: Maria viene portata in cielo, circondata da angeli che la accompagnano verso l'alto.` },
                 { duration: "40s", content: `In questo dipinto Maria sale verso il cielo, sollevata da una schiera di angeli. ${f.authorName} ha dipinto la scena intorno al ${f.year}, usando colori luminosi per la parte alta del quadro e toni più scuri in basso, dove restano gli apostoli stupiti. Prova a seguire con lo sguardo il movimento verso l'alto: è pensato apposta per guidare i tuoi occhi.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `L'Assunzione della Vergine, tema caro alla pittura controriformata, qui interpretato da ${f.authorName} con un impianto compositivo tipico dello stile ${f.styleName.toLowerCase()}.` },
                 { duration: "40s", content: `La composizione contrappone la zona terrena, affollata dagli apostoli in pose concitate, a quella celeste, dove la Vergine ascende sorretta da un coro angelico. ${f.authorName} (${f.authorSpan}) realizza l'opera intorno al ${f.year}, con soluzioni luministiche riconducibili allo stile ${f.styleName.toLowerCase()}, in dialogo con le opere coeve della ${f.roomName}.` }
             ]
         },
         pieta: {
             elementare: (f) => [
-                { duration: "3s",  content: `Il dolore di Maria davanti a Gesù, dipinto da ${f.authorName}.` },
+                { duration: "3s", content: `Il dolore di Maria davanti a Gesù, dipinto da ${f.authorName}.` },
                 { duration: "15s", content: `Questo quadro mostra un momento molto triste: Maria tiene tra le braccia il corpo di Gesù, circondata da persone che condividono il suo dolore.` },
                 { duration: "40s", content: `${f.authorName} ha dipinto questa scena molto commovente intorno al ${f.year}: Maria sostiene il corpo di Gesù appena tolto dalla croce, mentre altre persone intorno piangono e si disperano. I colori sono scuri e pesanti, per far sentire tutta la tristezza del momento. Osserva le espressioni dei volti: raccontano il dolore meglio di tante parole.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `Il compianto sul corpo di Cristo, tema di forte intensità drammatica, reso da ${f.authorName} con un linguaggio coerente allo stile ${f.styleName.toLowerCase()}.` },
                 { duration: "40s", content: `Realizzata intorno al ${f.year} da ${f.authorName} (${f.authorSpan}), l'opera concentra la tensione drammatica nella figura della Vergine e del Cristo morto, circondati dalle altre figure del compianto. La tavolozza scura e il forte contrasto chiaroscurale sono coerenti con lo stile ${f.styleName.toLowerCase()}, e trovano confronto diretto con le opere esposte nella ${f.roomName}.` }
             ]
         },
         annunciazione: {
             elementare: (f) => [
-                { duration: "3s",  content: `L'angelo porta una notizia importante a Maria.` },
+                { duration: "3s", content: `L'angelo porta una notizia importante a Maria.` },
                 { duration: "15s", content: `In questo quadro un angelo arriva a portare a Maria una notizia molto importante. Maria lo ascolta con sorpresa e attenzione.` },
                 { duration: "40s", content: `${f.authorName} racconta in questo dipinto, intorno al ${f.year}, il momento in cui un angelo arriva davanti a Maria per parlarle. Guarda come sono disposte le due figure: l'angelo sembra appena arrivato in volo, mentre Maria si volta sorpresa. Anche un giglio, simbolo di purezza, compare spesso in questo tipo di scena: prova a cercarlo.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `L'Annunciazione, tra i temi più rappresentati della pittura religiosa occidentale, qui interpretata da ${f.authorName} secondo i modi dello stile ${f.styleName.toLowerCase()}.` },
                 { duration: "40s", content: `${f.authorName} (${f.authorSpan}) imposta la scena secondo lo schema consolidato dell'iconografia dell'Annunciazione, con l'angelo e la Vergine contrapposti entro uno spazio costruito con cura prospettica. L'opera, datata al ${f.year} ca., riflette le soluzioni compositive tipiche dello stile ${f.styleName.toLowerCase()}, coerenti con il resto della ${f.roomName}.` }
             ]
         },
         sacraFamiglia: {
             elementare: (f) => [
-                { duration: "3s",  content: `Gesù bambino con la sua famiglia, dipinto da ${f.authorName}.` },
+                { duration: "3s", content: `Gesù bambino con la sua famiglia, dipinto da ${f.authorName}.` },
                 { duration: "15s", content: `Questo quadro mostra una scena di famiglia: Gesù bambino insieme a Maria e alle persone che si prendono cura di lui.` },
                 { duration: "40s", content: `${f.authorName} dipinge intorno al ${f.year} un momento familiare e affettuoso: Gesù bambino gioca o riposa vicino a Maria, mentre altre figure li osservano con affetto. La scena è pensata per sembrare vicina e vera, come un momento di vita quotidiana, anche se racconta una storia sacra.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `Variante intima del tema mariano, con la Sacra Famiglia colta in un momento di quotidianità affettuosa, secondo i modi dello stile ${f.styleName.toLowerCase()}.` },
                 { duration: "40s", content: `Databile al ${f.year} ca., l'opera di ${f.authorName} (${f.authorSpan}) propone una lettura più intima e domestica del tema mariano, con un impianto compositivo raccolto e una gamma cromatica calda, in linea con lo stile ${f.styleName.toLowerCase()} e con le altre opere della ${f.roomName}.` }
             ]
         },
         deposizione: {
             elementare: (f) => [
-                { duration: "3s",  content: `Il corpo di Gesù viene tolto dalla croce.` },
+                { duration: "3s", content: `Il corpo di Gesù viene tolto dalla croce.` },
                 { duration: "15s", content: `Questo quadro mostra il momento in cui il corpo di Gesù viene tolto dalla croce, sorretto con cura dalle persone intorno a lui.` },
                 { duration: "40s", content: `${f.authorName} racconta in questo dipinto, intorno al ${f.year}, un momento molto delicato: alcune persone sorreggono con cura il corpo di Gesù mentre lo calano dalla croce. I gesti sono lenti e attenti, i volti seri. Guarda come i corpi si intrecciano tra loro per sostenere quel peso, sia fisico che emotivo.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `La Deposizione dalla croce, tema di grande impegno compositivo, interpretato da ${f.authorName} con soluzioni tipiche dello stile ${f.styleName.toLowerCase()}.` },
                 { duration: "40s", content: `L'opera, attribuita a ${f.authorName} (${f.authorSpan}) e databile al ${f.year} ca., organizza le figure in un intreccio piramidale attorno al corpo del Cristo, secondo una soluzione compositiva ricorrente nello stile ${f.styleName.toLowerCase()}. Il confronto con le opere coeve della ${f.roomName} ne mette in luce l'aggiornamento sulle novità stilistiche del periodo.` }
             ]
         },
         martirio: {
             elementare: (f) => [
-                { duration: "3s",  content: `${f.title}, dipinto da ${f.authorName}.` },
+                { duration: "3s", content: `${f.title}, dipinto da ${f.authorName}.` },
                 { duration: "15s", content: `Questo quadro racconta la storia di un santo che ha affrontato un momento molto difficile per restare fedele a ciò in cui credeva.` },
                 { duration: "40s", content: `${f.authorName} dipinge intorno al ${f.year} un momento drammatico della vita del santo raffigurato. Anche se la scena può sembrare forte, il messaggio che l'artista voleva trasmettere era di coraggio e fedeltà. Osserva l'espressione del volto del santo: è composta e serena, nonostante tutto.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `Scena agiografica di forte impatto drammatico, tema ricorrente nella pittura controriformata, qui reso da ${f.authorName} secondo i modi dello stile ${f.styleName.toLowerCase()}.` },
                 { duration: "40s", content: `Datata al ${f.year} ca., l'opera di ${f.authorName} (${f.authorSpan}) affronta il tema del martirio con un linguaggio coerente allo stile ${f.styleName.toLowerCase()}: il corpo del santo diventa veicolo di intensità emotiva, mentre la composizione guida lo sguardo dello spettatore verso il volto, punto di massima tensione psicologica. Confrontabile con le altre opere della ${f.roomName}.` }
             ]
         },
         ritratto: {
             elementare: (f) => [
-                { duration: "3s",  content: `${f.title}, dipinto da ${f.authorName}.` },
+                { duration: "3s", content: `${f.title}, dipinto da ${f.authorName}.` },
                 { duration: "15s", content: `Questo quadro mostra il volto di una persona realmente esistita. L'artista ha cercato di renderla il più somigliante possibile.` },
                 { duration: "40s", content: `${f.authorName} dipinge questo ritratto intorno al ${f.year}, cercando di catturare non solo l'aspetto ma anche il carattere della persona ritratta. Guarda gli abiti e gli oggetti intorno a lei: spesso servivano a mostrare il suo ruolo sociale o la sua professione, un po' come una fotografia racconterebbe oggi.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `Ritratto di rappresentanza tipico della ritrattistica bolognese, in cui abiti e attributi concorrono a definire lo status sociale dell'effigiato.` },
                 { duration: "40s", content: `Eseguito da ${f.authorName} (${f.authorSpan}) intorno al ${f.year}, il ritratto segue le convenzioni della ritrattistica di rappresentanza bolognese: posa composta, sfondo neutro, abiti e attributi scelti per comunicare status e ruolo sociale dell'effigiato. Lo stile ${f.styleName.toLowerCase()} emerge soprattutto nella resa del volto e delle mani.` }
             ]
         },
         mitologia: {
             elementare: (f) => [
-                { duration: "3s",  content: `${f.title}, dipinto da ${f.authorName}.` },
+                { duration: "3s", content: `${f.title}, dipinto da ${f.authorName}.` },
                 { duration: "15s", content: `Questo quadro racconta una storia antica, tramandata dai racconti degli antichi greci e romani, con dèi ed eroi protagonisti.` },
                 { duration: "40s", content: `${f.authorName} dipinge intorno al ${f.year} una scena tratta dai racconti mitologici classici. Anche se i personaggi non sono reali, la storia serviva a parlare di temi importanti come il coraggio, l'amore o la giustizia. Guarda i colori vivaci e i gesti dei personaggi: raccontano un momento di grande movimento.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `Soggetto mitologico tratto dalla tradizione classica, genere che conosce grande fortuna nelle collezioni private bolognesi tra Sei e Settecento.` },
                 { duration: "40s", content: `Realizzata da ${f.authorName} (${f.authorSpan}) intorno al ${f.year}, l'opera attinge al repertorio mitologico classico, molto richiesto dalle collezioni private del tempo come tema alternativo alla pittura religiosa. Lo stile ${f.styleName.toLowerCase()} si riconosce nell'equilibrio compositivo e nella resa idealizzata delle figure.` }
             ]
         },
         genere: {
             elementare: (f) => [
-                { duration: "3s",  content: `${f.title}, dipinto da ${f.authorName}.` },
+                { duration: "3s", content: `${f.title}, dipinto da ${f.authorName}.` },
                 { duration: "15s", content: `Questo quadro mostra una scena di vita di tutti i giorni, con persone comuni intente nelle loro attività quotidiane.` },
                 { duration: "40s", content: `${f.authorName} dipinge intorno al ${f.year} una scena presa dalla vita di ogni giorno: non re, non santi, ma persone comuni. Era una scelta insolita per l'epoca, che preferiva soggetti più solenni. Guarda i dettagli degli oggetti e degli ambienti: raccontano com'era la vita quotidiana in quel periodo.` }
             ],
             medio: (f) => [
-                { duration: "3s",  content: `${f.title}, ${f.authorName}, ${f.year}.` },
+                { duration: "3s", content: `${f.title}, ${f.authorName}, ${f.year}.` },
                 { duration: "15s", content: `Scena di genere, filone che introduce nella grande pittura bolognese soggetti tratti dalla vita quotidiana, in contrasto con la tradizione religiosa e mitologica dominante.` },
                 { duration: "40s", content: `Databile al ${f.year} ca., l'opera di ${f.authorName} (${f.authorSpan}) si inserisce nel filone della pittura di genere, che porta nella grande pittura soggetti quotidiani fino ad allora relegati ai margini. Lo sguardo informale sulla scena, coerente con lo stile ${f.styleName.toLowerCase()}, anticipa sensibilità più tarde nella pittura europea.` }
             ]
@@ -629,7 +707,7 @@ async function seed() {
     // secondo livello di approfondimento tematico oltre ad artista/stile,
     // per dimostrare più a fondo il meccanismo "dimmi di più" per dominio.
     const extraDomainTargets = [
-        { entry: artworksBologna[2],  domain: "materiali", content: `Il supporto è realizzato secondo le tecniche pittoriche tipiche del periodo di ${authorsData.find((a) => a.key === artworksBologna[2].authorKey).name}, con una preparazione a gesso e colla animale che consentiva stesure sottili e sovrapposte.` },
+        { entry: artworksBologna[2], domain: "materiali", content: `Il supporto è realizzato secondo le tecniche pittoriche tipiche del periodo di ${authorsData.find((a) => a.key === artworksBologna[2].authorKey).name}, con una preparazione a gesso e colla animale che consentiva stesure sottili e sovrapposte.` },
         { entry: artworksBologna[27], domain: "architettura", content: `L'ambientazione architettonica dipinta nello sfondo riflette i canoni prospettici del Quattrocento, con uno spazio costruito secondo una griglia geometrica rigorosa.` },
         { entry: bedoliArtwork, domain: "materiali", content: `Il supporto è una tavola di pioppo, tipica della pittura emiliana del periodo, preparata con gesso e colla animale prima della stesura pittorica a olio. Questa tecnica consentiva velature sottili e sovrapposte, alla base della resa fredda e smaltata tipica del manierismo di Bedoli.` },
         { entry: strageInnocenti, domain: "storia", content: `Il soggetto riprende l'episodio evangelico della strage degli innocenti, tema caro alla pittura controriformata per il suo carico drammatico ed emotivo, qui reso da Ludovico Carracci con un naturalismo dei corpi e degli affetti che segna la rottura con la maniera tardo-cinquecentesca.` },
@@ -679,10 +757,10 @@ async function seed() {
         },
         services: ["bookshop", "audioguide"],
         rooms: [
-            { name: "Sala del Correggio",                       floor: 1, bounds: { x: 5,  y: 10, width: 22, height: 80 } },
-            { name: "Sala della pittura ferrarese ed emiliana",  floor: 1, bounds: { x: 29, y: 10, width: 22, height: 80 } },
-            { name: "Sala della scultura estense",               floor: 1, bounds: { x: 53, y: 10, width: 20, height: 80 } },
-            { name: "Sala del Seicento emiliano",                floor: 2, bounds: { x: 5,  y: 10, width: 30, height: 80 } }
+            { name: "Sala del Correggio", floor: 1, bounds: { x: 5, y: 10, width: 22, height: 80 } },
+            { name: "Sala della pittura ferrarese ed emiliana", floor: 1, bounds: { x: 29, y: 10, width: 22, height: 80 } },
+            { name: "Sala della scultura estense", floor: 1, bounds: { x: 53, y: 10, width: 20, height: 80 } },
+            { name: "Sala del Seicento emiliano", floor: 2, bounds: { x: 5, y: 10, width: 30, height: 80 } }
         ],
         floorPlans: [
             { floor: 1, imageUrl: "/assets/floorplans/estense-piano1.svg" },
@@ -692,11 +770,11 @@ async function seed() {
     const roomsModena = museum2.rooms;
 
     museum2.pointsOfInterest = [
-        { type: "entrance", name: "Ingresso principale", floor: 1, coords: { x: 2,  y: 50 } },
-        { type: "exit",     name: "Uscita",              floor: 1, coords: { x: 98, y: 50 } },
-        { type: "restroom", name: "Bagni",                floor: 1, roomId: roomsModena[1]._id, coords: { x: 30, y: 90 } },
-        { type: "shop",     name: "Bookshop",              floor: 1, coords: { x: 90, y: 95 } },
-        { type: "elevator", name: "Ascensore",             floor: 1, coords: { x: 50, y: 95 } }
+        { type: "entrance", name: "Ingresso principale", floor: 1, coords: { x: 2, y: 50 } },
+        { type: "exit", name: "Uscita", floor: 1, coords: { x: 98, y: 50 } },
+        { type: "restroom", name: "Bagni", floor: 1, roomId: roomsModena[1]._id, coords: { x: 30, y: 90 } },
+        { type: "shop", name: "Bookshop", floor: 1, coords: { x: 90, y: 95 } },
+        { type: "elevator", name: "Ascensore", floor: 1, coords: { x: 50, y: 95 } }
     ];
     await museum2.save();
     console.log("Secondo museo creato: Galleria Estense di Modena, 4 sale.");
@@ -730,12 +808,12 @@ async function seed() {
         authorKey: "bernini", styleKey: "scultura-barocca-romana", museumObj: museum2, roomsArr: roomsModena, roomIdx: 2, subject: "ritratto", pool: artworksModena,
         customTexts: {
             elementare: [
-                { duration: "3s",  content: "Un ritratto scolpito nel marmo, non dipinto: è di Gian Lorenzo Bernini." },
+                { duration: "3s", content: "Un ritratto scolpito nel marmo, non dipinto: è di Gian Lorenzo Bernini." },
                 { duration: "15s", content: "Questa non è un dipinto ma una scultura di marmo: rappresenta il duca Francesco I d'Este, scolpito da uno degli artisti più famosi del suo tempo, Gian Lorenzo Bernini." },
                 { duration: "40s", content: "Guarda bene: questo volto non è dipinto, è scolpito nel marmo bianco. Bernini è riuscito a far sembrare il marmo quasi vivo, con pieghe morbide negli abiti e uno sguardo intenso. Il duca Francesco I d'Este volle un suo ritratto da uno degli scultori più richiesti d'Europa, anche se non poté mai posare di persona a Roma." }
             ],
             medio: [
-                { duration: "3s",  content: "Busto di Francesco I d'Este, Gian Lorenzo Bernini, 1650-1651, marmo." },
+                { duration: "3s", content: "Busto di Francesco I d'Este, Gian Lorenzo Bernini, 1650-1651, marmo." },
                 { duration: "15s", content: "Capolavoro della ritrattistica scultorea barocca, il busto ritrae il duca di Modena con un realismo psicologico raro per il genere, tipico della maniera di Bernini." },
                 { duration: "40s", content: "Realizzato tra il 1650 e il 1651, il busto di Francesco I d'Este è una delle prove più celebri di Bernini nel genere del ritratto scolpito. Il duca non poté recarsi a Roma per posare di persona, e Bernini lavorò basandosi su un ritratto dipinto inviatogli come riferimento: nonostante questo, riuscì a restituire un'intensità psicologica e un dinamismo dei panneggi che pochi scultori coevi sapevano eguagliare." }
             ]

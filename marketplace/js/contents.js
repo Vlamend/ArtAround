@@ -57,17 +57,17 @@ async function main() {
       renderPagination(totale, visiteCorrenti);
     }
   });
-  mineCheck.addEventListener('change', () =>{
+  mineCheck.addEventListener('change', () => {
     showMine = !showMine;
     const totale = renderArtworksUI();
     renderPagination(totale, opereCorrenti);
   });
-  othersCheck.addEventListener('change', () =>{
+  othersCheck.addEventListener('change', () => {
     showOthers = !showOthers;
     const totale = renderArtworksUI();
     renderPagination(totale, opereCorrenti);
   });
-  sorter.addEventListener("change", (v)  => {
+  sorter.addEventListener("change", (v) => {
     sortBy = v.target.value
     if (whichList === 'a') {
       opereCorrenti = 1;
@@ -101,7 +101,7 @@ async function main() {
 
   // Carichiamo i dati nelle cache
   await Promise.all([loadVisitsData(), loadArtworksData()]);
-  
+
   // Eseguiamo il primo disegno della UI
   if (whichList === 'a') {
     const totale = renderArtworksUI();
@@ -172,10 +172,10 @@ function renderArtworksUI() {
   const ids = new Set(mieFiltrate.map(item => item._id))
   const ordinato = sortElements(pacchetto);
   if (ordinato.length > 0) {
-    for (const artwork of ordinato){
-      ids.has(artwork._id) ? 
-      artworkEL.appendChild(renderArtworkCard(artwork))
-      : artworkEL.appendChild(renderOtherArtworkCard(artwork));
+    for (const artwork of ordinato) {
+      ids.has(artwork._id) ?
+        artworkEL.appendChild(renderArtworkCard(artwork))
+        : artworkEL.appendChild(renderOtherArtworkCard(artwork));
     }
   }
   return totale;
@@ -200,10 +200,10 @@ function renderVisitCard(visit) {
 
   const isMine = visit.author?._id === currentUser.id;
   const info = document.createElement('div');
-  
+
   info.innerHTML = `
     <strong>${visit.title}</strong>
-    ${!visit.isPublic ? 
+    ${!visit.isPublic ?
       ' <span class="status-message">(bozza)</span>' : ''}<br>
     <span class="status-message">${visit.steps?.length ?? 0} tappe ${visit.price ? `· ${visit.price}€` : '· gratuita'}</span>
   `;
@@ -238,9 +238,9 @@ function renderVisitCard(visit) {
   return li;
 }
 
-function sortElements(arr){
-  return [...arr].sort((a, b) =>{
-    switch(sortBy){
+function sortElements(arr) {
+  return [...arr].sort((a, b) => {
+    switch (sortBy) {
       case 'title-asc':
         return a.title.localeCompare(b.title);
       case 'title-desc':
@@ -259,7 +259,7 @@ function renderPagination(totalItems, currentPage) {
   paginationInfo.textContent = totalItems === 0
     ? '0-0 di 0'
     : `${(currentPage - 1) * paginazione + 1}–${Math.min(currentPage * paginazione, totalItems)} di ${totalItems}`;
-  if(maxPages > 1){
+  if (maxPages > 1) {
 
     const firstBtn = document.createElement('a');
     firstBtn.classList.add("pagination-button");
@@ -276,25 +276,25 @@ function renderPagination(totalItems, currentPage) {
     pagination.appendChild(firstBtn);
     let firstPage = 1;
     let lastPage = 3;
-    if(maxPages > 3){
-      if(currentPage === 1){
+    if (maxPages > 3) {
+      if (currentPage === 1) {
         firstPage = 1;
         lastPage = 3;
-      }else if(currentPage === maxPages){
+      } else if (currentPage === maxPages) {
         lastPage = maxPages;
-        firstPage = maxPages -2;
-      }else{
+        firstPage = maxPages - 2;
+      } else {
         firstPage = currentPage - 1;
-        lastPage = currentPage + 1;  
+        lastPage = currentPage + 1;
       }
     }
-    if(maxPages < 3){
+    if (maxPages < 3) {
       firstPage = 1;
       lastPage = maxPages;
     }
     for (let i = firstPage; i <= lastPage; i++) {
-    const button = document.createElement('a');
-    button.innerHTML = `
+      const button = document.createElement('a');
+      button.innerHTML = `
       <svg class="pagination-border" viewBox="0 0 36 36" aria-hidden="true">
         <circle
           cx="18"
@@ -304,22 +304,22 @@ function renderPagination(totalItems, currentPage) {
       </svg>
       <span>${i}</span>
     `;
-    button.classList.add("pagination-button");
-    if (i === currentPage) {
-      button.classList.add('active');
-    }
-    button.addEventListener('click', () => {
-      if (whichList === 'a') {
-        opereCorrenti = i;
-        const totale = renderArtworksUI();
-        renderPagination(totale, opereCorrenti);
-      } else {
-        visiteCorrenti = i;
-        const totale = renderVisitsUI();
-        renderPagination(totale, visiteCorrenti);
+      button.classList.add("pagination-button");
+      if (i === currentPage) {
+        button.classList.add('active');
       }
-    });
-    pagination.appendChild(button);
+      button.addEventListener('click', () => {
+        if (whichList === 'a') {
+          opereCorrenti = i;
+          const totale = renderArtworksUI();
+          renderPagination(totale, opereCorrenti);
+        } else {
+          visiteCorrenti = i;
+          const totale = renderVisitsUI();
+          renderPagination(totale, visiteCorrenti);
+        }
+      });
+      pagination.appendChild(button);
     }
 
     const lastBtn = document.createElement('a');
@@ -337,12 +337,12 @@ function renderPagination(totalItems, currentPage) {
     pagination.appendChild(lastBtn);
 
     if (whichList === 'a') {
-        opereCorrenti === 1 ? firstBtn.classList.add('disabled') : "";
-        opereCorrenti === maxPages ? lastBtn.classList.add('disabled') : "";
-      } else if(whichList === 'b'){
-        visiteCorrenti === 1 ? firstBtn.classList.add('disabled') : "";
-        visiteCorrenti === maxPages ? lastBtn.classList.add('disabled') : ""; 
-      }
+      opereCorrenti === 1 ? firstBtn.classList.add('disabled') : "";
+      opereCorrenti === maxPages ? lastBtn.classList.add('disabled') : "";
+    } else if (whichList === 'b') {
+      visiteCorrenti === 1 ? firstBtn.classList.add('disabled') : "";
+      visiteCorrenti === maxPages ? lastBtn.classList.add('disabled') : "";
+    }
 
     lastBtn.addEventListener('click', () => {
       if (whichList === 'a') {
@@ -392,42 +392,42 @@ async function loadArtworksData() {
     ]);
     cacheMineArtworks = mine;
     cacheOthersArtworks = others;
-  } catch(err) {
+  } catch (err) {
     console.error('Errore caricamento opere', err);
   }
 }
- 
+
 function renderArtworkCard(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
- 
+
   const info = document.createElement('div');
   info.innerHTML = `
     <strong>${artwork.title}</strong>
     ${!artwork.isPublic ? ' <span class="status-message">(bozza)</span>' : ''}<br>
     <span class="status-message">adozione: ${artwork.adoptionPrice ? `${artwork.adoptionPrice}€` : 'gratis'} · acquisizione: ${artwork.acquisitionPrice ? `${artwork.acquisitionPrice}€` : 'gratis'} · ${artwork.license}</span>
   `;
- 
+
   const actions = document.createElement('div');
   actions.className = 'card-actions';
- 
+
   const editBtn = document.createElement('button');
   editBtn.className = 'primary';
   editBtn.textContent = 'Modifica';
   editBtn.addEventListener('click', () => {
     window.location.href = `artwork-editor?id=${artwork._id}`;
   });
- 
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'danger';
   deleteBtn.textContent = 'Elimina';
   deleteBtn.addEventListener('click', () => handleDeleteArtwork(artwork));
- 
+
   actions.append(editBtn, deleteBtn);
   li.append(info, actions);
   return li;
 }
- 
+
 async function handleDeleteArtwork(artwork) {
   if (!window.confirm(`Eliminare "${artwork.title}"? Fallisce se ci sono ancora content collegati.`)) {
     return;
@@ -443,37 +443,37 @@ async function handleDeleteArtwork(artwork) {
 function renderOtherArtworkCard(artwork, userLicensesData = {}) {
   const li = document.createElement('li');
   li.className = 'card';
- 
+
   const ownerName = artwork.owner?.username ?? 'altro autore';
   const info = document.createElement('div');
   info.innerHTML = `
     <strong>${artwork.title}</strong> <span class="status-message">di ${ownerName}</span><br>
     <span class="status-message">adozione: ${artwork.adoptionPrice ? `${artwork.adoptionPrice}€` : 'gratis'} · acquisizione: ${artwork.acquisitionPrice ? `${artwork.acquisitionPrice}€` : 'gratis'} · ${artwork.license}</span>
   `;
- 
+
   const actions = document.createElement('div');
   actions.className = 'card-actions';
 
   // Estraiamo in sicurezza l'array delle licenze dall'oggetto restituito dal backend
   const licenses = userLicensesData?.licenses || [];
-  
+
   // Eseguiamo il controllo sull'array reale
-  const hasAdopted = licenses.some(lic => 
+  const hasAdopted = licenses.some(lic =>
     lic.artwork?._id === artwork._id && lic.type === 'adoption'
   );
- 
+
   const adoptBtn = document.createElement('button');
-  
+
   if (hasAdopted) {
     adoptBtn.textContent = `Già Adottata`;
     adoptBtn.disabled = true;
-    adoptBtn.className = 'disabled-btn'; 
+    adoptBtn.className = 'disabled-btn';
   } else {
     adoptBtn.textContent = `Adotta`;
     adoptBtn.addEventListener('click', () => handleAdopt(artwork, adoptBtn));
   }
   actions.appendChild(adoptBtn);
- 
+
   if (currentUser.role === 'autore' || currentUser.role === 'admin') {
     const acquireBtn = document.createElement('button');
     acquireBtn.className = 'success';
@@ -481,12 +481,12 @@ function renderOtherArtworkCard(artwork, userLicensesData = {}) {
     acquireBtn.addEventListener('click', () => handleAcquire(artwork, acquireBtn));
     actions.appendChild(acquireBtn);
   }
- 
+
   li.appendChild(info);
   li.appendChild(actions);
   return li;
 }
- 
+
 async function handleAdopt(artwork, button) {
   button.disabled = true;
   button.textContent = 'Adozione in corso…';
@@ -501,7 +501,7 @@ async function handleAdopt(artwork, button) {
     button.textContent = `Adotta (${artwork.adoptionPrice}€)`;
   }
 }
- 
+
 async function handleAcquire(artwork, button) {
   button.disabled = true;
   button.textContent = 'Acquisizione in corso…';
@@ -526,7 +526,7 @@ function handleNew() {
 function showList(which) {
   const showA = which === 'a';
   whichList = which;
-  if(!showA) {
+  if (!showA) {
     const totale = renderVisitsUI();
     renderPagination(totale, visiteCorrenti);
     checkBoxes.style.display = "none";
@@ -563,5 +563,5 @@ function setupToolbarListeners() {
     visiteCorrenti = 1;
     const totale = renderVisitsUI();
     renderPagination(totale, visiteCorrenti);
-  }); 
+  });
 }

@@ -230,13 +230,13 @@ const museumSchema = new Schema({
 
     openingHours: {
 
-        monday:    { type: String, default: 'Chiuso' },
-        tuesday:   { type: String, default: 'Chiuso' },
+        monday: { type: String, default: 'Chiuso' },
+        tuesday: { type: String, default: 'Chiuso' },
         wednesday: { type: String, default: 'Chiuso' },
-        thursday:  { type: String, default: 'Chiuso' },
-        friday:    { type: String, default: 'Chiuso' },
-        saturday:  { type: String, default: 'Chiuso' },
-        sunday:    { type: String, default: 'Chiuso' }
+        thursday: { type: String, default: 'Chiuso' },
+        friday: { type: String, default: 'Chiuso' },
+        saturday: { type: String, default: 'Chiuso' },
+        sunday: { type: String, default: 'Chiuso' }
 
     },
 
@@ -291,9 +291,9 @@ museumSchema.index({ city: 1 });
  Middleware
 -------------------------------------------------- */
 
-museumSchema.pre('save', function(next){
+museumSchema.pre('save', function (next) {
 
-    if(this.services){
+    if (this.services) {
         this.services = [...new Set(this.services)];
     }
 

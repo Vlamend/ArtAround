@@ -9,13 +9,13 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  user-select: none; 
+  user-select: none;
 }
 
-* { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -34,13 +34,32 @@ main {
 /* ==========================================================================
    2. ELEMENTI TIPOGRAFICI E LINK
    ========================================================================== */
-h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
-a { color: var(--color-primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
 
-.status-message { color: var(--color-status); }
-.error-message { color: var(--color-danger); }
+h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.status-message {
+  color: var(--color-status);
+}
+
+.error-message {
+  color: var(--color-danger);
+}
 
 /* ==========================================================================
    3. STRUTTURE DI LAYOUT (Header & Toolbar)
@@ -70,7 +89,8 @@ button {
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  border: 1px solid #ccc; /* Colore di fallback per evitare bug grafici */
+  border: 1px solid #ccc;
+  /* Colore di fallback per evitare bug grafici */
   background: #fff;
   color: #333;
   display: inline-flex;
@@ -81,8 +101,8 @@ button {
   transition: all 0.2s ease-in-out;
 }
 
-button:hover { 
-  background: #f5f5f5; 
+button:hover {
+  background: #f5f5f5;
 }
 
 button:disabled {
@@ -97,8 +117,9 @@ button.outline {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
-button.outline:hover { 
-  background: #eef4fc; 
+
+button.outline:hover {
+  background: #eef4fc;
   transform: translateY(-1px);
 }
 
@@ -107,7 +128,8 @@ button.primary {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
-button.primary:hover { 
+
+button.primary:hover {
   background: var(--color-primary);
   color: #fff;
   transform: translateY(-1px);
@@ -118,6 +140,7 @@ button.success {
   border-color: var(--color-success);
   color: var(--color-success);
 }
+
 button.success:hover {
   background: var(--color-success);
   color: #fff;
@@ -128,7 +151,8 @@ button.danger {
   border-color: var(--color-danger);
   color: var(--color-danger);
 }
-button.danger:hover { 
+
+button.danger:hover {
   background: var(--color-danger);
   color: #fff;
 }
@@ -142,7 +166,7 @@ button.danger:hover {
   flex-direction: column;
   gap: 0.75rem;
   padding: 1vh;
-  overflow:auto;
+  overflow: auto;
 }
 
 .card-list.invisible {
@@ -158,7 +182,7 @@ button.danger:hover {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .card-actions {
@@ -168,20 +192,21 @@ button.danger:hover {
   align-items: center;
 }
 
-.primary-card-button { 
+.primary-card-button {
   border: 2px solid var(--color-primary);
-  color: var(--color-primary); 
+  color: var(--color-primary);
   text-align: center;
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 20px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   transition: all 0.2s ease-in-out;
 }
-.primary-card-button:hover { 
-  background: var(--color-primary); 
+
+.primary-card-button:hover {
+  background: var(--color-primary);
   color: #fff;
-} 
+}
 
 /* ==========================================================================
    6. COMPONENTE: FORM E INPUT
@@ -201,7 +226,9 @@ label {
   font-weight: 500;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font: inherit;
   padding: 0.5rem;
   border: 1px solid #ccc;
@@ -210,9 +237,12 @@ input, select, textarea {
   transition: border-color 0.15s ease;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
-  border-color: var(--color-primary); /* Sostituito con variabile */
+  border-color: var(--color-primary);
+  /* Sostituito con variabile */
 }
 
 /* ==========================================================================
@@ -224,10 +254,10 @@ input:focus, select:focus, textarea:focus {
   overflow: hidden;
   display: flex;
   margin-bottom: 20px;
-  border-radius: 6px; 
+  border-radius: 6px;
   border: 1px solid #ccc;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* Questa è la slide animata che scorre dietro */
@@ -238,24 +268,26 @@ input:focus, select:focus, textarea:focus {
   left: var(--bg-offset);
   width: 50%;
   height: 100%;
-  background: #222; /* Spostato qui il colore dello stato attivo */
+  background: #222;
+  /* Spostato qui il colore dello stato attivo */
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
 }
 
-.switch > button {
+.switch>button {
   flex: 1;
   padding: 10px 14px;
   font-size: 14px;
   background: transparent;
   border: none;
   border-radius: 0;
-  z-index: 2; /* Porta il testo del bottone SOPRA lo sfondo scuro animato */
+  z-index: 2;
+  /* Porta il testo del bottone SOPRA lo sfondo scuro animato */
   transition: color 0.3s ease;
 }
 
 /* Cambio colore testo quando il bottone è attivo */
-.switch > button.active {
+.switch>button.active {
   color: #fff;
   background: transparent;
 }
@@ -275,7 +307,7 @@ input:focus, select:focus, textarea:focus {
   background: #fff;
   padding: 0;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   flex-flow: column;
   align-items: stretch;
   height: 67vh;
@@ -312,13 +344,14 @@ input:focus, select:focus, textarea:focus {
 .filter-scale {
   border-right: none;
   padding-right: 0;
-  margin-left: auto; /* la scala si stacca a destra, i primi due restano raggruppati a sinistra */
+  margin-left: auto;
+  /* la scala si stacca a destra, i primi due restano raggruppati a sinistra */
 }
 
 /* Checkbox come "chip" cliccabili invece di quadratini nudi */
 .filter-label {
   display: inline;
-  
+
 }
 
 /* Select coerenti con input/button del resto del sito */
@@ -347,19 +380,20 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--color-primary);
 }
 
-.primary-button { 
+.primary-button {
   border: 1px solid var(--color-primary);
   padding: 0.4% 1vw;
-  color: var(--color-primary); 
+  color: var(--color-primary);
   text-align: center;
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 20px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   transition: all 0.2s ease-in-out;
 }
-.primary-button:hover { 
-  background: var(--color-primary); 
+
+.primary-button:hover {
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -375,7 +409,7 @@ input:focus, select:focus, textarea:focus {
   gap: 24px;
 }
 
-.pagination-info{
+.pagination-info {
   font-size: small;
 }
 
@@ -386,7 +420,7 @@ input:focus, select:focus, textarea:focus {
   gap: 4px;
 }
 
-.page-numbers{
+.page-numbers {
   display: flex;
 }
 
@@ -468,6 +502,7 @@ input:focus, select:focus, textarea:focus {
   cursor: default;
   opacity: 0.5;
 }
+
 .pagination-button.disabled:hover {
   cursor: default;
   opacity: 0.5;
@@ -475,7 +510,7 @@ input:focus, select:focus, textarea:focus {
   stroke: none;
 }
 
-.pagination-button.disabled > .pagination-border{
+.pagination-button.disabled>.pagination-border {
   stroke: none;
 }
 

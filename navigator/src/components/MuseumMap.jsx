@@ -60,108 +60,108 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
   const poiOnFloor = pointsOfInterest.filter(poi => poi.floor === selectedFloor);
   const roomsOnFloor = rooms.filter(r => r.floor === selectedFloor);
 
-return (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4">
-    <div className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-auto rounded-xl bg-white shadow-2xl dark:bg-gray-800">
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4">
+      <div className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-auto rounded-xl bg-white shadow-2xl dark:bg-gray-800">
 
-      {floorsAvailable.length > 1 && (
-        <div className="flex w-full shrink-0 gap-2 border-b border-gray-200 p-3 dark:border-gray-700">
-          <div className="flex w-full shrink-0 items-center justify-between border-b border-gray-200 p-3 dark:border-gray-700">
-  <div className="flex gap-2">
-    {floorsAvailable.length > 1 &&
-      floorsAvailable.map(floor => (
-        <button
-          key={floor}
-          className={
-            floor === selectedFloor
-              ? 'rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white dark:bg-secondary'
-              : 'rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-          }
-          onClick={() => setSelectedFloor(floor)}
-        >
-          Piano {floor}
-        </button>
-      ))}
-  </div>
-
-  <button
-    type="button"
-    onClick={() => closeMap(false)}
-    aria-label="Chiudi mappa"
-    className="bg-gray-100 px-4 py-2 rounded-xl cursor-pointer text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-  >
-    X
-  </button>
-</div>
-        </div>
-      )}
-
-      {floorPlan ? (
-        <MapWithFloorPlan
-          imageUrl={floorPlan.imageUrl}
-          steps={stepsOnFloor}
-          currentIndex={currentIndex}
-          pointsOfInterest={poiOnFloor}
-          onSelectStep={onSelectStep}
-        />
-      ) : (
-        <MapAbstract
-          rooms={roomsOnFloor}
-          steps={stepsOnFloor}
-          currentIndex={currentIndex}
-          pointsOfInterest={poiOnFloor}
-          onSelectStep={onSelectStep}
-        />
-      )}
-
-      {/* Legenda */}
-      <div className="mt-3 shrink-0 border-t border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
-        <div className="mb-2 font-semibold text-gray-800 dark:text-gray-100">
-          Legenda
-        </div>
-
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {/* Tappa corrente */}
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white dark:bg-blue-500">
-              1
-            </span>
-
-            <span className="text-gray-700 dark:text-gray-300">
-              Tappa corrente
-            </span>
-          </div>
-
-          {/* Altra tappa */}
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-700 bg-white text-[10px] font-bold text-gray-800 dark:border-gray-300 dark:bg-gray-800 dark:text-gray-100">
-              2
-            </span>
-
-            <span className="text-gray-700 dark:text-gray-300">
-              Tappa
-            </span>
-          </div>
-
-          {/* POI presenti sulla mappa */}
-          {[...new Set(pointsOfInterest.map(poi => poi.type))]
-            .filter(type => POI_LABELS[type])
-            .map(type => (
-              <div key={type} className="flex items-center gap-2">
-                <span className="flex h-6 min-w-6 items-center justify-center rounded-md bg-gray-100 px-1 text-[9px] font-bold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
-                  {POI_GLYPH[type] ?? '•'}
-                </span>
-
-                <span className="text-gray-700 dark:text-gray-300">
-                  {POI_LABELS[type]}
-                </span>
+        {floorsAvailable.length > 1 && (
+          <div className="flex w-full shrink-0 gap-2 border-b border-gray-200 p-3 dark:border-gray-700">
+            <div className="flex w-full shrink-0 items-center justify-between border-b border-gray-200 p-3 dark:border-gray-700">
+              <div className="flex gap-2">
+                {floorsAvailable.length > 1 &&
+                  floorsAvailable.map(floor => (
+                    <button
+                      key={floor}
+                      className={
+                        floor === selectedFloor
+                          ? 'rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white dark:bg-secondary'
+                          : 'rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                      }
+                      onClick={() => setSelectedFloor(floor)}
+                    >
+                      Piano {floor}
+                    </button>
+                  ))}
               </div>
-            ))}
-        </div>
-      </div>
 
+              <button
+                type="button"
+                onClick={() => closeMap(false)}
+                aria-label="Chiudi mappa"
+                className="bg-gray-100 px-4 py-2 rounded-xl cursor-pointer text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+              >
+                X
+              </button>
+            </div>
+          </div>
+        )}
+
+        {floorPlan ? (
+          <MapWithFloorPlan
+            imageUrl={floorPlan.imageUrl}
+            steps={stepsOnFloor}
+            currentIndex={currentIndex}
+            pointsOfInterest={poiOnFloor}
+            onSelectStep={onSelectStep}
+          />
+        ) : (
+          <MapAbstract
+            rooms={roomsOnFloor}
+            steps={stepsOnFloor}
+            currentIndex={currentIndex}
+            pointsOfInterest={poiOnFloor}
+            onSelectStep={onSelectStep}
+          />
+        )}
+
+        {/* Legenda */}
+        <div className="mt-3 shrink-0 border-t border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+          <div className="mb-2 font-semibold text-gray-800 dark:text-gray-100">
+            Legenda
+          </div>
+
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {/* Tappa corrente */}
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white dark:bg-blue-500">
+                1
+              </span>
+
+              <span className="text-gray-700 dark:text-gray-300">
+                Tappa corrente
+              </span>
+            </div>
+
+            {/* Altra tappa */}
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-700 bg-white text-[10px] font-bold text-gray-800 dark:border-gray-300 dark:bg-gray-800 dark:text-gray-100">
+                2
+              </span>
+
+              <span className="text-gray-700 dark:text-gray-300">
+                Tappa
+              </span>
+            </div>
+
+            {/* POI presenti sulla mappa */}
+            {[...new Set(pointsOfInterest.map(poi => poi.type))]
+              .filter(type => POI_LABELS[type])
+              .map(type => (
+                <div key={type} className="flex items-center gap-2">
+                  <span className="flex h-6 min-w-6 items-center justify-center rounded-md bg-gray-100 px-1 text-[9px] font-bold text-gray-700 shadow-sm dark:bg-gray-800 dark:text-gray-200">
+                    {POI_GLYPH[type] ?? '•'}
+                  </span>
+
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {POI_LABELS[type]}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+
+      </div>
     </div>
-  </div>
   );
 }
 

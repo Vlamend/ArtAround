@@ -35,8 +35,8 @@ export async function register(req, res) {
         if (existingUsername) {
             return res.status(409).json({ error: "Username non disponibile." });
         }
-        if(role !== 'admin' && role !== 'visitatore' && role !== 'autore'){
-            return res.status(422).json({ error: "Ruolo non valido"});
+        if (role !== 'admin' && role !== 'visitatore' && role !== 'autore') {
+            return res.status(422).json({ error: "Ruolo non valido" });
         }
 
         // Creazione utente
@@ -115,12 +115,12 @@ export function logout(req, res) {
 export async function protectedRoute(req, res) {
     try {
         const user = await User.findById(req.user.id).select("-password");
- 
+
         if (!user) {
             return res.status(404).json({ error: "Utente non trovato." });
         }
- 
-        res.json({ 
+
+        res.json({
             user: {
                 id: user._id,
                 username: user.username,
@@ -131,8 +131,8 @@ export async function protectedRoute(req, res) {
                 interestWeights: user.interestWeights,
                 visitedVisits: user.visitedVisits
             }
-         });
- 
+        });
+
     } catch (error) {
         console.error("Errore nel recupero dell'utente:", error);
         res.status(500).json({ error: "Errore del server." });
@@ -146,13 +146,13 @@ export async function protectedRoute(req, res) {
 export async function updateMe(req, res) {
     try {
         const user = await User.findById(req.user.id);
- 
+
         if (!user) {
             return res.status(404).json({ error: "Utente non trovato." });
         }
- 
+
         const { preferredLanguageLevel, interfaceLanguage, interestWeights } = req.body;
- 
+
         if (preferredLanguageLevel !== undefined) {
             user.preferredLanguageLevel = preferredLanguageLevel;
         }
@@ -169,9 +169,9 @@ export async function updateMe(req, res) {
                 }
             }
         }
- 
+
         await user.save();
- 
+
         res.json({
             user: {
                 id: user._id,
@@ -184,14 +184,14 @@ export async function updateMe(req, res) {
                 visitedVisits: user.visitedVisits
             }
         });
- 
+
     } catch (error) {
         console.error("Errore nell'aggiornamento delle preferenze:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }
 
-export async function getLicenses (req, res) {
+export async function getLicenses(req, res) {
     try {
         const user = await User.findById(req.user.id)
             .select("licenses")

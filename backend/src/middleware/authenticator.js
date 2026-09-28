@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
  * Controlla che il token JWT sia presente e valido.
  */
 export function authenticateToken(req, res, next) {
-    if (!process.env.JWT_SECRET){
+    if (!process.env.JWT_SECRET) {
         return res.status(500).json({ error: "JWT_SECRET non configurato" });
     }
     // Controllo che l'header Authorization sia presente
@@ -22,7 +22,7 @@ export function authenticateToken(req, res, next) {
         next();
     }
     // Se il token non è valido, l'utente non è autenticato
-    catch(err){
+    catch (err) {
         return res.status(403).json({ error: "Token non valido." });
     }
 }
@@ -63,11 +63,11 @@ export function requireRole(...allowedRoles) {
 export function optionalAuth(req, res, next) {
     const authHeader = req.headers["authorization"];
     const token = authHeader?.split(" ")[1];
- 
+
     if (!token) {
         return next(); // nessun token: richiesta anonima
     }
- 
+
     try {
         req.user = jwt.verify(token, process.env.JWT_SECRET);
     } catch {

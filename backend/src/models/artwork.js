@@ -16,9 +16,9 @@ const urlRegex = /^(https?:\/\/)?([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w\-\.\?=%&=]
  senza alcun vincolo.
 ----------------------------------------------------- */
 const artworkSchema = new Schema({
-  title:      { type: String, required: true, trim: true },
-  year:       { type: String, default: 'Sconosciuto' },
-  technique:  { type: String, default: 'Sconosciuto' },
+  title: { type: String, required: true, trim: true },
+  year: { type: String, default: 'Sconosciuto' },
+  technique: { type: String, default: 'Sconosciuto' },
   dimensions: { type: String, default: '' },
 
   // Immagine di riconoscimento (non contenuto, solo per
@@ -28,7 +28,7 @@ const artworkSchema = new Schema({
     default: '',
     validate: {
       validator: v => v === '' || urlRegex.test(v),
-      message:   props => `${props.value} non è un URL valido`
+      message: props => `${props.value} non è un URL valido`
     }
   },
 
@@ -90,9 +90,9 @@ const artworkSchema = new Schema({
     enum: ['CC0', 'CC-BY', 'CC-BY-SA', 'CC-BY-NC', 'private'],
     default: 'CC-BY'
   },
-  isPublic:         { type: Boolean, default: true },
-  adoptionPrice:    { type: Number,  default: 0, min: 0 },
-  acquisitionPrice: { type: Number,  default: 0, min: 0 }
+  isPublic: { type: Boolean, default: true },
+  adoptionPrice: { type: Number, default: 0, min: 0 },
+  acquisitionPrice: { type: Number, default: 0, min: 0 }
 }, { timestamps: true });
 
 // { museum, title } unique: previene il caso più comune di
