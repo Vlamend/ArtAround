@@ -53,6 +53,16 @@ export function getMe() {
   return request('/users/protected-route');
 }
 
+export async function signup(username, email, password){
+  const role = 'visitatore'
+  const data = await request('/users/register', {
+    method: 'POST',
+    body: JSON.stringify({ username, email, password, role })
+  });
+  setToken(data.token);
+  return data.user;
+}
+
 // authController.login si aspetta { email, password }, non { username, password }
 export async function login(email, password) {
   const data = await request('/users/login', {

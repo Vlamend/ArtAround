@@ -15,10 +15,8 @@ async function main() {
     return; // requireAuth ha già gestito il redirect al login
   }
 
-  // Anche se la route è già protetta lato server (requireAdmin — vedi
-  // server.js), la pagina si blocca anche qui: un non-admin non deve
-  // nemmeno vedere il form, non solo fallire il salvataggio dopo
-  // averlo compilato.
+  // Anche se la route è già protetta lato server, la pagina si blocca anche qui: un non-admin non deve
+  // nemmeno vedere il form, non solo fallire il salvataggio dopo averlo compilato.
   if (currentUser.role !== 'admin') {
     statusEl.hidden = false;
     statusEl.className = 'error-message';

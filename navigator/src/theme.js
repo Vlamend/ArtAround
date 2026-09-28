@@ -10,12 +10,6 @@ export function applyMuseumTheme(museum) {
   }
 }
 
-export function clearMuseumTheme() {
-  const root = document.documentElement;
-  root.style.removeProperty('--color-primary');
-  root.style.removeProperty('--color-secondary');
-}
-
 export function initDarkMode() {
   const storedTheme = sessionStorage.getItem(STORAGE_KEY);
 

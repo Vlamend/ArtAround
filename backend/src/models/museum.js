@@ -284,7 +284,6 @@ const museumSchema = new Schema({
  Indici
 -------------------------------------------------- */
 
-museumSchema.index({ slug: 1 });
 museumSchema.index({ name: 1 });
 museumSchema.index({ city: 1 });
 

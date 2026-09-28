@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useParams, Link } from 'react-router-dom';
 import { getVisitById, getMe, getItems, giveFeedback, completeVisit } from '../api.js';
 import { useVoiceCommands } from '../useVoiceCommands.js';
@@ -7,6 +8,7 @@ import { DOMAIN_LABELS, LANGUAGE_ORDER, buildTopicQueue, buildFrames, firstFrame
 import MuseumMap from '../components/MuseumMap.jsx';
 
 export default function NavigatorPlayer() {
+  const navigate = useNavigate();
   const { visitId } = useParams();
   const [visit, setVisit] = useState(null);
   const [status, setStatus] = useState('loading');
@@ -146,12 +148,6 @@ export default function NavigatorPlayer() {
     window.speechSynthesis.speak(utterance);
   }, []);
 
-  useEffect(() => {
-    if (itemLoading) return;
-    if (!currentText) return;
-    speak(currentText.content);
-    return () => window.speechSynthesis?.cancel();
-  }, [ currentText ]);
   // Registrazione del completamento della visita museale
   useEffect(() => {
     if (!visit || hasMarkedComplete) return;
@@ -162,8 +158,12 @@ export default function NavigatorPlayer() {
   }, [currentText]);
   function goNext() {
     if (!visit) return;
-    setStepIndex(i => Math.min(i + 1, visit.steps.length - 1));
-  }
+    if(stepIndex === visit.steps.length - 1){
+      navigate('/visits'); 
+    }else{
+      setStepIndex(i => Math.min(i + 1, visit.steps.length - 1));
+    }
+  }
   function goPrev() {
     setStepIndex(i => Math.max(i - 1, 0));
   }
@@ -253,9 +253,34 @@ export default function NavigatorPlayer() {
         <span className="text-sm font-semibold text-slate-900 dark:text-white">Tappa {stepIndex + 1} di {visit.steps.length}</span>
         {roomName && <span className="text-sm text-slate-500 dark:text-slate-400">{roomName}</span>}
       </div>
+{currentStep?.logisticNote && (
+        <p className="mx-auto my-4 w-full max-w-3xl rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">{currentStep.logisticNote}</p>
+      )}
       <div className="mx-auto w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 md:p-7">
-
-        <h1>{currentArtwork?.title}</h1>
+        <div className='flex justify-between'>
+          <h1>{currentArtwork?.title}</h1>
+          <button onClick={() => speak(currentText?.content)} 
+          disabled={itemLoading}
+          className='cursor-pointer hover:text-primary dark:hover:text-secondary duration-150'>
+            <svg 
+        width="26" 
+        height="26" 
+        viewBox="0 0 32 32"
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+      > 
+        <circle cx="16" cy="16" r="14" />
+        <g transform="translate(3, 4)">
+          <path d="M2 10v4h4l5 5V5L6 10H2z" />
+          <path d="M15.5 8.5a4 4 0 0 1 0 7" />
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+        </g>
+      </svg>
+          </button>
+        </div>
         {currentArtwork?.year && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{currentArtwork.year}{currentArtwork.technique ? ` ${currentArtwork.technique}` : ''}</p>}
         {itemLoading ? (
           <p className="mt-5 text-sm text-slate-500 dark:text-slate-400">Adattamento testo in corso…</p>
@@ -270,35 +295,50 @@ export default function NavigatorPlayer() {
             <p className="mt-4 text-base leading-7 text-slate-800 dark:text-slate-200">{currentText?.content ?? 'Nessun testo disponibile per questo livello.'}</p>
           </>
         )}
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4 dark:border-neutral-700">
-          <span className="text-sm text-slate-500 dark:text-slate-400">Ti interessa questo contenuto?</span>
-          <button
-            className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'up' ? 'ring-2 ring-primary bg-violet-50 dark:bg-violet-950' : ''}`}
-            onClick={() => handleFeedback('up')}
-            aria-label="Interessante"
-            disabled={itemLoading}
-          >👍</button>
-          <button
-            className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'down' ? 'ring-2 ring-primary bg-violet-50 dark:bg-violet-950' : ''}`}
-            onClick={() => handleFeedback('down')}
-            aria-label="Non interessante"
-            disabled={itemLoading}
-          >👎</button>
-        </div>
+        <div className="flex justify-between border-t mt-6 border-slate-200 dark:border-neutral-700">
+          <div className="flex flex-wrap items-center gap-2 pt-4">
+            <span className="text-sm text-slate-500 dark:text-slate-400">Ti interessa questo contenuto?</span>
+            <button
+              className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'up' ? 'ring-2 ring-primary dark:ring-secondary bg-primary/30 dark:bg-secondary/30' : ''}`}
+              onClick={() => handleFeedback('up')}
+              aria-label="Interessante"
+              disabled={itemLoading}
+            >👍</button>
+            <button
+              className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700 ${feedbackGiven === 'down' ? 'ring-2 ring-primary dark:ring-secondary bg-primary/30 dark:bg-secondary/30' : ''}`}
+              onClick={() => handleFeedback('down')}
+              aria-label="Non interessante"
+              disabled={itemLoading}
+            >👎</button>
+          </div>
+          <button className="enabled:cursor-pointer enabled:hover:text-primary enabled:dark:hover:text-secondary duration-150"
+          onClick={startListening}
+          disabled={isListening || itemLoading}
+    >
+      <svg 
+        width="26" 
+        height="26" 
+        viewBox="0 0 32 32" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+      > 
+        <circle cx="16" cy="16" r="14" />
+        <g transform="translate(6, 5)">
+          <rect x="6" y="2" width="8" height="12" rx="4" />
+          <path d="M2 10a8 10 0 0 0 16 0" />
+          <line x1="10" y1="18" x2="10" y2="22" />
+        </g>
+      </svg>
+    </button>
+        </div>
       </div>
-      {currentStep?.logisticNote && (
-        <p className="mx-auto mt-4 w-full max-w-3xl rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">{currentStep.logisticNote}</p>
-      )}
+      
       <div className="mx-auto mt-6 flex w-full max-w-3xl flex-col gap-3">
         {voiceSupported && (
-          <div className="flex flex-col gap-2 rounded-lg border items-center border-slate-200 bg-slate-50 p-3 dark:border-neutral-700 dark:bg-neutral-800">
-            <button
-              className={`inline-flex w-fit items-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 ${isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary/70 dark:bg-secondary/70 dark:hover:bg-secondary cursor-pointer'}`}
-              onClick={startListening}
-              disabled={isListening || itemLoading}
-            >
-              {isListening ? 'In ascolto…' : '🎤 Parla'}
-            </button>
+          <div className="flex flex-col gap-2 items-center p-3">
             {lastHeard && (
               <p className={`text-sm ${lastHeard.recognized ? 'text-slate-600 dark:text-slate-400' : 'text-amber-700 dark:text-amber-400'}`}>
                 Hai detto: «{lastHeard.transcript}»
@@ -314,7 +354,7 @@ export default function NavigatorPlayer() {
         )}
         <div className="grid grid-cols-2 gap-2">
           <button className="museum-button" onClick={goPrev} disabled={stepIndex === 0 || itemLoading}>Precedente</button>
-          <button className="museum-button" onClick={goNext} disabled={stepIndex === visit.steps.length - 1 || itemLoading}>Prossimo</button>
+          <button className="museum-button" onClick={goNext} disabled={itemLoading}>{stepIndex === visit.steps.length - 1 ? 'Concludi visita' : 'Prossimo'}</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <button className="museum-button" onClick={tellLess} disabled={frameIndex === 0 || itemLoading}>Dimmi di meno</button>
@@ -325,16 +365,13 @@ export default function NavigatorPlayer() {
           <button className="museum-button" onClick={makeHarder} disabled={currentFrame?.type !== 'base' || !canGoHarder || itemLoading}>Troppo semplice</button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <button className="museum-button" onClick={() => speak(currentText?.content)} disabled={itemLoading}>Ripeti</button>
-          <button className="museum-button" onClick={() => setShowPoi(v => !v)}>Dove...?</button>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
           <button className="museum-button" onClick={() => jumpToDomain('artista')} disabled={!hasAuthorTopic || itemLoading}>Chi è l'autore</button>
           <button className="museum-button" onClick={() => jumpToDomain('stile')} disabled={!hasStyleTopic || itemLoading}>Qual è lo stile</button>
         </div>
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-slate-100 dark:hover:bg-neutral-700 cursor-pointer" onClick={() => setShowMap(v => !v)}>Mappa</button>
-        </div>
+          <button className="museum-button" onClick={() => setShowPoi(v => !v)}>Dove...?</button>
+        </div>
       </div>
       {showPoi && (
         <div className="mx-auto mt-6 w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">

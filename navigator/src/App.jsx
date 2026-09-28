@@ -4,8 +4,9 @@ import Login from './pages/Login.jsx';
 import VisitList from './pages/VisitList.jsx';
 import NavigatorPlayer from './pages/NavigatorPlayer.jsx';
 import Settings from './pages/Settings.jsx';
+import Signup from './pages/Signup.jsx';
 import { getToken, getMe, clearToken, getConfig, getMuseumBySlug } from './api.js';
-import { clearMuseumTheme, applyMuseumTheme, initDarkMode} from './theme.js';
+import { applyMuseumTheme, initDarkMode} from './theme.js';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,6 +18,16 @@ export default function App() {
   // Controlla se l'utente è loggato al caricamento dell'app
   useEffect(() => {
     async function checkLogin() {
+      initDarkMode();
+      setMuseumStatus('loading');
+      getConfig()
+        .then(config => getMuseumBySlug(config.museumSlug))
+        .then(data => {
+          setMuseum(data);
+          applyMuseumTheme(data);
+          setMuseumStatus('ready');
+        })
+      .catch(() => setMuseumStatus('error'));
       const token = getToken();
       if (!token) {
         setIsLoggedIn(false);
@@ -33,22 +44,8 @@ export default function App() {
         setLoading(false);
       }
     }
-    initDarkMode();
     checkLogin();
   }, []);
-
-  useEffect(() => {
-      if (!isLoggedIn) return;
-      setMuseumStatus('loading');
-      getConfig()
-        .then(config => getMuseumBySlug(config.museumSlug))
-        .then(data => {
-          setMuseum(data);
-          applyMuseumTheme(data);
-          setMuseumStatus('ready');
-        })
-        .catch(() => setMuseumStatus('error'));
-  }, [isLoggedIn]);
 
   // Mostra un messaggio di caricamento mentre si verifica lo stato di login
   if (stillLoading) {
@@ -84,6 +81,11 @@ export default function App() {
         element={!isLoggedIn ? 
         <Login onLogin={() => setIsLoggedIn(true)} /> : <Navigate to="/visits" replace/>}/>
         
+        <Route 
+        path="/signup" 
+        element={!isLoggedIn ? 
+        <Signup onSignup={() => setIsLoggedIn(true)} /> : <Navigate to="/visits" replace/>}/>
+
         <Route
         path="/settings"
         element={isLoggedIn ? 
@@ -97,9 +99,6 @@ export default function App() {
             <VisitList
               museum={museum}
               onLogout={() => {
-                clearMuseumTheme();
-                setMuseum(null);
-                setMuseumStatus('idle');
                 setIsLoggedIn(false);
               }}
             />

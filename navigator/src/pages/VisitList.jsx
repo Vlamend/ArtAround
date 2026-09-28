@@ -130,7 +130,7 @@ export default function VisitList({ museum, onLogout }) {
                   <button type="button" aria-controls="collapseMenu"
                      onClick={closeMenu}
                      id="toggleClose"
-                     className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
+                     className="cursor-pointer focus:outline-primary dark:focus:outline-secondary focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
                   >
                      <span className="sr-only">Chiudi menu</span>
                      <svg
@@ -151,7 +151,7 @@ export default function VisitList({ museum, onLogout }) {
                   <li>
                      <Link
                         to="/settings"
-                        className="hover:text-primary dark:hover:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                        className="hover:text-primary dark:hover:text-secondary focus:outline-primary dark:focus:outline-secondary focus-visible:ring-2 focus-visible:ring-primary rounded"
                         aria-current="page"
                      >
                         Impostazioni
@@ -160,7 +160,7 @@ export default function VisitList({ museum, onLogout }) {
                   <li>
                      <a
                         onClick={handleLogout}
-                        className="hover:cursor-pointer hover:text-primary dark:hover:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                        className="hover:cursor-pointer hover:text-primary dark:hover:text-secondary focus:outline-primary dark:focus:outline-secondary focus-visible:ring-2 focus-visible:ring-primary rounded"
                      >
                         Esci
                      </a>
@@ -176,7 +176,7 @@ export default function VisitList({ museum, onLogout }) {
                   aria-haspopup="true"
                   id="toggleOpen"
                   onClick={openMenu}
-                  className="cursor-pointer lg:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
+                  className="cursor-pointer lg:hidden focus:outline-primary dark:focus:outline-secondary focus-visible:ring-2 focus-visible:ring-primary rounded">
                   <span className="sr-only">Open main menu</span>
                   <svg
                      className="size-7 fill-slate-900 dark:fill-slate-50"
@@ -195,27 +195,32 @@ export default function VisitList({ museum, onLogout }) {
          </div>
       </nav>
       <div className="flex flex-col max-w-7xl mx-auto py-8 px-4 md:px-8">
-         <h1 className=" text-2xl font-bold">Scegli la visita</h1>
+         <h1 className=" text-2xl font-bold mb-2">Scegli la visita</h1>
          <div className="flex h-full gap-4 flex-col overflow-hidden rounded-lg border border-slate-300 dark:border-neutral-700">
             <nav className="flex flex-row justify-between shrink-0 border-b border-slate-300 px-4 py-3 dark:border-neutral-700">
                <div className="flex items-center gap-2 w-full max-w-sm">
-                  <div className="flex items-center gap-2 px-3 h-8 relative rounded-full bg-white dark:bg-neutral-800 outline-1 -outline-offset-1 outline-slate-300 dark:outline-neutral-700 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-primary/650">
-                     <label htmlFor="search" className="sr-only">Search</label>
-                     <input 
-                        type="search"
-                        id="search"
-                        placeholder="Cerca visita..."
-                        value={search}
-                        onChange={(e) => {
-                           setSearch(e.target.value);
-                           setActualPage(1);
-                        }}
-                        className="text-xs text-slate-900 dark:text-slate-50 w-full outline-none bg-transparent" 
-                     />
-                  </div>
+                  <div className="flex items-center gap-2 px-3 h-8 relative rounded-full bg-white dark:bg-neutral-800 
+                  border border-slate-300 dark:border-neutral-700 
+                  focus-within:border-primary dark:focus-within:border-secondary 
+                  focus-within:ring-2 focus-within:ring-primary/20 dark:focus-within:ring-secondary/20"
+               >
+                  <label htmlFor="search" className="sr-only">Cerca</label>
+                  <input 
+                     type="search"
+                     id="search"
+                     placeholder="Cerca visita..."
+                     value={search}
+                     onChange={(e) => {
+                        setSearch(e.target.value);
+                        setActualPage(1);
+                     }}
+                     className="text-xs text-slate-900 dark:text-slate-50 w-full outline-none bg-transparent" 
+                  />
+               </div>
+
                </div>
                <div className="relative shrink-0">
-                  <label htmlFor="sortOrder" className="sr-only">Category</label>
+                  <label htmlFor="sortOrder" className="sr-only">Ordina per</label>
                   <select
                      id="sortOrder"
                      value={sortOrder}
@@ -223,8 +228,11 @@ export default function VisitList({ museum, onLogout }) {
                         setSortOrder(e.target.value);
                         setActualPage(1);
                      }}
-                     className="h-8 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/650 focus:border-transparent"
-                  >
+                     className="h-8 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-full appearance-none cursor-pointer 
+                     focus:outline-none 
+                   focus:border-primary dark:focus:border-secondary 
+                     focus:ring-2 focus:ring-primary/20 dark:focus:ring-secondary/20"
+                     >
                      <option value="default">Ordina per...</option>
                      <option value="title-asc">Nome: A-Z</option>
                      <option value="title-desc">Nome: Z-A</option>
@@ -241,14 +249,14 @@ export default function VisitList({ museum, onLogout }) {
                   <label htmlFor="pagerSize" className="sr-only">Page size:</label>
                   <select
                      id="pagerSize"
-                     className="h-8 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/650 focus:border-transparent"
+                     className="h-8 pl-3 pr-8 text-xs font-medium text-slate-700 dark:text-neutral-200 bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-full appearance-none cursor-pointer 
+                     focus:outline-none focus:border-primary dark:focus:border-secondary focus:ring-2 focus:ring-primary/20 dark:focus:ring-secondary/20"
                      value={visitsOnScreen}
                      onChange={(e) => {
                         setVisitsOnScreen(Number(e.target.value));
                         setActualPage(1);
                      }}
                   >
-                     <option value="1">1</option>
                      <option value="3">3</option>
                      <option value="5">5</option>
                      <option value="10">10</option>
@@ -272,9 +280,15 @@ export default function VisitList({ museum, onLogout }) {
 
             <ul className="flex flex-col flex-nowrap place-content-between min-h-0 flex-1 max-h-100 overflow-y-auto p-4 gap-3">
             {visibleVisits.map(v => (
-               <li key={v._id}>
-                  <a onClick={() => navigate(`/visits/${v._id}`)} className="block p-4 border cursor-pointer border-slate-300 dark:border-neutral-700 rounded-lg hover:bg-slate-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                     <h5 className="text-2xl font-semibold tracking-tight text-heading leading-8">{v.title}</h5>
+               <li className="" key={v._id}>
+                  <a onClick={() => navigate(`/visits/${v._id}`)} className="block p-4 border cursor-pointer border-slate-300 dark:border-neutral-700 rounded-lg hover:bg-primary/10 dark:hover:bg-secondary/10 focus:outline-primary dark:focus:outline-secondary focus-visible:ring-2 focus-visible:ring-primary hover:translate-y-1 duration-100">
+                     <div className='flex justify-between'
+                     >
+                        <h5 className="text-2xl font-semibold tracking-tight text-heading leading-8">{v.title}</h5>
+                        {v.price === 0 && <p className="text-sm text-slate-600">gratis</p>}
+                        {v.price !== 0 && <p className="text-sm text-slate-600">{v.price} €</p>}
+                        
+                     </div>
                      {visitedIds.has(v._id) && <h6 className="text-sm text-slate-600 dark:text-slate-400">Già visitata</h6>}
                      {v.description && <p className="text-body">{v.description}</p>}
                   </a>
@@ -291,10 +305,10 @@ export default function VisitList({ museum, onLogout }) {
                      onClick={goToPreviousPage}
                      disabled={actualPage === 1}
                      aria-label="Previous page"
-                     className="flex items-center justify-center shrink-0 bg-gray-200 w-9 h-9 rounded-md disabled:opacity-50 disabled:cursor-default hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 dark:hover:bg-neutral-700"
+                     className="flex items-center justify-center shrink-0 bg-gray-200 w-9 h-9 rounded-md disabled:opacity-50 enabled:hover:bg-primary/30 enabled:focus:outline-primary enabled:dark:focus:outline-secondary enabled:cursor-pointer enabled:focus-visible:ring-2 enabled:focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 enabled:dark:hover:bg-secondary/30 duration-100 enabled:hover:translate-y-0.5"
                   >
                   <svg xmlns="http://www.w3.org/2000/svg"
-                        className="fill-slate-400 size-3 rotate-180 overflow-visible dark:fill-slate-600" viewBox="0 0 451.846 451.847"
+                        className="fill-slate-600 size-3 overflow-visible dark:fill-slate-50 rotate-180" viewBox="0 0 451.846 451.847"
                         aria-hidden="true">
                         <path
                            d="M345.441 248.292 151.154 442.573c-12.359 12.365-32.397 12.365-44.75 0-12.354-12.354-12.354-32.391 0-44.744L278.318 225.92 106.409 54.017c-12.354-12.359-12.354-32.394 0-44.748 12.354-12.359 32.391-12.359 44.75 0l194.287 194.284c6.177 6.18 9.262 14.271 9.262 22.366 0 8.099-3.091 16.196-9.267 22.373"
@@ -312,8 +326,8 @@ export default function VisitList({ museum, onLogout }) {
                               aria-current={actualPage === page ? "page" : undefined}
                               className={
                                  actualPage === page
-                                    ? "flex items-center justify-center shrink-0 text-sm font-semibold text-white w-9 h-9 rounded-md bg-primary dark:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/500"
-                                    : "flex items-center justify-center shrink-0 text-sm font-semibold text-slate-900 w-9 h-9 rounded-md hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 dark:hover:bg-neutral-700"
+                                    ? "flex items-center justify-center shrink-0 text-sm font-semibold text-white w-9 h-9 rounded-md bg-primary dark:bg-secondary focus:outline-primary dark:focus:outline-secondary focus-visible:ring-2 focus-visible:ring-primary/500"
+                                    : "flex cursor-pointer items-center justify-center shrink-0 text-sm font-semibold text-slate-900 w-9 h-9 rounded-md hover:bg-primary/30 focus:outline-primary dark:focus:outline-secondary focus-visible:ring-2 focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 dark:hover:bg-secondary/30 duration-100 enabled:hover:translate-y-0.5"
                               }
                         >
                               {page}
@@ -325,7 +339,7 @@ export default function VisitList({ museum, onLogout }) {
                      onClick={goToNextPage}
                      disabled={actualPage === maxPages}
                      aria-label="Next page"
-                     className="flex items-center justify-center shrink-0 bg-gray-200 w-9 h-9 rounded-md disabled:opacity-50 disabled:cursor-default hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 dark:hover:bg-neutral-700"
+                     className="flex items-center justify-center shrink-0 bg-gray-200 w-9 h-9 rounded-md disabled:opacity-50 enabled:hover:bg-primary/30 enabled:focus:outline-primary enabled:dark:focus:outline-secondary enabled:cursor-pointer enabled:focus-visible:ring-2 enabled:focus-visible:ring-primary/650 dark:bg-neutral-800 dark:text-slate-50 enabled:dark:hover:bg-secondary/30 duration-100 enabled:hover:translate-y-0.5"
                   >
                      <svg xmlns="http://www.w3.org/2000/svg" className="fill-slate-600 size-3 overflow-visible dark:fill-slate-50"
                         viewBox="0 0 451.846 451.847" aria-hidden="true">

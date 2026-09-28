@@ -310,24 +310,45 @@ export default function Settings() {
                       accent-primary
                       outline-none
                       focus-visible:ring-2
-                      focus-visible:ring-primary
+                      focus-visible:ring-primary/20
                       dark:bg-neutral-700
                       dark:accent-secondary
-                      dark:focus-visible:ring-secondary
+                      dark:focus-visible:ring-secondary/20
 
+                      {/* --- WEBKIT (Chrome, Safari, Edge) --- */}
                       [&::-webkit-slider-thumb]:h-4
                       [&::-webkit-slider-thumb]:w-4
                       [&::-webkit-slider-thumb]:appearance-none
                       [&::-webkit-slider-thumb]:rounded-full
                       [&::-webkit-slider-thumb]:bg-primary
                       dark:[&::-webkit-slider-thumb]:bg-secondary
+                      
+                      {/* Ombratura con OPACITÀ (color-mix mescola il colore con il trasparente) */}
+                      [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-primary)_15%,transparent)]
+                      dark:[&::-webkit-slider-thumb]:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-secondary)_15%,transparent)]
+                      
+                      {/* Effetto hover (opacità al 25% e raggio a 6px) */}
+                      hover:[&::-webkit-slider-thumb]:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-primary)_25%,transparent)]
+                      dark:hover:[&::-webkit-slider-thumb]:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-secondary)_25%,transparent)]
+                      
+                      [&::-webkit-slider-thumb]:transition-all
 
+                      {/* --- MOZILLA (Firefox) --- */}
                       [&::-moz-range-thumb]:h-4
                       [&::-moz-range-thumb]:w-4
                       [&::-moz-range-thumb]:rounded-full
                       [&::-moz-range-thumb]:border-0
                       [&::-moz-range-thumb]:bg-primary
                       dark:[&::-moz-range-thumb]:bg-secondary
+                      
+                      {/* Stesso effetto opacità per Firefox */}
+                      [&::-moz-range-thumb]:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-primary)_15%,transparent)]
+                      dark:[&::-moz-range-thumb]:shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-secondary)_15%,transparent)]
+                      
+                      hover:[&::-moz-range-thumb]:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-primary)_25%,transparent)]
+                      dark:hover:[&::-moz-range-thumb]:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-secondary)_25%,transparent)]
+                      
+                      [&::-moz-range-thumb]:transition-all
                     "
                   />
 

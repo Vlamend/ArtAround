@@ -10,26 +10,29 @@ import Item from "./src/models/item.js";
 import Visit from "./src/models/visit.js";
 
 /*
- * seed.js — versione estesa (~200 opere)
+ * seed.js — versione estesa (~200 opere + secondo museo)
  *
  * Rispetto alla versione precedente: più sale (8, non più 5, per
  * coprire anche il Settecento), più autori/stili reali della scuola
- * bolognese ed emiliana, e soprattutto testi generati per SOGGETTO
- * (madonna, ritratto, martirio, mitologia...) invece che un unico
- * paragrafo-template ripetuto identico su tutte le opere — che era
- * il limite esplicito segnalato nel commento della versione precedente.
+ * bolognese ed emiliana, testi generati per SOGGETTO (madonna,
+ * ritratto, martirio, mitologia...) invece che un unico paragrafo-
+ * template ripetuto identico su tutte le opere, e un SECONDO MUSEO
+ * (Galleria Estense di Modena, ~24 opere) per poter verificare che
+ * l'esclusione tra musei funzioni davvero — opere/sale/visite di un
+ * museo non devono mai comparire navigando l'altro — e per poter
+ * testare la config admin con più di un museum reale tra cui scegliere.
  *
  * Onestà sui dati: un nucleo di opere è realmente documentato e
- * verificato (Bedoli, Guido Reni, Raffaello, i due Carracci — già
- * presenti nelle versioni precedenti del seed), così come l'elenco di
- * ~24 autori (tutti pittori realmente attivi a Bologna/Emilia tra
- * Duecento e Settecento, con date storiche corrette). I ~190 titoli
- * restanti sono però combinazioni plausibili soggetto+santi/famiglie
- * patrizie bolognesi realmente esistite (Bentivoglio, Pepoli,
- * Zambeccari, Malvezzi, Ranuzzi, Aldrovandi), non un calco 1:1 del
- * catalogo reale del museo: a 200 opere di granularità non potevo
- * verificare ogni singolo titolo, e preferisco dirlo chiaramente
- * piuttosto che presentarli come schedatura filologica vera.
+ * verificato (Bedoli, Guido Reni, Raffaello, i due Carracci, il busto
+ * di Bernini a Modena), così come l'elenco di 27 autori (tutti
+ * realmente attivi in Emilia tra Duecento e Settecento, con date
+ * storiche corrette). I titoli restanti sono però combinazioni
+ * plausibili soggetto+santi/famiglie patrizie realmente esistite
+ * (Bentivoglio, Pepoli, Zambeccari, Malvezzi, Ranuzzi, Aldrovandi),
+ * non un calco 1:1 del catalogo reale dei due musei: a questa
+ * granularità non potevo verificare ogni singolo titolo, e preferisco
+ * dirlo chiaramente piuttosto che presentarli come schedatura
+ * filologica vera.
  *
  * adoptionPrice è 0 su tutte le opere (contenuto sempre adottabile
  * gratuitamente nelle visite, coerente con la licenza CC-BY educativa
@@ -157,6 +160,14 @@ async function seed() {
         { key: "settecento", name: "Settecento bolognese", period: "XVIII secolo", description: [
             { duration: "15s", content: "Nel Settecento la pittura bolognese oscilla tra il classicismo elegante di Donato Creti e il naturalismo quasi domestico di Giuseppe Maria Crespi." },
             { duration: "40s", content: "Il Settecento bolognese si muove tra due poli: da un lato il classicismo levigato ed elegante di Donato Creti e Marcantonio Franceschini, erede diretto della tradizione di Reni; dall'altro il naturalismo informale e a tratti irriverente di Giuseppe Maria Crespi, che introduce nella grande pittura temi di vita quotidiana fino ad allora relegati ai margini. Gaetano Gandolfi, più avanti nel secolo, sintetizza le due anime in una maniera brillante e già aperta al gusto neoclassico." }
+        ]},
+        // Stili usati nel secondo museo (Galleria Estense di Modena).
+        { key: "corte-estense", name: "Rinascimento alla corte estense", period: "XVI secolo", description: [
+            { duration: "15s", content: "Pittura del Cinquecento ferrarese e parmense legata al mecenatismo della famiglia Este, con Correggio e Dosso Dossi tra i protagonisti." },
+            { duration: "40s", content: "Alla corte estense, tra Ferrara e Parma, si sviluppa nel Cinquecento una pittura raffinata e colta, sostenuta dal mecenatismo della famiglia Este. Correggio elabora soluzioni luministiche e spaziali di straordinaria modernità, mentre Dosso Dossi coltiva un gusto più fantastico e coloristico, con soggetti mitologici e allegorici pensati per gli appartamenti privati della corte." }
+        ]},
+        { key: "scultura-barocca-romana", name: "Barocco scultoreo romano", period: "XVII secolo", description: [
+            { duration: "15s", content: "La scultura barocca romana, con Gian Lorenzo Bernini come protagonista assoluto, cerca nel marmo un movimento e un'espressività quasi pittorici." }
         ]}
     ];
     const styles = {};
@@ -252,6 +263,19 @@ async function seed() {
         ]},
         { key: "gandolfi", name: "Gaetano Gandolfi", styleKey: "settecento", birthYear: "1734", deathYear: "1802", bio: [
             { duration: "15s", content: "Pittore bolognese di fine Settecento, con una maniera brillante che guarda già al gusto neoclassico." }
+        ]},
+        // I tre autori seguenti sono usati nel secondo museo (Galleria Estense di
+        // Modena, vedi più sotto), non nella Pinacoteca di Bologna.
+        { key: "correggio", name: "Antonio Allegri, detto il Correggio", styleKey: "corte-estense", birthYear: "1489 ca.", deathYear: "1534", bio: [
+            { duration: "15s", content: "Pittore parmense tra i massimi del Rinascimento emiliano, noto per gli affreschi illusionistici delle cupole di Parma e per una luce morbida e avvolgente." },
+            { duration: "40s", content: "Antonio Allegri, detto il Correggio dal nome del suo paese natale, sviluppa uno stile personalissimo fatto di sfumature morbide, scorci audaci e una luce calda e avvolgente. I suoi affreschi illusionistici nelle cupole di Parma anticipano soluzioni spaziali che saranno riprese dal Barocco un secolo più tardi, mentre le sue opere da cavalletto uniscono grazia formale e intensità emotiva." }
+        ]},
+        { key: "dossodossi", name: "Dosso Dossi", styleKey: "corte-estense", birthYear: "1489 ca.", deathYear: "1542", bio: [
+            { duration: "15s", content: "Pittore ferrarese, per anni artista di corte degli Este, noto per una tavolozza ricca e per soggetti mitologici e fantastici." }
+        ]},
+        { key: "bernini", name: "Gian Lorenzo Bernini", styleKey: "scultura-barocca-romana", birthYear: "1598", deathYear: "1680", bio: [
+            { duration: "15s", content: "Scultore e architetto romano, il protagonista assoluto del Barocco italiano." },
+            { duration: "40s", content: "Gian Lorenzo Bernini è la figura dominante della scultura e dell'architettura barocca a Roma nel Seicento. Il suo marmo ha una capacità quasi teatrale di rendere il movimento e l'espressione, trasformando la materia inerte in carne, panneggi e sguardi vividi. Il busto del duca Francesco I d'Este, oggi alla Galleria Estense di Modena, è tra le sue prove più celebri nel genere del ritratto scolpito." }
         ]}
     ];
     const authors = {};
@@ -487,17 +511,19 @@ async function seed() {
     function nextOwner() { return authorOwnerCycle[ownerCursor++ % authorOwnerCycle.length]; }
 
     function acquisitionPriceFor(authorKey, year) {
-        const famous = new Set(["raffaello", "guido-reni", "annibale-carracci", "ludovico-carracci", "vitale-da-bologna", "guercino"]);
+        const famous = new Set(["raffaello", "guido-reni", "annibale-carracci", "ludovico-carracci", "vitale-da-bologna", "guercino", "correggio", "bernini"]);
         const base = famous.has(authorKey) ? 30 : 12;
         return base + Math.round((year % 17));
     }
 
-    const artworks = [];       // { artwork, elementare, medio, roomIdx, styleKey }
+    // roomOccurrence è chiavato sull'_id della stanza (non su un indice numerico):
+    // così il conteggio non si confonde quando, più avanti, genereremo opere
+    // anche per le stanze di un secondo museo con gli stessi roomIdx 0,1,2...
     let roomOccurrence = {};
-    function nextCoords(roomIdx) {
-        const room = rooms[roomIdx];
+    function nextCoords(room) {
         const b = room.bounds;
-        const n = (roomOccurrence[roomIdx] = (roomOccurrence[roomIdx] || 0) + 1);
+        const key = room._id.toString();
+        const n = (roomOccurrence[key] = (roomOccurrence[key] || 0) + 1);
         const cols = 5;
         const col = (n - 1) % cols;
         const row = Math.floor((n - 1) / cols);
@@ -507,17 +533,25 @@ async function seed() {
         };
     }
 
-    async function createArtworkWithContent({ title, year, technique, authorKey, styleKey, roomIdx, subject, isPublicOverride }) {
+    // Generalizzata per poter creare opere su musei diversi: museumObj e
+    // roomsArr indicano su quale museo/elenco-sale lavorare, pool è
+    // l'array in cui accumulare l'opera creata (un pool per museo, per
+    // non mischiare le opere di due musei diversi nelle stesse visite).
+    // customTexts, se presente, salta la generazione per soggetto e usa
+    // testi scritti a mano (serve per pezzi particolari come una scultura,
+    // per cui i template pensati per la pittura non sono adatti).
+    async function createArtworkWithContent({ title, year, technique, authorKey, styleKey, museumObj, roomsArr, roomIdx, subject, isPublicOverride, pool, customTexts }) {
         const author = authors[authorKey];
         const style = styles[styleKey];
         const owner = nextOwner();
+        const room = roomsArr[roomIdx];
         const artwork = await Artwork.create({
             title,
             year,
             technique,
-            museum: museum._id,
-            roomId: rooms[roomIdx]._id,
-            coords: nextCoords(roomIdx),
+            museum: museumObj._id,
+            roomId: room._id,
+            coords: nextCoords(room),
             author: author._id,
             style: style._id,
             owner: owner._id,
@@ -527,23 +561,33 @@ async function seed() {
             acquisitionPrice: acquisitionPriceFor(authorKey, parseInt(year, 10) || 1500)
         });
 
-        const facts = {
-            title, year,
-            authorName: authorsData.find((a) => a.key === authorKey).name,
-            authorSpan: `${authorsData.find((a) => a.key === authorKey).birthYear}${authorsData.find((a) => a.key === authorKey).deathYear ? " - " + authorsData.find((a) => a.key === authorKey).deathYear : ""}`,
-            styleName: stylesData.find((s) => s.key === styleKey).name,
-            technique,
-            roomName: rooms[roomIdx].name
-        };
+        let elementareTexts, medioTexts;
+        if (customTexts) {
+            elementareTexts = customTexts.elementare;
+            medioTexts = customTexts.medio;
+        } else {
+            const facts = {
+                title, year,
+                authorName: authorsData.find((a) => a.key === authorKey).name,
+                authorSpan: `${authorsData.find((a) => a.key === authorKey).birthYear}${authorsData.find((a) => a.key === authorKey).deathYear ? " - " + authorsData.find((a) => a.key === authorKey).deathYear : ""}`,
+                styleName: stylesData.find((s) => s.key === styleKey).name,
+                technique,
+                roomName: room.name
+            };
+            elementareTexts = makeTexts(subject, "elementare", facts);
+            medioTexts = makeTexts(subject, "medio", facts);
+        }
 
-        const elementare = await Item.create({ artwork: artwork._id, texts: makeTexts(subject, "elementare", facts), language: "elementare", domains: ["storia"] });
-        const medio = await Item.create({ artwork: artwork._id, texts: makeTexts(subject, "medio", facts), language: "medio", domains: ["storia", "stile"] });
+        const elementare = await Item.create({ artwork: artwork._id, texts: elementareTexts, language: "elementare", domains: ["storia"] });
+        const medio = await Item.create({ artwork: artwork._id, texts: medioTexts, language: "medio", domains: ["storia", "stile"] });
 
-        artworks.push({ artwork, elementare, medio, roomIdx, styleKey, authorKey, subject });
-        return { artwork, elementare, medio };
+        const entry = { artwork, elementare, medio, roomIdx, styleKey, authorKey, subject };
+        pool.push(entry);
+        return entry;
     }
 
-    // --- Opere generate dal piano sale ---
+    // --- Opere generate dal piano sale (Pinacoteca di Bologna) ---
+    const artworksBologna = [];
     for (const plan of ROOM_PLAN) {
         for (let i = 0; i < plan.count; i++) {
             const authorKey = plan.authorKeys[i % plan.authorKeys.length];
@@ -551,33 +595,33 @@ async function seed() {
             const year = plan.yearMin + Math.round((plan.yearMax - plan.yearMin) * (i / Math.max(1, plan.count - 1)));
             const technique = plan.tech[i % plan.tech.length];
             const title = titleFor(subject);
-            await createArtworkWithContent({ title, year: `${year} ca.`, technique, authorKey, styleKey: plan.styleKey, roomIdx: plan.roomIdx, subject });
+            await createArtworkWithContent({ title, year: `${year} ca.`, technique, authorKey, styleKey: plan.styleKey, museumObj: museum, roomsArr: rooms, roomIdx: plan.roomIdx, subject, pool: artworksBologna });
         }
     }
 
     // --- 5 opere "fisse", realmente documentate (coerenza con le versioni precedenti del seed) ---
     const raffaello = await createArtworkWithContent({
         title: "Estasi di Santa Cecilia", year: "1514-1516", technique: "Olio su tavola trasportato su tela",
-        authorKey: "raffaello", styleKey: "cinquecento-maturo", roomIdx: 2, subject: "ritratto", isPublicOverride: false
+        authorKey: "raffaello", styleKey: "cinquecento-maturo", museumObj: museum, roomsArr: rooms, roomIdx: 2, subject: "ritratto", isPublicOverride: false, pool: artworksBologna
     });
     const bedoliArtwork = await createArtworkWithContent({
         title: "Ritratto di frate in veste di San Tommaso d'Aquino", year: "1545 ca.", technique: "Olio su tavola",
-        authorKey: "bedoli", styleKey: "manierismo", roomIdx: 3, subject: "ritratto"
+        authorKey: "bedoli", styleKey: "manierismo", museumObj: museum, roomsArr: rooms, roomIdx: 3, subject: "ritratto", pool: artworksBologna
     });
     const reniMadonna = await createArtworkWithContent({
         title: "Madonna di San Luca", year: "1611", technique: "Olio su tela",
-        authorKey: "guido-reni", styleKey: "classicismo-barocco", roomIdx: 5, subject: "madonna"
+        authorKey: "guido-reni", styleKey: "classicismo-barocco", museumObj: museum, roomsArr: rooms, roomIdx: 5, subject: "madonna", pool: artworksBologna
     });
     const comunioneGirolamo = await createArtworkWithContent({
         title: "Comunione di San Girolamo", year: "1614", technique: "Olio su tela",
-        authorKey: "ludovico-carracci", styleKey: "riforma-carracci", roomIdx: 4, subject: "martirio"
+        authorKey: "ludovico-carracci", styleKey: "riforma-carracci", museumObj: museum, roomsArr: rooms, roomIdx: 4, subject: "martirio", pool: artworksBologna
     });
     const strageInnocenti = await createArtworkWithContent({
         title: "Strage degli Innocenti", year: "1611 ca.", technique: "Olio su tela",
-        authorKey: "ludovico-carracci", styleKey: "riforma-carracci", roomIdx: 4, subject: "martirio"
+        authorKey: "ludovico-carracci", styleKey: "riforma-carracci", museumObj: museum, roomsArr: rooms, roomIdx: 4, subject: "martirio", pool: artworksBologna
     });
 
-    console.log(`${artworks.length} artwork create (con Content elementare + medio ciascuna: ${artworks.length * 2} Item totali).`);
+    console.log(`${artworksBologna.length} artwork create per la Pinacoteca (con Content elementare + medio ciascuna: ${artworksBologna.length * 2} Item totali).`);
     console.log("Distribuzione proprietà: ~40% autore1, ~40% autore2, ~20% admin1 (i visitatori non possiedono mai opere).");
 
     // ---------- Content extra sui domini 'materiali'/'storia'/'architettura' ----------
@@ -585,8 +629,8 @@ async function seed() {
     // secondo livello di approfondimento tematico oltre ad artista/stile,
     // per dimostrare più a fondo il meccanismo "dimmi di più" per dominio.
     const extraDomainTargets = [
-        { entry: artworks[2],  domain: "materiali", content: `Il supporto è realizzato secondo le tecniche pittoriche tipiche del periodo di ${authorsData.find((a) => a.key === artworks[2].authorKey).name}, con una preparazione a gesso e colla animale che consentiva stesure sottili e sovrapposte.` },
-        { entry: artworks[27], domain: "architettura", content: `L'ambientazione architettonica dipinta nello sfondo riflette i canoni prospettici del Quattrocento, con uno spazio costruito secondo una griglia geometrica rigorosa.` },
+        { entry: artworksBologna[2],  domain: "materiali", content: `Il supporto è realizzato secondo le tecniche pittoriche tipiche del periodo di ${authorsData.find((a) => a.key === artworksBologna[2].authorKey).name}, con una preparazione a gesso e colla animale che consentiva stesure sottili e sovrapposte.` },
+        { entry: artworksBologna[27], domain: "architettura", content: `L'ambientazione architettonica dipinta nello sfondo riflette i canoni prospettici del Quattrocento, con uno spazio costruito secondo una griglia geometrica rigorosa.` },
         { entry: bedoliArtwork, domain: "materiali", content: `Il supporto è una tavola di pioppo, tipica della pittura emiliana del periodo, preparata con gesso e colla animale prima della stesura pittorica a olio. Questa tecnica consentiva velature sottili e sovrapposte, alla base della resa fredda e smaltata tipica del manierismo di Bedoli.` },
         { entry: strageInnocenti, domain: "storia", content: `Il soggetto riprende l'episodio evangelico della strage degli innocenti, tema caro alla pittura controriformata per il suo carico drammatico ed emotivo, qui reso da Ludovico Carracci con un naturalismo dei corpi e degli affetti che segna la rottura con la maniera tardo-cinquecentesca.` },
         { entry: comunioneGirolamo, domain: "storia", content: `L'episodio raffigurato, l'ultima comunione di San Girolamo poco prima della morte, è un soggetto molto diffuso nella pittura controriformata come esempio di devozione esemplare in punto di morte.` },
@@ -603,66 +647,213 @@ async function seed() {
     }
     console.log(`${extraDomainTargets.length} Content extra su domini di approfondimento creati.`);
 
+    // ---------- Secondo museo: Galleria Estense di Modena ----------
+    // Serve soprattutto a verificare che l'esclusione tra musei funzioni
+    // davvero (opere/visite/sale di un museo non devono mai comparire
+    // navigando l'altro) e a poter testare la config admin (PUT /api/config
+    // valida museumSlug contro Museum reali: ora ce ne sono due tra cui
+    // scegliere). Scala volutamente più piccola della Pinacoteca (~24
+    // opere): basta a esercitare i confini tra musei senza raddoppiare
+    // il tempo di seeding.
+    const museum2 = await Museum.create({
+        slug: "galleria-estense-modena",
+        name: "Galleria Estense di Modena",
+        description: "La quadreria di famiglia degli Estensi, trasferita da Ferrara a Modena nel Seicento: capolavori di Correggio e Dosso Dossi, e il celebre busto marmoreo di Bernini.",
+        address: "Largo Porta Sant'Agostino, 337",
+        city: "Modena",
+        province: "MO",
+        region: "Emilia-Romagna",
+        cap: "41121",
+        website: "https://gallerie-estensi.beniculturali.it",
+        primaryColor: "#0B3D66",
+        secondaryColor: "#C9A227",
+        ticketInfo: "Biglietto intero 8€, ridotto 2€. Ingresso gratuito la prima domenica del mese.",
+        openingHours: {
+            monday: "Chiuso",
+            tuesday: "08:30-19:00",
+            wednesday: "08:30-19:00",
+            thursday: "08:30-19:00",
+            friday: "08:30-19:00",
+            saturday: "08:30-19:00",
+            sunday: "08:30-19:00"
+        },
+        services: ["bookshop", "audioguide"],
+        rooms: [
+            { name: "Sala del Correggio",                       floor: 1, bounds: { x: 5,  y: 10, width: 22, height: 80 } },
+            { name: "Sala della pittura ferrarese ed emiliana",  floor: 1, bounds: { x: 29, y: 10, width: 22, height: 80 } },
+            { name: "Sala della scultura estense",               floor: 1, bounds: { x: 53, y: 10, width: 20, height: 80 } },
+            { name: "Sala del Seicento emiliano",                floor: 2, bounds: { x: 5,  y: 10, width: 30, height: 80 } }
+        ],
+        floorPlans: [
+            { floor: 1, imageUrl: "/assets/floorplans/estense-piano1.svg" },
+            { floor: 2, imageUrl: "/assets/floorplans/estense-piano2.svg" }
+        ]
+    });
+    const roomsModena = museum2.rooms;
+
+    museum2.pointsOfInterest = [
+        { type: "entrance", name: "Ingresso principale", floor: 1, coords: { x: 2,  y: 50 } },
+        { type: "exit",     name: "Uscita",              floor: 1, coords: { x: 98, y: 50 } },
+        { type: "restroom", name: "Bagni",                floor: 1, roomId: roomsModena[1]._id, coords: { x: 30, y: 90 } },
+        { type: "shop",     name: "Bookshop",              floor: 1, coords: { x: 90, y: 95 } },
+        { type: "elevator", name: "Ascensore",             floor: 1, coords: { x: 50, y: 95 } }
+    ];
+    await museum2.save();
+    console.log("Secondo museo creato: Galleria Estense di Modena, 4 sale.");
+
+    // --- Opere generate (Modena) ---
+    const ROOM_PLAN_MODENA = [
+        { roomIdx: 0, styleKey: "corte-estense", authorKeys: ["correggio"], subjects: ["madonna", "sacraFamiglia", "pieta"], yearMin: 1510, yearMax: 1530, tech: TECH_1500, count: 6 },
+        { roomIdx: 1, styleKey: "corte-estense", authorKeys: ["dossodossi", "correggio"], subjects: ["mitologia", "ritratto", "madonna"], yearMin: 1515, yearMax: 1540, tech: TECH_1500, count: 6 },
+        { roomIdx: 2, styleKey: "riforma-carracci", authorKeys: ["annibale-carracci", "guercino"], subjects: ["ritratto", "martirio"], yearMin: 1595, yearMax: 1625, tech: TECH_1600PLUS, count: 3 }, // + 1 fissa (busto Bernini) = 4
+        { roomIdx: 3, styleKey: "naturalismo-luministico", authorKeys: ["guercino", "annibale-carracci"], subjects: ["martirio", "sacraFamiglia", "mitologia"], yearMin: 1615, yearMax: 1650, tech: TECH_1600PLUS, count: 8 }
+    ];
+
+    const artworksModena = [];
+    for (const plan of ROOM_PLAN_MODENA) {
+        for (let i = 0; i < plan.count; i++) {
+            const authorKey = plan.authorKeys[i % plan.authorKeys.length];
+            const subject = plan.subjects[i % plan.subjects.length];
+            const year = plan.yearMin + Math.round((plan.yearMax - plan.yearMin) * (i / Math.max(1, plan.count - 1)));
+            const technique = plan.tech[i % plan.tech.length];
+            const title = titleFor(subject);
+            await createArtworkWithContent({ title, year: `${year} ca.`, technique, authorKey, styleKey: plan.styleKey, museumObj: museum2, roomsArr: roomsModena, roomIdx: plan.roomIdx, subject, pool: artworksModena });
+        }
+    }
+
+    // Pezzo "fisso" reale: il busto di Francesco I d'Este di Bernini. Testi
+    // scritti a mano (customTexts), perché i banchi testuali per soggetto
+    // sopra sono pensati per la pittura ("questo quadro...") e userebbero
+    // un linguaggio sbagliato per una scultura in marmo.
+    const bernBust = await createArtworkWithContent({
+        title: "Busto di Francesco I d'Este", year: "1650-1651", technique: "Scultura in marmo",
+        authorKey: "bernini", styleKey: "scultura-barocca-romana", museumObj: museum2, roomsArr: roomsModena, roomIdx: 2, subject: "ritratto", pool: artworksModena,
+        customTexts: {
+            elementare: [
+                { duration: "3s",  content: "Un ritratto scolpito nel marmo, non dipinto: è di Gian Lorenzo Bernini." },
+                { duration: "15s", content: "Questa non è un dipinto ma una scultura di marmo: rappresenta il duca Francesco I d'Este, scolpito da uno degli artisti più famosi del suo tempo, Gian Lorenzo Bernini." },
+                { duration: "40s", content: "Guarda bene: questo volto non è dipinto, è scolpito nel marmo bianco. Bernini è riuscito a far sembrare il marmo quasi vivo, con pieghe morbide negli abiti e uno sguardo intenso. Il duca Francesco I d'Este volle un suo ritratto da uno degli scultori più richiesti d'Europa, anche se non poté mai posare di persona a Roma." }
+            ],
+            medio: [
+                { duration: "3s",  content: "Busto di Francesco I d'Este, Gian Lorenzo Bernini, 1650-1651, marmo." },
+                { duration: "15s", content: "Capolavoro della ritrattistica scultorea barocca, il busto ritrae il duca di Modena con un realismo psicologico raro per il genere, tipico della maniera di Bernini." },
+                { duration: "40s", content: "Realizzato tra il 1650 e il 1651, il busto di Francesco I d'Este è una delle prove più celebri di Bernini nel genere del ritratto scolpito. Il duca non poté recarsi a Roma per posare di persona, e Bernini lavorò basandosi su un ritratto dipinto inviatogli come riferimento: nonostante questo, riuscì a restituire un'intensità psicologica e un dinamismo dei panneggi che pochi scultori coevi sapevano eguagliare." }
+            ]
+        }
+    });
+
+    console.log(`${artworksModena.length} artwork create per la Galleria Estense (con Content elementare + medio ciascuna).`);
+
+    // Content extra su dominio per un paio di opere di Modena.
+    const extraDomainTargetsModena = [
+        { entry: bernBust, domain: "materiali", content: "Il marmo bianco proviene dalle cave di Carrara, materiale privilegiato dalla scultura barocca romana per la sua capacità di restituire superfici morbide e quasi traslucide, ideali per rendere carnagioni e panneggi." },
+        { entry: artworksModena[0], domain: "storia", content: "Il Correggio è celebre soprattutto per gli affreschi illusionistici delle cupole di Parma, capaci di aprire il soffitto verso un cielo popolato di figure in volo: una soluzione spaziale che influenzerà la decorazione barocca del secolo successivo." }
+    ];
+    for (const target of extraDomainTargetsModena) {
+        await Item.create({
+            artwork: target.entry.artwork._id,
+            texts: [{ duration: "40s", content: target.content }],
+            language: "medio",
+            domains: [target.domain]
+        });
+    }
+    console.log(`${extraDomainTargetsModena.length} Content extra su domini di approfondimento creati (Modena).`);
+
     // ---------- Visite ----------
+    // Ogni visita porta anche il proprio museum + entranceInfo (non più
+    // fissi su museum._id): con due musei in gioco, una visita deve
+    // restare scoped a UN SOLO museo, ed è esattamente questo confine
+    // che il seed vuole ora poter verificare.
     function stepsFrom(entries, note) {
         return entries.map((e, idx) => ({
             artwork: e.artwork._id,
             logisticNote: idx === 0 ? note : "Proseguire nella sala successiva seguendo le indicazioni a pavimento."
         }));
     }
-    function byRoom(roomIdx, n) { return artworks.filter((a) => a.roomIdx === roomIdx).slice(0, n); }
-    function byStyle(styleKey, n) { return artworks.filter((a) => a.styleKey === styleKey).slice(0, n); }
+    function byRoom(pool, roomIdx, n) { return pool.filter((a) => a.roomIdx === roomIdx).slice(0, n); }
+    function byStyle(pool, styleKey, n) { return pool.filter((a) => a.styleKey === styleKey).slice(0, n); }
+
+    const BOLOGNA_ENTRANCE = "Ingresso da via delle Belle Arti 56. Biglietto 6€, ridotto 2€, guardaroba gratuito.";
+    const MODENA_ENTRANCE = "Ingresso da Largo Porta Sant'Agostino 337. Biglietto 8€, ridotto 2€.";
 
     const visitsData = [
         {
             title: "Il Trecento bolognese", description: "Dalla pittura tardogotica ai primi accenni di naturalismo, con Vitale da Bologna protagonista.",
-            entries: byRoom(0, 10), author: users.autore1, pace: "40s", price: 0, isPublic: true, tags: ["trecento", "gotico"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: byRoom(artworksBologna, 0, 10), author: users.autore1, pace: "40s", price: 0, isPublic: true, tags: ["trecento", "gotico"]
         },
         {
             title: "Da Francia ai manieristi", description: "Il passaggio dal Quattrocento al Manierismo emiliano, attraverso Francesco Francia e la cerchia del Parmigianino.",
-            entries: [...byRoom(1, 5), ...byRoom(2, 5), ...byRoom(3, 5)], author: users.autore1, pace: "40s", price: 0, isPublic: true, tags: ["rinascimento", "manierismo"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: [...byRoom(artworksBologna, 1, 5), ...byRoom(artworksBologna, 2, 5), ...byRoom(artworksBologna, 3, 5)], author: users.autore1, pace: "40s", price: 0, isPublic: true, tags: ["rinascimento", "manierismo"]
         },
         {
             title: "I capolavori del Seicento", description: "Il grande secolo bolognese, dai Carracci a Guido Reni fino a Guercino.",
-            entries: [...byRoom(4, 5), ...byRoom(5, 5), ...byRoom(6, 4)], author: users.autore1, pace: "1min", price: 0, isPublic: true, tags: ["seicento", "barocco"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: [...byRoom(artworksBologna, 4, 5), ...byRoom(artworksBologna, 5, 5), ...byRoom(artworksBologna, 6, 4)], author: users.autore1, pace: "1min", price: 0, isPublic: true, tags: ["seicento", "barocco"]
         },
         {
             title: "L'arte spiegata ai più piccoli", description: "Un percorso pensato per bambini e scolaresche, con testi semplici e opere dai colori vivaci.",
-            entries: [...byRoom(0, 3), ...byRoom(3, 3), ...byRoom(7, 4)], author: users.autore2, pace: "15s", price: 0, isPublic: true, tags: ["famiglie", "bambini"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: [...byRoom(artworksBologna, 0, 3), ...byRoom(artworksBologna, 3, 3), ...byRoom(artworksBologna, 7, 4)], author: users.autore2, pace: "15s", price: 0, isPublic: true, tags: ["famiglie", "bambini"]
         },
         {
             title: "Il secolo dei Carracci", description: "La riforma naturalistica di Ludovico, Annibale e Agostino Carracci, tra Bologna e i suoi committenti.",
-            entries: byRoom(4, 12), author: users.autore2, pace: "40s", price: 0, isPublic: true, tags: ["carracci", "seicento"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: byRoom(artworksBologna, 4, 12), author: users.autore2, pace: "40s", price: 0, isPublic: true, tags: ["carracci", "seicento"]
         },
         {
             title: "Bologna nel Settecento", description: "Dal classicismo elegante di Creti al naturalismo domestico di Crespi, fino a Gandolfi.",
-            entries: byRoom(7, 14), author: users.autore2, pace: "40s", price: 0, isPublic: true, tags: ["settecento"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: byRoom(artworksBologna, 7, 14), author: users.autore2, pace: "40s", price: 0, isPublic: true, tags: ["settecento"]
         },
         {
             title: "Ritratti e volti della collezione", description: "Un percorso trasversale sui ritratti della Pinacoteca, dal Manierismo al Settecento.",
-            entries: artworks.filter((a) => a.subject === "ritratto").slice(0, 12), author: users.autore2, pace: "40s", price: 0, isPublic: true, tags: ["ritratti"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: artworksBologna.filter((a) => a.subject === "ritratto").slice(0, 12), author: users.autore2, pace: "40s", price: 0, isPublic: true, tags: ["ritratti"]
         },
         {
             title: "Percorso completo della Pinacoteca", description: "Una visita generale, sala per sala, attraverso l'intera collezione permanente.",
-            entries: [...byRoom(0, 3), ...byRoom(1, 2), ...byRoom(2, 3), ...byRoom(3, 3), ...byRoom(4, 3), ...byRoom(5, 3), ...byRoom(6, 3), ...byRoom(7, 3)],
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: [...byRoom(artworksBologna, 0, 3), ...byRoom(artworksBologna, 1, 2), ...byRoom(artworksBologna, 2, 3), ...byRoom(artworksBologna, 3, 3), ...byRoom(artworksBologna, 4, 3), ...byRoom(artworksBologna, 5, 3), ...byRoom(artworksBologna, 6, 3), ...byRoom(artworksBologna, 7, 3)],
             author: users.admin1, pace: "40s", price: 0, isPublic: true, tags: ["panoramica"]
         },
         {
             title: "Un'ora tra i capolavori", description: "I pezzi più celebri della collezione, per chi ha poco tempo a disposizione.",
-            entries: [raffaello, bedoliArtwork, reniMadonna, comunioneGirolamo, strageInnocenti, ...byRoom(6, 3)],
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: [raffaello, bedoliArtwork, reniMadonna, comunioneGirolamo, strageInnocenti, ...byRoom(artworksBologna, 6, 3)],
             author: users.admin1, pace: "1min", price: 0, isPublic: true, tags: ["highlights"]
         },
         {
             title: "Le mie preferite del Manierismo", description: "Una selezione personale delle opere manieriste che preferisco, per una visita tranquilla.",
-            entries: [bedoliArtwork, ...byRoom(3, 6)], author: users.visitatore1, pace: "1min", price: 0, isPublic: false, tags: ["personale"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: [bedoliArtwork, ...byRoom(artworksBologna, 3, 6)], author: users.visitatore1, pace: "1min", price: 0, isPublic: false, tags: ["personale"]
         },
         {
             title: "Percorso per il compleanno di mia figlia", description: "Un giro breve e colorato tra le opere più vivaci, pensato per una gita in famiglia.",
-            entries: byRoom(7, 6), author: users.visitatore1, pace: "15s", price: 0, isPublic: false, tags: ["personale", "famiglia"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: byRoom(artworksBologna, 7, 6), author: users.visitatore1, pace: "15s", price: 0, isPublic: false, tags: ["personale", "famiglia"]
         },
         {
             title: "Studio per l'esame di Storia dell'Arte", description: "Le opere del Seicento che mi servono per ripassare prima dell'esame.",
-            entries: [...byRoom(4, 4), ...byRoom(5, 4)], author: users.visitatore2, pace: "1min", price: 0, isPublic: false, tags: ["personale", "studio"]
+            museum, entranceInfo: BOLOGNA_ENTRANCE,
+            entries: [...byRoom(artworksBologna, 4, 4), ...byRoom(artworksBologna, 5, 4)], author: users.visitatore2, pace: "1min", price: 0, isPublic: false, tags: ["personale", "studio"]
+        },
+        // --- Visite del secondo museo (Galleria Estense di Modena) ---
+        {
+            title: "Correggio e la corte estense", description: "Il Rinascimento raffinato di Correggio e Dosso Dossi alla corte degli Este.",
+            museum: museum2, entranceInfo: MODENA_ENTRANCE,
+            entries: [...byRoom(artworksModena, 0, 4), ...byRoom(artworksModena, 1, 4)], author: users.autore1, pace: "40s", price: 0, isPublic: true, tags: ["rinascimento", "estense"]
+        },
+        {
+            title: "Mezz'ora alla Estense", description: "Una selezione rapida tra pittura e scultura, dal Correggio al busto di Bernini.",
+            museum: museum2, entranceInfo: MODENA_ENTRANCE,
+            entries: [bernBust, ...byRoom(artworksModena, 0, 2), ...byRoom(artworksModena, 3, 2)], author: users.admin1, pace: "15s", price: 0, isPublic: true, tags: ["highlights"]
+        },
+        {
+            title: "La mia visita a Modena", description: "Le opere che voglio rivedere con calma la prossima volta che torno alla Estense.",
+            museum: museum2, entranceInfo: MODENA_ENTRANCE,
+            entries: [bernBust, ...byRoom(artworksModena, 3, 4)], author: users.visitatore2, pace: "1min", price: 0, isPublic: false, tags: ["personale"]
         }
     ];
 
@@ -670,8 +861,8 @@ async function seed() {
         await Visit.create({
             title: v.title,
             description: v.description,
-            museum: museum._id,
-            entranceInfo: "Ingresso da via delle Belle Arti 56. Biglietto 6€, ridotto 2€, guardaroba gratuito.",
+            museum: v.museum._id,
+            entranceInfo: v.entranceInfo,
             pace: v.pace,
             steps: stepsFrom(v.entries, "Dall'ingresso, proseguire verso la prima sala del percorso."),
             author: v.author._id,
@@ -681,13 +872,14 @@ async function seed() {
             tags: v.tags
         });
     }
-    console.log(`${visitsData.length} visite create: 8 pubbliche (autore1, autore2, admin1) + 3 private (visitatore1 x2, visitatore2 x1).`);
+    console.log(`${visitsData.length} visite create: 11 pubbliche (autore1, autore2, admin1, su entrambi i musei) + 4 private (visitatore1 x2, visitatore2 x2).`);
 
-    console.log("\nSeed completato!");
-    console.log("   Museo:", museum.name, "-", rooms.length, "sale");
+    console.log("\n✅ Seed completato!");
+    console.log("   Musei:", museum.name, `(${rooms.length} sale)`, "/", museum2.name, `(${roomsModena.length} sale)`);
     console.log("   Utenti: autore1, autore2, visitatore1, visitatore2, admin1 (password: 12345678)");
     console.log("   Autori:", authorsData.length, " / Stili:", stylesData.length);
-    console.log("   Opere:", artworks.length, " / Content:", artworks.length * 2 + extraDomainTargets.length);
+    console.log("   Opere Pinacoteca:", artworksBologna.length, " / Opere Estense:", artworksModena.length);
+    console.log("   Content totali:", (artworksBologna.length + artworksModena.length) * 2 + extraDomainTargets.length + extraDomainTargetsModena.length);
     console.log("   Visite:", visitsData.length);
 
     await mongoose.disconnect();

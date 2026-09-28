@@ -17,7 +17,7 @@ function generateToken(user) {
 //registrazione utente
 export async function register(req, res) {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role } = req.body;
 
         // Controllo campi obbligatori
         if (!username || !email || !password) {
@@ -35,9 +35,12 @@ export async function register(req, res) {
         if (existingUsername) {
             return res.status(409).json({ error: "Username non disponibile." });
         }
+        if(role !== 'admin' && role !== 'visitatore' && role !== 'autore'){
+            return res.status(422).json({ error: "Ruolo non valido"});
+        }
 
-        // Creazione utente (password hashata automaticamente dal pre-save)
-        const newUser = new User({ username, email, password });
+        // Creazione utente
+        const newUser = new User({ username, email, password, role });
         await newUser.save();
 
         // Genero token per login immediato

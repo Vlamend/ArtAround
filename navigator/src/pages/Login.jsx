@@ -5,21 +5,17 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      await login(email, password);
-      onLogin();
-    } catch (err) {
-      setError(err.message || 'Credenziali non valide.');
-    } finally {
-      setLoading(false);
-    }
-  }
+   async function handleSubmit(e) {
+      e.preventDefault();
+      setError('');
+      try {
+         await login(email, password);
+         onLogin();
+      } catch (err) {
+         setError(err.message || 'Credenziali non valide.');
+      }
+   }
 
   return (
     <main className="bg-gray-50 px-4 md:px-8 dark:bg-neutral-900">
@@ -39,7 +35,7 @@ export default function Login({ onLogin }) {
                           value={email}
                           onChange={e => setEmail(e.target.value)}
                           autoComplete="email"
-                          className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
+                          className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary/70 dark:focus:outline-secondary/70 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                      </div>
                      <div>
                         <label htmlFor="password"
@@ -51,7 +47,7 @@ export default function Login({ onLogin }) {
                           onChange={e => setPassword(e.target.value)}
                           required
                           autoComplete="current-password"
-                          className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
+                          className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-primary/70 dark:focus:outline-secondary/70 dark:text-slate-50 dark:bg-neutral-700 dark:outline-neutral-600" />
                      </div>
                      
                      {error && 
@@ -59,13 +55,13 @@ export default function Login({ onLogin }) {
                       <p className="error-message">{error}</p>
                      </div>}
                      <button type="submit"
-                        className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-indigo-600 bg-indigo-600 hover:bg-indigo-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-primary dark:border-secondary bg-primary dark:bg-secondary dark:hover:bg-secondary/30 hover:bg-primary/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                         Accedi</button>
 
                      <div className="text-slate-900 text-sm text-center dark:text-slate-50">Non hai un account? 
-                        <a href="#"
-                        className="text-indigo-700 hover:underline ml-1 font-medium dark:text-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">Sign
-                        up</a>
+                        <a href="/signup"
+                        className="text-primary dark:text-secondary hover:underline ml-1 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:focus-visible:ring-secondary rounded">
+                           Registrati</a>
                      </div>
                   </form>
                </div>
