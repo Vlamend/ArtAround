@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getVisits, logout, getMe } from '../api.js';
+import { getMyVisits, getVisits, logout, getMe } from '../api.js';
 
 export default function VisitList({ museum, onLogout }) {
    const [visits, setVisits] = useState([]);
@@ -51,10 +51,10 @@ export default function VisitList({ museum, onLogout }) {
 
    useEffect(() => {
       if (!museum?._id) return;
-
-      Promise.all([getVisits(museum._id), getMe()])
-         .then(([visitsData, meData]) => {
-            setVisits(visitsData);
+      Promise.all([getVisits(museum._id), getMyVisits(museum._id), getMe()])
+         .then(([visitsData, myVisitsData, meData]) => {
+            const allVisits = [...visitsData, ...myVisitsData];
+            setVisits(allVisits);
             const ids = new Set((meData.user.visitedVisits ?? []).map(v => v.visit));
             setVisitedIds(ids);
             setStatus('ready');

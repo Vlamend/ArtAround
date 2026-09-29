@@ -80,6 +80,21 @@ app.put("/api/config", authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// FRONTEND SERVITO DA QUESTO STESSO SERVER (un solo container node)
+//  - /            -> build del Navigator (navigator/dist), con fallback SPA
+//  - /marketplace -> marketplace vanilla (link senza estensione: .html)
+//  - /assets      -> navigator/assets (planimetrie: non finiscono nella build)
+// Il Navigator va buildato prima (npm run build in navigator/).
+const ROOT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+const NAVIGATOR_DIST = path.join(ROOT_DIR, "navigator", "dist");
+
+app.use("/assets", express.static(path.join(ROOT_DIR, "navigator", "assets")));
+app.use("/marketplace", express.static(path.join(ROOT_DIR, "marketplace"), { extensions: ["html"], index: "login.html" }));
+app.use(express.static(NAVIGATOR_DIST));
+app.get(/^\/(?!api(\/|$)|marketplace)/, (req, res, next) => {
+  res.sendFile(path.join(NAVIGATOR_DIST, "index.html"), (err) => err && next());
+});
+
 //Tutto ciò che non è stato catturato dalle route precedenti viene gestito da questi middleware
 app.use(notFound);
 app.use(errorHandler);

@@ -61,40 +61,37 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
   const roomsOnFloor = rooms.filter(r => r.floor === selectedFloor);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 select-none">
       <div className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-auto rounded-xl bg-white shadow-2xl dark:bg-gray-800">
-
-        {floorsAvailable.length > 1 && (
-          <div className="flex w-full shrink-0 gap-2 border-b border-gray-200 p-3 dark:border-gray-700">
-            <div className="flex w-full shrink-0 items-center justify-between border-b border-gray-200 p-3 dark:border-gray-700">
-              <div className="flex gap-2">
-                {floorsAvailable.length > 1 &&
-                  floorsAvailable.map(floor => (
-                    <button
-                      key={floor}
-                      className={
-                        floor === selectedFloor
-                          ? 'rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white dark:bg-secondary'
-                          : 'rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                      }
-                      onClick={() => setSelectedFloor(floor)}
-                    >
-                      Piano {floor}
-                    </button>
-                  ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => closeMap(false)}
-                aria-label="Chiudi mappa"
-                className="bg-gray-100 px-4 py-2 rounded-xl cursor-pointer text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-              >
-                X
-              </button>
+        <div className="flex w-full shrink-0 gap-2 border-b border-gray-200 p-3 dark:border-gray-700">
+          <div className="flex w-full shrink-0 items-center justify-between border-b border-gray-200 p-3 dark:border-gray-700">
+            <div className="flex gap-2">
+              {floorsAvailable.length > 1 &&
+                floorsAvailable.map(floor => (
+                  <button
+                    key={floor}
+                    className={
+                      floor === selectedFloor
+                        ? 'rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white dark:bg-secondary'
+                        : 'rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                    }
+                    onClick={() => setSelectedFloor(floor)}
+                  >
+                    Piano {floor}
+                  </button>
+                ))}
             </div>
+
+            <button
+              type="button"
+              onClick={() => closeMap(false)}
+              aria-label="Chiudi mappa"
+              className="bg-gray-100 px-4 py-2 rounded-xl cursor-pointer text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            >
+              X
+            </button>
           </div>
-        )}
+        </div>
 
         {floorPlan ? (
           <MapWithFloorPlan
@@ -123,7 +120,7 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {/* Tappa corrente */}
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white dark:bg-blue-500">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white dark:bg-secondary">
                 1
               </span>
 
@@ -230,15 +227,15 @@ function MapWithFloorPlan({
                   items-center justify-center
                   rounded-full
                   border-2 border-white
-                  bg-blue-600
+                  bg-primary
                   text-sm font-bold text-white
                   shadow-lg
-                  ring-4 ring-blue-500/30
+                  ring-4 ring-primary/30
                   transition-transform duration-200
                   hover:scale-110
                   dark:border-gray-900
-                  dark:bg-blue-500
-                  dark:ring-blue-400/30
+                  dark:bg-secondary
+                  dark:ring-secondary/30
                 `
                 : `
                   absolute z-10
@@ -258,6 +255,7 @@ function MapWithFloorPlan({
                   dark:text-gray-100
                 `
             }
+
             style={{
               left: `${artwork?.coords?.x ?? 0}%`,
               top: `${artwork?.coords?.y ?? 0}%`
@@ -268,11 +266,15 @@ function MapWithFloorPlan({
             {i + 1}
           </button>
         );
+      }
+      )}
+      {steps.map(({ step, i }) => {
+        const artwork = step.artwork;
+        console.log(artwork.coords)
       })}
     </div>
   );
 }
-
 // Fallback: nessuna planimetria fornita per questo piano. Rettangoli
 // astratti calcolati da Museum.rooms[].bounds, invece di lasciare i
 // marker fluttuare senza alcun riferimento spaziale.
@@ -318,7 +320,6 @@ function MapAbstract({ rooms, steps, currentIndex, pointsOfInterest, onSelectSte
             </text>
           </g>
         ))}
-
         {/* Punti di interesse */}
         {pointsOfInterest.map((poi, idx) => (
           <g
@@ -329,7 +330,6 @@ function MapAbstract({ rooms, steps, currentIndex, pointsOfInterest, onSelectSte
               r="2.4"
               className="fill-gray-700 dark:fill-gray-200"
             />
-
             <text
               y="-3.5"
               textAnchor="middle"
@@ -339,12 +339,10 @@ function MapAbstract({ rooms, steps, currentIndex, pointsOfInterest, onSelectSte
             </text>
           </g>
         ))}
-
         {/* Tappe */}
         {steps.map(({ step, i }) => {
           const artwork = step.artwork;
           const isCurrent = i === currentIndex;
-
           return (
             <g
               key={artwork?._id ?? i}
@@ -356,12 +354,11 @@ function MapAbstract({ rooms, steps, currentIndex, pointsOfInterest, onSelectSte
                 r={isCurrent ? 4.2 : 3}
                 className={
                   isCurrent
-                    ? 'fill-blue-600 stroke-white dark:fill-blue-500 dark:stroke-gray-900'
+                    ? 'fill-primary stroke-white dark:fill-secondary dark:stroke-gray-900'
                     : 'fill-white stroke-gray-700 dark:fill-gray-700 dark:stroke-gray-200'
                 }
                 strokeWidth="0.8"
               />
-
               <text
                 y="1"
                 textAnchor="middle"

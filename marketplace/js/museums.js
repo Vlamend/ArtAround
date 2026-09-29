@@ -1,4 +1,5 @@
 import { requireAuth } from './auth-guard.js';
+import { escapeHtml } from './escape.js';
 import { getMuseums } from './api.js';
 
 const statusEl = document.getElementById('status');
@@ -35,8 +36,8 @@ function renderMuseumCard(museum) {
 
   const info = document.createElement('div');
   info.innerHTML = `
-    <strong>${museum.name}</strong><br>
-    <span class="status-message">${museum.city ?? ''}</span>
+    <strong>${escapeHtml(museum.name)}</strong><br>
+    <span class="status-message">${escapeHtml(museum.city)}</span>
   `;
 
   const actions = document.createElement('div');

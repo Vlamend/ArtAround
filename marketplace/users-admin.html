@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtAround Editor — Gestione autori</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <header>
+    <strong>ArtAround Editor</strong>
+  </header>
+
+  <main>
+    <p><a href="museums">&larr; Torna ai musei</a></p>
+
+    <h1>Gestione autori</h1>
+    <p class="status-message">Crea un account con ruolo <strong>autore</strong>. Se lasci vuota la password, l'account
+      parte con la password di default (12345678) e l'autore potrà cambiarla in seguito.</p>
+
+    <p id="status" class="status-message" hidden></p>
+
+    <form id="author-form">
+      <label>
+        Username (senza spazi)
+        <input type="text" id="username" required autocomplete="off" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" id="email" required autocomplete="off" />
+      </label>
+
+      <label>
+        Password (facoltativa)
+        <input type="password" id="password" autocomplete="new-password" placeholder="vuota = password di default" />
+      </label>
+
+      <p id="form-error" class="error-message" hidden></p>
+
+      <button type="submit" class="primary" id="submit-btn">Crea account autore</button>
+    </form>
+
+    <h2>Autori esistenti</h2>
+    <p id="list-status" class="status-message">Caricamento…</p>
+    <ul id="author-list" class="card-list visible"></ul>
+  </main>
+
+  <script type="module" src="js/users-admin.js"></script>
+</body>
+
+</html>

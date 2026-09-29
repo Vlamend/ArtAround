@@ -1,5 +1,7 @@
 import { requireAuth } from './auth-guard.js';
+import { escapeHtml } from './escape.js';
 import { getMuseumById, getVisits, deleteVisit, getArtworks, deleteArtwork, adoptArtwork, acquireArtwork, getLicenses } from './api.js';
+import { sortByField, renderPagination } from './list-utils.js';
 
 const titleEl = document.getElementById('museum-title');
 const statusEl = document.getElementById('status');
@@ -33,6 +35,7 @@ let opereCorrenti = 1;
 let cacheVisits = [];
 let cacheMineArtworks = [];
 let cacheOthersArtworks = [];
+let cacheLicenses = [];
 
 let showMine = true;
 let showOthers = true;
@@ -47,37 +50,21 @@ async function main() {
   newBtn.addEventListener('click', () => handleNew());
   paginationSelect.addEventListener('change', (v) => {
     paginazione = parseInt(v.target.value, 10);
-    if (whichList === 'a') {
-      opereCorrenti = 1;
-      const totale = renderArtworksUI();
-      renderPagination(totale, opereCorrenti);
-    } else {
-      visiteCorrenti = 1;
-      const totale = renderVisitsUI();
-      renderPagination(totale, visiteCorrenti);
-    }
+    if (whichList === 'a') opereCorrenti = 1; else visiteCorrenti = 1;
+    renderCurrentList();
   });
   mineCheck.addEventListener('change', () => {
     showMine = !showMine;
-    const totale = renderArtworksUI();
-    renderPagination(totale, opereCorrenti);
+    renderCurrentList();
   });
   othersCheck.addEventListener('change', () => {
     showOthers = !showOthers;
-    const totale = renderArtworksUI();
-    renderPagination(totale, opereCorrenti);
+    renderCurrentList();
   });
   sorter.addEventListener("change", (v) => {
     sortBy = v.target.value
-    if (whichList === 'a') {
-      opereCorrenti = 1;
-      const totale = renderArtworksUI();
-      renderPagination(totale, opereCorrenti);
-    } else {
-      visiteCorrenti = 1;
-      const totale = renderVisitsUI();
-      renderPagination(totale, visiteCorrenti);
-    }
+    if (whichList === 'a') opereCorrenti = 1; else visiteCorrenti = 1;
+    renderCurrentList();
   });
   const params = new URLSearchParams(window.location.search);
   museumId = params.get('museum');
@@ -103,16 +90,32 @@ async function main() {
   await Promise.all([loadVisitsData(), loadArtworksData()]);
 
   // Eseguiamo il primo disegno della UI
-  if (whichList === 'a') {
-    const totale = renderArtworksUI();
-    renderPagination(totale, opereCorrenti);
-  } else {
-    const totale = renderVisitsUI();
-    renderPagination(totale, visiteCorrenti);
-  }
+  renderCurrentList();
 
   // Inizializza i controlli della Toolbar (es. Input di ricerca e tendine)
   setupToolbarListeners();
+}
+
+// Unico punto che sa "quale lista è attiva → quale funzione la disegna →
+// come la si pagina": prima era ripetuto, identico, in cinque punti
+// diversi del file (cambio pagina, cambio ordinamento, primo disegno,
+// i tre bottoni della paginazione). Ora c'è una volta sola.
+function renderCurrentList() {
+  if (whichList === 'a') {
+    const totale = renderArtworksUI();
+    renderPagination({
+      container: pagination, infoEl: paginationInfo,
+      totalItems: totale, currentPage: opereCorrenti, pageSize: paginazione,
+      onPageChange: (page) => { opereCorrenti = page; renderCurrentList(); }
+    });
+  } else {
+    const totale = renderVisitsUI();
+    renderPagination({
+      container: pagination, infoEl: paginationInfo,
+      totalItems: totale, currentPage: visiteCorrenti, pageSize: paginazione,
+      onPageChange: (page) => { visiteCorrenti = page; renderCurrentList(); }
+    });
+  }
 }
 
 function renderVisitsUI() {
@@ -128,9 +131,6 @@ function renderVisitsUI() {
   const inizio = (visiteCorrenti - 1) * paginazione;
   const fine = Math.min(inizio + paginazione, totale);
   const pacchetto = filtrate.slice(inizio, fine);
-
-  // 3. Aggiorna l'indicatore testuale (es: "1-25 di 120") se hai aggiunto i tag nell'HTML
-  renderPagination(totale, visiteCorrenti);
 
   if (pacchetto.length === 0) {
     const emptyLi = document.createElement('li');
@@ -160,7 +160,10 @@ function renderArtworksUI() {
 
   const inizio = (opereCorrenti - 1) * paginazione;
   const fine = Math.min(inizio + paginazione, totale);
-  const pacchetto = tutteInsieme.slice(inizio, fine);
+  // Ordina PRIMA di tagliare la pagina: altrimenti ogni pagina si
+  // ordinerebbe da sola (i suoi 25 elementi), non l'insieme intero.
+  const ordinato = sortByField(tutteInsieme, sortBy);
+  const pacchetto = ordinato.slice(inizio, fine);
 
   if (pacchetto.length === 0) {
     const emptyLi = document.createElement('li');
@@ -170,13 +173,10 @@ function renderArtworksUI() {
     return 0;
   }
   const ids = new Set(mieFiltrate.map(item => item._id))
-  const ordinato = sortElements(pacchetto);
-  if (ordinato.length > 0) {
-    for (const artwork of ordinato) {
-      ids.has(artwork._id) ?
-        artworkEL.appendChild(renderArtworkCard(artwork))
-        : artworkEL.appendChild(renderOtherArtworkCard(artwork));
-    }
+  for (const artwork of pacchetto) {
+    ids.has(artwork._id) ?
+      artworkEL.appendChild(renderArtworkCard(artwork))
+      : artworkEL.appendChild(renderOtherArtworkCard(artwork));
   }
   return totale;
 }
@@ -202,7 +202,7 @@ function renderVisitCard(visit) {
   const info = document.createElement('div');
 
   info.innerHTML = `
-    <strong>${visit.title}</strong>
+    <strong>${escapeHtml(visit.title)}</strong>
     ${!visit.isPublic ?
       ' <span class="status-message">(bozza)</span>' : ''}<br>
     <span class="status-message">${visit.steps?.length ?? 0} tappe ${visit.price ? `· ${visit.price}€` : '· gratuita'}</span>
@@ -238,137 +238,6 @@ function renderVisitCard(visit) {
   return li;
 }
 
-function sortElements(arr) {
-  return [...arr].sort((a, b) => {
-    switch (sortBy) {
-      case 'title-asc':
-        return a.title.localeCompare(b.title);
-      case 'title-desc':
-        return b.title.localeCompare(a.title);
-      case 'newest':
-        return new Date(b.updatedAt) - new Date(a.updatedAt);
-      default:
-        return 0;
-    }
-  })
-}
-
-function renderPagination(totalItems, currentPage) {
-  const maxPages = Math.ceil(totalItems / paginazione) || 1;
-  pagination.innerHTML = '';
-  paginationInfo.textContent = totalItems === 0
-    ? '0-0 di 0'
-    : `${(currentPage - 1) * paginazione + 1}–${Math.min(currentPage * paginazione, totalItems)} di ${totalItems}`;
-  if (maxPages > 1) {
-
-    const firstBtn = document.createElement('a');
-    firstBtn.classList.add("pagination-button");
-    firstBtn.innerHTML = `
-      <svg class="pagination-border" viewBox="0 0 36 36" aria-hidden="true">
-        <circle
-          cx="18"
-          cy="18"
-          r="17"
-        />
-      </svg>
-      <span> << </span>
-    `
-    pagination.appendChild(firstBtn);
-    let firstPage = 1;
-    let lastPage = 3;
-    if (maxPages > 3) {
-      if (currentPage === 1) {
-        firstPage = 1;
-        lastPage = 3;
-      } else if (currentPage === maxPages) {
-        lastPage = maxPages;
-        firstPage = maxPages - 2;
-      } else {
-        firstPage = currentPage - 1;
-        lastPage = currentPage + 1;
-      }
-    }
-    if (maxPages < 3) {
-      firstPage = 1;
-      lastPage = maxPages;
-    }
-    for (let i = firstPage; i <= lastPage; i++) {
-      const button = document.createElement('a');
-      button.innerHTML = `
-      <svg class="pagination-border" viewBox="0 0 36 36" aria-hidden="true">
-        <circle
-          cx="18"
-          cy="18"
-          r="17"
-        />
-      </svg>
-      <span>${i}</span>
-    `;
-      button.classList.add("pagination-button");
-      if (i === currentPage) {
-        button.classList.add('active');
-      }
-      button.addEventListener('click', () => {
-        if (whichList === 'a') {
-          opereCorrenti = i;
-          const totale = renderArtworksUI();
-          renderPagination(totale, opereCorrenti);
-        } else {
-          visiteCorrenti = i;
-          const totale = renderVisitsUI();
-          renderPagination(totale, visiteCorrenti);
-        }
-      });
-      pagination.appendChild(button);
-    }
-
-    const lastBtn = document.createElement('a');
-    lastBtn.classList.add("pagination-button");
-    lastBtn.innerHTML = `
-      <svg class="pagination-border" viewBox="0 0 36 36" aria-hidden="true">
-        <circle
-          cx="18"
-          cy="18"
-          r="17"
-        />
-      </svg>
-      <span> >> </span>
-    `
-    pagination.appendChild(lastBtn);
-
-    if (whichList === 'a') {
-      opereCorrenti === 1 ? firstBtn.classList.add('disabled') : "";
-      opereCorrenti === maxPages ? lastBtn.classList.add('disabled') : "";
-    } else if (whichList === 'b') {
-      visiteCorrenti === 1 ? firstBtn.classList.add('disabled') : "";
-      visiteCorrenti === maxPages ? lastBtn.classList.add('disabled') : "";
-    }
-
-    lastBtn.addEventListener('click', () => {
-      if (whichList === 'a') {
-        opereCorrenti = maxPages;
-        const totale = renderArtworksUI();
-        renderPagination(totale, opereCorrenti);
-      } else {
-        visiteCorrenti = maxPages;
-        const totale = renderVisitsUI();
-        renderPagination(totale, visiteCorrenti);
-      }
-    });
-    firstBtn.addEventListener('click', () => {
-      if (whichList === 'a') {
-        opereCorrenti = 1;
-        const totale = renderArtworksUI();
-        renderPagination(totale, opereCorrenti);
-      } else {
-        visiteCorrenti = 1;
-        const totale = renderVisitsUI();
-        renderPagination(totale, visiteCorrenti);
-      }
-    });
-  }
-}
-
 async function handleDelete(visit) {
   if (!window.confirm(`Eliminare la visita "${visit.title}"? L'operazione non è reversibile.`)) {
     return;
@@ -376,8 +245,7 @@ async function handleDelete(visit) {
   try {
     await deleteVisit(visit._id);
     await loadVisitsData();
-    const totale = renderVisitsUI();
-    renderPagination(totale, visiteCorrenti);
+    renderCurrentList();
   } catch (err) {
     window.alert(err.message || 'Impossibile eliminare la visita.');
   }
@@ -392,6 +260,7 @@ async function loadArtworksData() {
     ]);
     cacheMineArtworks = mine;
     cacheOthersArtworks = others;
+    cacheLicenses = userLicenses;
   } catch (err) {
     console.error('Errore caricamento opere', err);
   }
@@ -403,9 +272,9 @@ function renderArtworkCard(artwork) {
 
   const info = document.createElement('div');
   info.innerHTML = `
-    <strong>${artwork.title}</strong>
+    <strong>${escapeHtml(artwork.title)}</strong>
     ${!artwork.isPublic ? ' <span class="status-message">(bozza)</span>' : ''}<br>
-    <span class="status-message">adozione: ${artwork.adoptionPrice ? `${artwork.adoptionPrice}€` : 'gratis'} · acquisizione: ${artwork.acquisitionPrice ? `${artwork.acquisitionPrice}€` : 'gratis'} · ${artwork.license}</span>
+    <span class="status-message">adozione: ${artwork.adoptionPrice ? `${artwork.adoptionPrice}€` : 'gratis'} · acquisizione: ${artwork.acquisitionPrice ? `${artwork.acquisitionPrice}€` : 'gratis'} · ${escapeHtml(artwork.license)}</span>
   `;
 
   const actions = document.createElement('div');
@@ -435,35 +304,32 @@ async function handleDeleteArtwork(artwork) {
   try {
     await deleteArtwork(artwork._id);
     await loadArtworksData();
+    renderCurrentList();
   } catch (err) {
     window.alert(err.message || 'Impossibile eliminare l\'opera.');
   }
 }
 
-function renderOtherArtworkCard(artwork, userLicensesData = {}) {
+function renderOtherArtworkCard(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
 
   const ownerName = artwork.owner?.username ?? 'altro autore';
   const info = document.createElement('div');
   info.innerHTML = `
-    <strong>${artwork.title}</strong> <span class="status-message">di ${ownerName}</span><br>
-    <span class="status-message">adozione: ${artwork.adoptionPrice ? `${artwork.adoptionPrice}€` : 'gratis'} · acquisizione: ${artwork.acquisitionPrice ? `${artwork.acquisitionPrice}€` : 'gratis'} · ${artwork.license}</span>
+    <strong>${escapeHtml(artwork.title)}</strong> <span class="status-message">di ${escapeHtml(ownerName)}</span><br>
+    <span class="status-message">adozione: ${artwork.adoptionPrice ? `${artwork.adoptionPrice}€` : 'gratis'} · acquisizione: ${artwork.acquisitionPrice ? `${artwork.acquisitionPrice}€` : 'gratis'} · ${escapeHtml(artwork.license)}</span>
   `;
 
   const actions = document.createElement('div');
   actions.className = 'card-actions';
 
-  // Estraiamo in sicurezza l'array delle licenze dall'oggetto restituito dal backend
-  const licenses = userLicensesData?.licenses || [];
-
   // Eseguiamo il controllo sull'array reale
-  const hasAdopted = licenses.some(lic =>
+  const hasAdopted = cacheLicenses.licenses.some(lic =>
     lic.artwork?._id === artwork._id && lic.type === 'adoption'
   );
 
   const adoptBtn = document.createElement('button');
-
   if (hasAdopted) {
     adoptBtn.textContent = `Già Adottata`;
     adoptBtn.disabled = true;
@@ -493,8 +359,7 @@ async function handleAdopt(artwork, button) {
   try {
     await adoptArtwork(artwork._id);
     await loadArtworksData(); // l'opera resta nel gruppo "altre", ma ora è licenziata
-    const totale = renderArtworksUI();
-    renderPagination(totale, opereCorrenti);
+    renderCurrentList();
   } catch (err) {
     window.alert(err.message || 'Impossibile completare l\'adozione.');
     button.disabled = false;
@@ -508,8 +373,7 @@ async function handleAcquire(artwork, button) {
   try {
     await acquireArtwork(artwork._id);
     await loadArtworksData(); // l'opera passa dal gruppo "altre" a "le tue"
-    const totale = renderArtworksUI();
-    renderPagination(totale, opereCorrenti);
+    renderCurrentList();
   } catch (err) {
     window.alert(err.message || 'Impossibile completare l\'acquisizione.');
     button.disabled = false;
@@ -522,18 +386,13 @@ function handleNew() {
   window.location.href = `${page}?museum=${museumId}`;
 }
 
-
 function showList(which) {
   const showA = which === 'a';
   whichList = which;
+  renderCurrentList();
   if (!showA) {
-    const totale = renderVisitsUI();
-    renderPagination(totale, visiteCorrenti);
     checkBoxes.style.display = "none";
-  }
-  else {
-    const totale = renderArtworksUI();
-    renderPagination(totale, opereCorrenti);
+  } else {
     (currentUser.role === 'autore' || currentUser.role === 'admin') ? checkBoxes.style.display = "flex" : checkBoxes.style.display = "none";
   }
   visitEl.classList.toggle('invisible', showA);
@@ -553,15 +412,13 @@ function setupToolbarListeners() {
   document.getElementById('search-visite')?.addEventListener('input', (e) => {
     queryVisite = e.target.value;
     visiteCorrenti = 1; // Ritorna in prima pagina se l'utente filtra
-    const totale = renderVisitsUI();
-    renderPagination(totale, visiteCorrenti);
+    renderCurrentList();
   });
 
   // Listener scala elementi visite
   document.getElementById('select-visite-per-page')?.addEventListener('change', (e) => {
     paginazione = parseInt(e.target.value, 10);
     visiteCorrenti = 1;
-    const totale = renderVisitsUI();
-    renderPagination(totale, visiteCorrenti);
+    renderCurrentList();
   });
 }

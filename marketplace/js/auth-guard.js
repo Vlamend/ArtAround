@@ -25,15 +25,32 @@ function renderHeader(user) {
   const header = document.querySelector('header');
   if (!header) return;
 
+  // Costruito con il DOM e textContent, non con innerHTML: lo username
+  // lo sceglie l'utente in fase di registrazione.
   const userInfo = document.createElement('div');
-  userInfo.innerHTML = `
-    <span style="margin-right: 1rem;">${user.username} (${user.role})</span>
-    ${user.role === 'admin' ? '<a href="config-editor" style="margin-right: 1rem;">Config Navigator</a>' : ''}
-    <button id="logout-btn">Esci</button>
-  `;
+
+  const label = document.createElement('span');
+  label.style.marginRight = '1rem';
+  label.textContent = `${user.username} (${user.role})`;
+  userInfo.appendChild(label);
+
+  if (user.role === 'admin') {
+    for (const [href, text] of [['users-admin', 'Gestione autori'], ['config-editor', 'Config Navigator']]) {
+      const a = document.createElement('a');
+      a.href = href;
+      a.style.marginRight = '1rem';
+      a.textContent = text;
+      userInfo.appendChild(a);
+    }
+  }
+
+  const logoutBtn = document.createElement('button');
+  logoutBtn.id = 'logout-btn';
+  logoutBtn.textContent = 'Esci';
+  userInfo.appendChild(logoutBtn);
   header.appendChild(userInfo);
 
-  document.getElementById('logout-btn').addEventListener('click', () => {
+  logoutBtn.addEventListener('click', () => {
     logout();
     window.location.href = 'login';
   });

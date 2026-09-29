@@ -1,23 +1,18 @@
 import User from '../models/user.js';
-import Item from '../models/item.js';
 import Visit from '../models/visit.js';
 
-// Id delle Artwork per cui l'utente ha una licenza esplicita (adozione
-// o acquisizione) — usato per completare il criterio di accessibilità
-// ovunque serva (Content, step di una Visit, lista opere acquistabili).
-// Un'unica funzione, così i tre punti che ne hanno bisogno non
-// divergono nel tempo l'uno dall'altro.
+//Utility che restituisce gli IDs delle Artwork per cui l'utente ha una licenza (adozione o acquisizione).
 export async function getLicensedArtworkIds(userId) {
     if (!userId) return [];
     const user = await User.findById(userId, 'licenses.artwork');
     return (user?.licenses ?? []).map(l => l.artwork.toString());
 }
-
-// Criterio di accessibilità "posso usarla adesso, senza fare nulla di
-// nuovo": adozione gratuita, o sono il proprietario, o ho già una
-// licenza. Va combinato con isPublic=true da chi chiama (qui non
-// c'entra: un'opera non pubblica non è accessibile a prescindere da
-// tutto il resto, quello lo decide il chiamante).
+/* 
+ * Utility che imposta una serie di clausole per ottenere le opere accessibili.
+ * Di base controlla che l'adozione dell'opera sia gratuita,
+ * poi se alla funzione viene passato un ID utente si controlla se le opere sono dell'utente fornito
+ * e per finire, se fornita la lista di licenze di quell'utente vengono anche date le opere di cui si ha la licenza.
+ */
 export function accessibleOrClause(userId, licensedArtworkIds) {
     const clauses = [{ adoptionPrice: 0 }];
     if (userId) {
@@ -28,22 +23,26 @@ export function accessibleOrClause(userId, licensedArtworkIds) {
     }
     return clauses;
 }
-
-// Un content è "in uso" se un qualunque step di una qualunque Visit
-// (di chiunque, non solo del proprietario) lo referenzia. Query
-// diretta su Visit.steps.item, non una reference salvata da tenere
-// sincronizzata: è più lenta di una copia cache, ma non può mai
-// disallinearsi da sé stessa, ed è comunque un controllo eseguito solo
-// al momento (raro) di una cancellazione, non ad ogni lettura.
-export async function isItemUsedInAnyVisit(itemId) {
-    return Visit.exists({ 'steps.artwork': itemId });
+//Utility che controlla se l'artwork è utilizzato in delle visite.
+export async function isArtworkUsedInAnyVisit(artworkId) {
+    return Visit.exists({ 'steps.artwork': artworkId });
 }
-
-// Stesso controllo, esteso a TUTTI i Content di una data Artwork —
-// usato da deleteArtwork: un'opera non va cancellata se anche solo uno
-// dei suoi content è usato in una visita di qualcuno.
-export async function isArtworkContentUsedInAnyVisit(artworkId) {
-    const items = await Item.find({ artwork: artworkId }, '_id');
-    if (items.length === 0) return false;
-    return Visit.exists({ 'steps.item': { $in: items.map(i => i._id) } });
+/* 
+ * Utility che controlla se l'utente può accedere ad una opera:
+ * 1. Se l'artwork non esiste allora ritorno false.
+ * 2. Altrimenti controllo se l'opera è mia. Se si ritorno true.
+ * 3. Altrimenti se non è pubblica ritorno false.
+ * 4. Altrimenti se la sua adozione è gratutia ritorno true.
+ * 5. Infine, se la richiesta ha passato l'ID utente allora controllo se tra le sue licenze ci sia quella per l'opera
+ * 6. Se invece non c'è nessun accessso ritorno false.
+ */
+export async function canUseArtwork(artwork, userId) {
+    if (!artwork) return false;
+    const ownerId = (artwork.owner?._id ?? artwork.owner)?.toString();
+    if (userId && ownerId === userId) return true;
+    if (!artwork.isPublic) return false;
+    if (artwork.adoptionPrice === 0) return true;
+    if (!userId) return false;
+    const licensed = await getLicensedArtworkIds(userId);
+    return licensed.includes(artwork._id.toString());
 }

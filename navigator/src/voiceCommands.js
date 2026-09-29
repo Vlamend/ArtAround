@@ -31,8 +31,11 @@ const VOICE_COMMANDS = [
   { patterns: ['qual e lo stile', 'che stile e'], action: 'style' },
   {
     patterns: [
+      // "Dov'è l'uscita" viene normalizzato in "dove luscita" (dov'è -> dove,
+      // apostrofo eliminato): servono le varianti con e senza la "e".
+      'dove luscita', 'dove la toilette', 'dove il bar', 'dove lo shop',
       'dove e luscita', 'dove e l uscita',
-      'dove e la toilette', 'dove sono i bagni',
+      'dove e la toilette', 'dove sono i bagni', "dov'e la toilette", "dov'e il bagno",
       'dove e il bar', 'dove e lo shop',
       'ci sono ostacoli', 'dove sono i servizi'
     ],

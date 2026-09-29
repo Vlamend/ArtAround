@@ -44,7 +44,6 @@ async function validateStepsAccessibility(steps, userId) {
 export async function getVisits(req, res) {
     try {
         const filter = {};
-
         if (req.query.museum) {
             filter.museum = req.query.museum;
         }
@@ -70,6 +69,27 @@ export async function getVisits(req, res) {
     }
 }
 
+export async function getMyVisits(req, res) {
+    try {
+        const filter = {
+            author: req.user.id
+        };
+        console.log(filter);
+        if (req.query.museum) {
+            filter.museum = req.query.museum;
+        }
+
+        const visits = await Visit.find(filter)
+            .populate('museum', 'name slug')
+            .populate('author', 'username');
+
+        res.json(visits);
+    } catch (error) {
+        console.error("Errore nel recupero delle proprie visite:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
 // Dettaglio di una singola visita, con gli item della sequenza popolati
 // (il Navigator ne ha bisogno per eseguire la visita passo per passo)
 export async function getVisitById(req, res) {
@@ -86,6 +106,12 @@ export async function getVisitById(req, res) {
             });
 
         if (!visit) {
+            return res.status(404).json({ error: "Visita non trovata." });
+        }
+
+        // Una visita non pubblica è leggibile solo dal suo autore.
+        const authorId = (visit.author?._id ?? visit.author)?.toString();
+        if (!visit.isPublic && authorId !== req.user?.id) {
             return res.status(404).json({ error: "Visita non trovata." });
         }
 

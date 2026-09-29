@@ -45,6 +45,10 @@ export function getVisits(museumId) {
   return request(`/visits?museum=${museumId}`);
 }
 
+export function getMyVisits(museumId) {
+  return request(`/visits/mine?museum=${museumId}`);
+}
+
 export function getVisitById(id) {
   return request(`/visits/${id}`);
 }

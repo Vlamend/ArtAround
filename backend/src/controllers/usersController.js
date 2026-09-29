@@ -17,7 +17,10 @@ function generateToken(user) {
 //registrazione utente
 export async function register(req, res) {
     try {
-        const { username, email, password, role } = req.body;
+        // Il ruolo NON viene mai letto dal body: la registrazione pubblica crea
+        // sempre un visitatore. Gli account autore li crea solo un admin
+        // (createAuthorUser), altrimenti chiunque potrebbe registrarsi admin.
+        const { username, email, password } = req.body;
 
         // Controllo campi obbligatori
         if (!username || !email || !password) {
@@ -35,12 +38,9 @@ export async function register(req, res) {
         if (existingUsername) {
             return res.status(409).json({ error: "Username non disponibile." });
         }
-        if (role !== 'admin' && role !== 'visitatore' && role !== 'autore') {
-            return res.status(422).json({ error: "Ruolo non valido" });
-        }
 
         // Creazione utente
-        const newUser = new User({ username, email, password, role });
+        const newUser = new User({ username, email, password, role: 'visitatore' });
         await newUser.save();
 
         // Genero token per login immediato
@@ -201,6 +201,72 @@ export async function getLicenses(req, res) {
     }
     catch (error) {
         console.error("Errore nel recupero delle licenze:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
+// Password di default per gli account creati da un admin (come gli
+// account demo del progetto): l'autore potrà cambiarla in seguito.
+const DEFAULT_AUTHOR_PASSWORD = "12345678";
+
+// Solo admin. Crea un account con ruolo 'autore' — il ruolo è fissato qui,
+// non arriva dal client. Se la password non è indicata si usa quella di default.
+export async function createAuthorUser(req, res) {
+    try {
+        const { username, email, password } = req.body;
+
+        if (!username || !email) {
+            return res.status(400).json({ error: "Username ed email sono obbligatori." });
+        }
+
+        if (await User.findOne({ email })) {
+            return res.status(409).json({ error: "Email già registrata." });
+        }
+        if (await User.findOne({ username })) {
+            return res.status(409).json({ error: "Username non disponibile." });
+        }
+
+        const usedDefault = !password;
+        const newUser = new User({
+            username,
+            email,
+            password: usedDefault ? DEFAULT_AUTHOR_PASSWORD : password,
+            role: "autore"
+        });
+        await newUser.save();
+
+        res.status(201).json({
+            user: {
+                id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role
+            },
+            usedDefaultPassword: usedDefault
+        });
+
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            return res.status(422).json({ error: "Username o email non validi (lo username non può contenere spazi)." });
+        }
+        console.error("Errore nella creazione dell'autore:", error);
+        res.status(500).json({ error: "Errore del server." });
+    }
+}
+
+// Solo admin. Elenco account, filtrabile per ruolo (?role=autore).
+export async function listUsers(req, res) {
+    try {
+        const filter = {};
+        if (["admin", "autore", "visitatore"].includes(req.query.role)) {
+            filter.role = req.query.role;
+        }
+        const users = await User.find(filter)
+            .select("username email role createdAt")
+            .sort({ username: 1 });
+        res.json(users);
+    } catch (error) {
+        console.error("Errore nel recupero degli utenti:", error);
         res.status(500).json({ error: "Errore del server." });
     }
 }

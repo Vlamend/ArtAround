@@ -952,7 +952,7 @@ async function seed() {
     }
     console.log(`${visitsData.length} visite create: 11 pubbliche (autore1, autore2, admin1, su entrambi i musei) + 4 private (visitatore1 x2, visitatore2 x2).`);
 
-    console.log("\n✅ Seed completato!");
+    console.log("\nSeed completato!");
     console.log("   Musei:", museum.name, `(${rooms.length} sale)`, "/", museum2.name, `(${roomsModena.length} sale)`);
     console.log("   Utenti: autore1, autore2, visitatore1, visitatore2, admin1 (password: 12345678)");
     console.log("   Autori:", authorsData.length, " / Stili:", stylesData.length);

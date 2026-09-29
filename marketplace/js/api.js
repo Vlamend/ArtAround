@@ -185,3 +185,13 @@ export function updateConfig(payload) {
 export function getLicenses() {
   return request('/users/licenses');
 }
+
+// ---- Gestione account (solo admin) ----
+
+export function listUsers(role) {
+  return request(`/users${role ? `?role=${encodeURIComponent(role)}` : ''}`);
+}
+
+export function createAuthorUser(payload) {
+  return request('/users', { method: 'POST', body: JSON.stringify(payload) });
+}

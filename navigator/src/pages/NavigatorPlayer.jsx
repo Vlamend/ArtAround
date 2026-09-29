@@ -157,6 +157,7 @@ export default function NavigatorPlayer() {
     }
   }, [currentText]);
   function goNext() {
+    window.speechSynthesis.cancel();
     if (!visit) return;
     if (stepIndex === visit.steps.length - 1) {
       navigate('/visits');
@@ -165,12 +166,15 @@ export default function NavigatorPlayer() {
     }
   }
   function goPrev() {
+    window.speechSynthesis.cancel();
     setStepIndex(i => Math.max(i - 1, 0));
   }
   function tellMore() {
+    window.speechSynthesis.cancel();
     setFrameIndex(i => Math.min(i + 1, frames.length - 1));
   }
   function tellLess() {
+    window.speechSynthesis.cancel();
     setFrameIndex(i => Math.max(i - 1, 0));
   }
   // "Non capisco" / "Troppo semplice": il passo si calcola sul livello
@@ -179,6 +183,7 @@ export default function NavigatorPlayer() {
   // variante, altrimenti impostare un livello "vuoto" farebbe ricadere
   // pickBaseItem di nuovo sullo stesso identico testo già in mostra.
   function makeSimpler() {
+    window.speechSynthesis.cancel();
     const currentIdx = LANGUAGE_ORDER.indexOf(displayedItem?.language ?? targetLanguage);
     for (let i = currentIdx - 1; i >= 0; i--) {
       if (availableBaseLanguages.has(LANGUAGE_ORDER[i])) {
@@ -188,6 +193,7 @@ export default function NavigatorPlayer() {
     }
   }
   function makeHarder() {
+    window.speechSynthesis.cancel();
     const currentIdx = LANGUAGE_ORDER.indexOf(displayedItem?.language ?? targetLanguage);
     for (let i = currentIdx + 1; i < LANGUAGE_ORDER.length; i++) {
       if (availableBaseLanguages.has(LANGUAGE_ORDER[i])) {
@@ -197,10 +203,12 @@ export default function NavigatorPlayer() {
     }
   }
   function jumpToStep(i) {
+    window.speechSynthesis.cancel();
     setStepIndex(i);
     setShowMap(false);
   }
   function jumpToDomain(domain) {
+    window.speechSynthesis.cancel();
     const idx = firstFrameIndexForDomain(frames, topicQueue, domain);
     if (idx !== -1) setFrameIndex(idx);
   }
@@ -300,8 +308,8 @@ export default function NavigatorPlayer() {
             <span className="text-sm text-slate-500 dark:text-slate-400">Ti interessa questo contenuto?</span>
             <button
               className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transform transition-all duration-300 hover:bg-primary/40 hover:-translate-y-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-secondary/40 ${feedbackGiven === 'up'
-                  ? 'ring-2 ring-primary dark:ring-secondary bg-primary/30 dark:bg-secondary/30'
-                  : ''
+                ? 'ring-2 ring-primary dark:ring-secondary bg-primary/30 dark:bg-secondary/30'
+                : ''
                 }`}
               onClick={() => handleFeedback('up')}
               aria-label="Interessante"
@@ -312,8 +320,8 @@ export default function NavigatorPlayer() {
 
             <button
               className={`cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg transform transition-all duration-300 hover:bg-primary/40 hover:translate-y-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-secondary/40 ${feedbackGiven === 'down'
-                  ? 'ring-2 ring-primary dark:ring-secondary bg-primary/30 dark:bg-secondary/30'
-                  : ''
+                ? 'ring-2 ring-primary dark:ring-secondary bg-primary/30 dark:bg-secondary/30'
+                : ''
                 }`}
               onClick={() => handleFeedback('down')}
               aria-label="Non interessante"
