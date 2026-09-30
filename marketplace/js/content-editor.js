@@ -1,10 +1,10 @@
-// Gestione dei Content (i testi) di una singola opera, montata inline
-// nella pagina artwork-editor. Isolata in un modulo a sé perché non
-// condivide nulla con il form dell'opera se non l'id dell'opera stessa:
+// Gestione dei Content (i testi) di una singola opera, dentro la pagina artwork-editor.
+// Sta in un modulo a parte perché con il form dell'opera condivide solo l'id dell'opera:
 // initContentEditor(artworkId) è l'unico punto di contatto.
 import { escapeHtml } from './escape.js';
 import { getItems, createItem, updateItem, deleteItem } from './api.js';
 
+// Valori ammessi per durata, lingua e ambito di un Content (gli stessi dello schema nel backend)
 const DURATIONS = ['3s', '15s', '40s', '1min', '4min'];
 const LANGUAGES = ['infantile', 'elementare', 'medio', 'specialistico'];
 const DOMAINS = [
@@ -15,14 +15,20 @@ const DOMAINS = [
     { value: 'storia', label: 'Storia' }
 ];
 
+// Id dell'opera di cui si gestiscono i Content
 let artworkId;
 
 const contentLockedNote = document.getElementById('content-locked-note');
 const contentListEl = document.getElementById('content-list');
 const addContentBtn = document.getElementById('add-content-btn');
 
-// Chiamata una sola volta per caricamento pagina: all'avvio se l'opera
-// esiste già (mode 'edit'), oppure subito dopo una creazione riuscita.
+/*
+ * Attiva la sezione Content per l'opera indicata.
+ * 1. Nasconde l'avviso "sezione bloccata" e mostra il pulsante di aggiunta.
+ * 2. Carica i Content esistenti.
+ * Va chiamata una sola volta per pagina: all'avvio se l'opera esiste già,
+ * oppure subito dopo averla creata.
+ */
 export async function initContentEditor(id) {
     artworkId = id;
     contentLockedNote.hidden = true;
@@ -31,10 +37,11 @@ export async function initContentEditor(id) {
     await loadContents();
 }
 
+// Scarica i Content dell'opera e li mostra come elenco, oppure un messaggio se non ce ne sono
 async function loadContents() {
     try {
-        // mine:'true' bypassa il requisito isPublic — l'owner deve vedere
-        // e gestire anche i content di un'opera ancora in bozza.
+        // Con mine:'true' il server restituisce anche i Content di un'opera non pubblica,
+        // che il proprietario deve poter gestire.
         const items = await getItems({ artwork: artworkId, mine: 'true' });
         contentListEl.innerHTML = '';
 
@@ -50,11 +57,11 @@ async function loadContents() {
             contentListEl.appendChild(renderContentSummary(item));
         }
     } catch {
-        // se i content non si caricano, la sezione resta vuota — il resto
-        // della pagina (dati dell'opera) resta comunque consultabile
+        // Se i Content non si caricano la sezione resta vuota, il resto della pagina funziona comunque
     }
 }
 
+// Crea la card di riepilogo di un Content (lingua, ambiti, numero di testi) con i pulsanti Modifica ed Elimina
 function renderContentSummary(item) {
     const li = document.createElement('li');
     li.className = 'card';
@@ -85,6 +92,7 @@ function renderContentSummary(item) {
     return li;
 }
 
+// Elimina un Content dopo la conferma. Il server rifiuta se è usato in una visita.
 async function handleDeleteContent(item) {
     if (!window.confirm(`Eliminare il content in ${item.language}? Fallisce se è usato in una visita. L'operazione non è reversibile.`)) {
         return;
@@ -97,17 +105,24 @@ async function handleDeleteContent(item) {
     }
 }
 
+// Aggiunge in fondo alla lista il form per un nuovo Content
 function openNewContentCard() {
-    // Se la lista mostra solo il messaggio "nessun content ancora", va
-    // tolto prima di aggiungere la card vera — altrimenti resterebbe
-    // appeso accanto al form.
+    // Se c'è il messaggio "Nessun content ancora" lo toglie, altrimenti resterebbe accanto al form
     const placeholder = contentListEl.querySelector('li.status-message');
     if (placeholder) placeholder.remove();
 
     contentListEl.appendChild(renderContentForm(null));
 }
 
-// item === null significa "nuovo content, non ancora salvato".
+/*
+ * Crea il form per creare o modificare un Content (item === null significa nuovo Content).
+ * Il form contiene lingua, ambiti, elenco dei testi (uno per durata), tag e i pulsanti Salva e Annulla.
+ * Al salvataggio:
+ * 1. Controlla che ci sia almeno un testo non vuoto.
+ * 2. Crea o aggiorna il Content sul server e ricarica l'intera lista.
+ * 3. Se il server rifiuta mostra il suo messaggio d'errore dentro il form.
+ * Annulla toglie il form (nuovo Content) o rimette la card di riepilogo (Content esistente).
+ */
 function renderContentForm(item) {
     const isNew = !item;
 
@@ -139,13 +154,12 @@ function renderContentForm(item) {
         return checkbox;
     });
 
-    // Copia locale, non tocca item.texts finché non si salva davvero —
-    // così "Annulla" può scartare le modifiche semplicemente non
-    // chiamando mai updateItem.
+    // Copia dei testi su cui si lavora: item.texts resta intatto fino al salvataggio, così Annulla scarta le modifiche
     let texts = item ? item.texts.map(t => ({ duration: t.duration, content: t.content })) : [{ duration: '15s', content: '' }];
     const textsListEl = document.createElement('div');
     li.appendChild(textsListEl);
 
+    // Ridisegna le righe dei testi (durata, contenuto, pulsante di rimozione)
     function renderTexts() {
         textsListEl.innerHTML = '';
         texts.forEach((text, index) => {
@@ -173,7 +187,7 @@ function renderContentForm(item) {
             const removeTextBtn = document.createElement('button');
             removeTextBtn.className = 'danger';
             removeTextBtn.textContent = 'Rimuovi testo';
-            removeTextBtn.disabled = texts.length === 1; // almeno un testo è obbligatorio
+            removeTextBtn.disabled = texts.length === 1; // deve restare almeno un testo
             removeTextBtn.addEventListener('click', () => {
                 texts.splice(index, 1);
                 renderTexts();
@@ -237,7 +251,7 @@ function renderContentForm(item) {
             } else {
                 await updateItem(item._id, payload);
             }
-            await loadContents(); // ricarica l'intera lista, più semplice che aggiornare a mano lo stato locale
+            await loadContents(); // ricarica tutta la lista invece di aggiornare la singola card
         } catch (err) {
             formError.textContent = err.message || 'Impossibile salvare il content.';
             formError.hidden = false;
@@ -251,9 +265,9 @@ function renderContentForm(item) {
     cancelBtn.textContent = 'Annulla';
     cancelBtn.addEventListener('click', () => {
         if (isNew) {
-            li.remove(); // niente da annullare sul server, non è mai stato salvato
+            li.remove(); // non è mai stato salvato, quindi non c'è nulla da annullare sul server
             if (contentListEl.children.length === 0) {
-                loadContents(); // ripristina il messaggio "nessun content ancora"
+                loadContents(); // rimette il messaggio "Nessun content ancora"
             }
         } else {
             li.replaceWith(renderContentSummary(item));
@@ -266,6 +280,7 @@ function renderContentForm(item) {
     return li;
 }
 
+// Crea una label con il testo indicato che contiene il campo input
 function fieldLabel(text, input) {
     const label = document.createElement('label');
     label.textContent = text + ' ';

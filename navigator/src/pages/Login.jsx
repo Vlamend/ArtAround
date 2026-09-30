@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { login } from '../api.js';
 
+/*
+ * Pagina di login. Alla conferma chiama login() e, se va a buon fine,
+ * avvisa App tramite onLogin per far passare l'utente alle route protette.
+ * Se il server rifiuta le credenziali mostra il suo messaggio di errore.
+ */
 export default function Login({ onLogin }) {
    const [email, setEmail] = useState('');
    const [password, setPassword] = useState('');

@@ -5,14 +5,17 @@ const SpeechRecognitionImpl =
     ? window.SpeechRecognition || window.webkitSpeechRecognition
     : null;
 
-// Non tutti i browser supportano SpeechRecognition (in particolare
-// alcune versioni di Firefox e Safari): il chiamante deve controllare
-// isSupported e nascondere/disabilitare il pulsante microfono di
-// conseguenza, non dare per scontato che sia sempre disponibile.
+/*
+ * Hook che gestisce il riconoscimento vocale del browser (tap-to-talk).
+ * Quando l'utente parla, chiama onTranscript con il testo riconosciuto.
+ * Restituisce { isSupported, isListening, error, start }.
+ * Non tutti i browser supportano SpeechRecognition (alcune versioni di
+ * Firefox e Safari no): chi usa l'hook deve controllare isSupported prima
+ * di mostrare il pulsante del microfono.
+ */
 export function useVoiceCommands(onTranscript) {
   const [isListening, setIsListening] = useState(false);
-  // Motivo dell'ultimo errore (es. 'not-allowed', 'no-speech',
-  // 'network'...), non più fallimento silenzioso.
+  // Codice dell'ultimo errore del riconoscimento (es. 'not-allowed', 'no-speech', 'network')
   const [error, setError] = useState(null);
   const recognitionRef = useRef(null);
 
@@ -24,7 +27,7 @@ export function useVoiceCommands(onTranscript) {
 
     const recognition = new SpeechRecognitionImpl();
     recognition.lang = 'it-IT';
-    recognition.continuous = false; // un comando per volta (tap-to-talk)
+    recognition.continuous = false; // si ferma dopo una frase: un comando per volta
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 

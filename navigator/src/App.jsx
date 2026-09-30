@@ -8,14 +8,30 @@ import Signup from './pages/Signup.jsx';
 import { getToken, getMe, clearToken, getConfig, getMuseumBySlug } from './api.js';
 import { applyMuseumTheme, initDarkMode } from './theme.js';
 
+/*
+ * Componente radice: carica lo stato iniziale e definisce le route.
+ * Route pubbliche solo se non si è loggati: /login e /signup.
+ * Route protette (reindirizzano a /login se non si è loggati):
+ * /settings, /visits e /visits/:visitId.
+ */
 export default function App() {
+  // Stato del login e del caricamento iniziale
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [stillLoading, setLoading] = useState(true);
 
+  // Museo di questa installazione (scelto dalla config del server) e stato del suo caricamento:
+  // 'idle' | 'loading' | 'ready' | 'error'
   const [museum, setMuseum] = useState(null);
   const [museumStatus, setMuseumStatus] = useState('idle');
 
-  // Controlla se l'utente è loggato al caricamento dell'app
+  /*
+   * All'avvio dell'app:
+   * 1. Imposta la modalità chiara/scura.
+   * 2. Chiede al server la config, poi il museo indicato dal suo slug,
+   * e ne applica i colori. Se fallisce museumStatus diventa 'error'.
+   * 3. Se nel localStorage c'è un token lo verifica con getMe():
+   * se il server lo rifiuta lo elimina e l'utente risulta non loggato.
+   */
   useEffect(() => {
     async function checkLogin() {
       initDarkMode();
@@ -47,7 +63,7 @@ export default function App() {
     checkLogin();
   }, []);
 
-  // Mostra un messaggio di caricamento mentre si verifica lo stato di login
+  // Finché non si sa se l'utente è loggato mostra solo un messaggio di caricamento
   if (stillLoading) {
     return (<div className="screen">
       <p className="status-message">Loading...</p>
@@ -55,6 +71,7 @@ export default function App() {
     );
   }
 
+  // Mostra i figli solo quando il museo è stato caricato, altrimenti un messaggio di attesa o di errore
   function MuseumGate({ status, children }) {
     if (status === 'loading' || status === 'idle') {
       return <div className="screen"><p className="status-message">Caricamento museo…</p></div>;

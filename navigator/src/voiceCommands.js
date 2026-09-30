@@ -1,5 +1,5 @@
-// Rimuove accenti e punteggiatura per rendere il confronto robusto a
-// piccole variazioni di trascrizione (es. "dov'è" vs "dove e").
+// Utility che normalizza la trascrizione per il confronto: minuscolo, senza accenti e senza punteggiatura.
+// Così "Dov'è" e "dove e" diventano confrontabili.
 function normalize(text) {
   return text
     .toLowerCase()
@@ -9,30 +9,28 @@ function normalize(text) {
     .trim();
 }
 
-// Vocabolario controllato: ogni voce della lista comandi delle
-// specifiche ("Prossimo, precedente, Cos'è questo, dimmi di più,
-// dimmi di meno, Non capisco, troppo semplice, Chi è l'autore, qual è
-// lo stile, Dov'è l'uscita/la toilette/il bar/lo shop, ci sono
-// ostacoli") mappata a un'azione. Corrispondenza per sottostringa
-// dopo normalizzazione, non comprensione del linguaggio naturale
-// libero (quella è l'estensione 18-33 con LLM, fuori scope qui).
+/*
+ * Vocabolario dei comandi vocali: ogni azione ha le frasi che la attivano.
+ * Le frasi sono già normalizzate (senza accenti né punteggiatura), perché
+ * il confronto avviene dopo normalize(). Il riconoscimento cerca la frase
+ * dentro la trascrizione, non interpreta il linguaggio libero.
+ */
 const VOICE_COMMANDS = [
   { patterns: ['prossimo', 'avanti'], action: 'next' },
   { patterns: ['precedente', 'indietro'], action: 'prev' },
   { patterns: ['cose questo', 'cosa e questo', 'ripeti'], action: 'repeat' },
   { patterns: ['dimmi di piu'], action: 'more' },
   { patterns: ['dimmi di meno'], action: 'less' },
-  // Asse diverso da "dimmi di più/meno" (che agisce sulla durata):
-  // questi due agiscono sul LIVELLO LINGUISTICO del testo (infantile
-  // -> elementare -> medio -> specialistico), non sulla sua lunghezza.
+  // Questi due comandi cambiano il livello linguistico del testo,
+  // "dimmi di più" / "dimmi di meno" invece ne cambiano la durata.
   { patterns: ['non capisco', 'troppo difficile'], action: 'simpler' },
   { patterns: ['troppo semplice'], action: 'harder' },
   { patterns: ['chi e lautore', 'chi e l autore'], action: 'author' },
   { patterns: ['qual e lo stile', 'che stile e'], action: 'style' },
   {
     patterns: [
-      // "Dov'è l'uscita" viene normalizzato in "dove luscita" (dov'è -> dove,
-      // apostrofo eliminato): servono le varianti con e senza la "e".
+      // Dopo la normalizzazione "Dov'è l'uscita" diventa "dove luscita"
+      // (senza la "e"), quindi servono le varianti con e senza la "e".
       'dove luscita', 'dove la toilette', 'dove il bar', 'dove lo shop',
       'dove e luscita', 'dove e l uscita',
       'dove e la toilette', 'dove sono i bagni', "dov'e la toilette", "dov'e il bagno",
@@ -44,8 +42,11 @@ const VOICE_COMMANDS = [
   { patterns: ['mappa', 'dove mi trovo'], action: 'map' }
 ];
 
-// Restituisce l'azione riconosciuta (stringa) o null se nessun comando
-// del vocabolario controllato corrisponde al testo trascritto.
+/*
+ * Restituisce l'azione associata alla trascrizione (es. 'next', 'more'),
+ * oppure null se nessuna frase del vocabolario è contenuta nel testo.
+ * Vale il primo comando della lista che corrisponde.
+ */
 export function matchVoiceCommand(transcript) {
   const normalized = normalize(transcript);
   const match = VOICE_COMMANDS.find(cmd => cmd.patterns.some(p => normalized.includes(p)));

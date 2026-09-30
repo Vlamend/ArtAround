@@ -3,6 +3,7 @@ import { escapeHtml } from './escape.js';
 import { getMuseumById, getVisits, deleteVisit, getArtworks, deleteArtwork, adoptArtwork, acquireArtwork, getLicenses } from './api.js';
 import { sortByField, renderPagination } from './list-utils.js';
 
+// Elementi della pagina
 const titleEl = document.getElementById('museum-title');
 const statusEl = document.getElementById('status');
 const visitEl = document.getElementById('visit-list');
@@ -19,31 +20,47 @@ const sorter = document.getElementById("sort-select");
 const paginationInfo = document.getElementById('pagination-info');
 const pagination = document.getElementById('pagination');
 
+// Museo mostrato (preso dal parametro ?museum= dell'URL) e utente loggato
 let museumId;
 let currentUser;
 
+// Lista visibile: 'a' sono le opere, 'b' sono le visite
 let whichList = 'a';
 
+// Elementi per pagina
 let paginazione = 25;
 
+// Testo cercato e pagina corrente della lista delle visite
 let queryVisite = '';
 let visiteCorrenti = 1;
 
+// Testo cercato e pagina corrente della lista delle opere
 let queryOpere = '';
 let opereCorrenti = 1;
 
+// Dati scaricati dal server (visite, opere proprie, opere altrui, licenze dell'utente),
+// filtrati e ordinati nel browser senza rifare la richiesta
 let cacheVisits = [];
 let cacheMineArtworks = [];
 let cacheOthersArtworks = [];
 let cacheLicenses = [];
 
+// Filtri "le mie" / "altrui" della lista delle opere
 let showMine = true;
 let showOthers = true;
 
+// Criterio di ordinamento delle opere (vedi sortByField in list-utils.js)
 let sortBy = "property";
 
 main();
 
+/*
+ * Pagina dei contenuti di un museo: lista delle opere e lista delle visite.
+ * 1. Collega i controlli della pagina (cambio lista, filtri, ordinamento, paginazione).
+ * 2. Legge il museo dall'URL. Se manca torna alla scelta del museo.
+ * 3. Verifica il login con requireAuth. I filtri "mie" / "altrui" sono visibili solo ad autore e admin.
+ * 4. Scarica visite e opere nelle cache e disegna la lista.
+ */
 async function main() {
   btnA.addEventListener('click', () => showList('a'));
   btnB.addEventListener('click', () => showList('b'));
@@ -86,20 +103,21 @@ async function main() {
     titleEl.textContent = 'Contenuti';
   }
 
-  // Carichiamo i dati nelle cache
+  // Scarica i dati nelle cache
   await Promise.all([loadVisitsData(), loadArtworksData()]);
 
-  // Eseguiamo il primo disegno della UI
+  // Primo disegno della lista
   renderCurrentList();
 
-  // Inizializza i controlli della Toolbar (es. Input di ricerca e tendine)
+  // Collega la ricerca e la selezione degli elementi per pagina
   setupToolbarListeners();
 }
 
-// Unico punto che sa "quale lista è attiva → quale funzione la disegna →
-// come la si pagina": prima era ripetuto, identico, in cinque punti
-// diversi del file (cambio pagina, cambio ordinamento, primo disegno,
-// i tre bottoni della paginazione). Ora c'è una volta sola.
+/*
+ * Ridisegna la lista attiva (opere o visite) insieme ai suoi controlli di paginazione.
+ * Va chiamata ogni volta che cambia qualcosa: filtri, ordinamento, pagina o dati.
+ * Le funzioni di disegno restituiscono il numero totale di elementi, che serve alla paginazione.
+ */
 function renderCurrentList() {
   if (whichList === 'a') {
     const totale = renderArtworksUI();
@@ -118,12 +136,18 @@ function renderCurrentList() {
   }
 }
 
+/*
+ * Disegna la pagina corrente della lista delle visite e restituisce il totale delle visite filtrate.
+ * 1. Filtra le visite per titolo.
+ * 2. Calcola quali visite stanno nella pagina corrente (correggendo la pagina se è oltre l'ultima).
+ * 3. Disegna una card per ciascuna, oppure un messaggio se non ce ne sono.
+ */
 function renderVisitsUI() {
   visitEl.innerHTML = '';
 
-  // 1. Applica il Filtro
+  // 1. Filtro
   const filtrate = cacheVisits.filter(v => v.title.toLowerCase().includes(queryVisite.toLowerCase()));
-  // 2. Calcola Paginazione
+  // 2. Paginazione
   const totale = filtrate.length;
   const maxPagine = Math.ceil(totale / paginazione) || 1;
   if (visiteCorrenti > maxPagine) visiteCorrenti = maxPagine;
@@ -141,27 +165,32 @@ function renderVisitsUI() {
   }
 
   for (const visit of pacchetto) {
-    visitEl.appendChild(renderVisitCard(visit)); // Usa la tua funzione costruttrice originale
+    visitEl.appendChild(renderVisitCard(visit));
   }
   return totale;
 }
 
+/*
+ * Disegna la pagina corrente della lista delle opere e restituisce il totale delle opere filtrate.
+ * 1. Filtra per titolo le opere proprie e quelle altrui, secondo i filtri "mie" / "altrui".
+ * 2. Unisce i due gruppi, li ordina e taglia la pagina corrente.
+ * 3. Disegna la card completa per le proprie opere e quella con adozione/acquisizione per le altrui.
+ */
 function renderArtworksUI() {
   artworkEL.innerHTML = '';
 
-  // 1. Applica il Filtro sia sulle proprie che sulle altre
+  // 1. Filtro
   const mieFiltrate = showMine ? cacheMineArtworks.filter(a => a.title.toLowerCase().includes(queryOpere.toLowerCase())) : [];
   const altreFiltrate = showOthers ? cacheOthersArtworks.filter(a => a.title.toLowerCase().includes(queryOpere.toLowerCase())) : [];
   const tutteInsieme = [...mieFiltrate, ...altreFiltrate];
-  // 2. Calcola Paginazione sull'unione dei due gruppi
+  // 2. Paginazione, calcolata sull'unione dei due gruppi
   const totale = tutteInsieme.length;
   const maxPagine = Math.ceil(totale / paginazione) || 1;
   if (opereCorrenti > maxPagine) opereCorrenti = maxPagine;
 
   const inizio = (opereCorrenti - 1) * paginazione;
   const fine = Math.min(inizio + paginazione, totale);
-  // Ordina PRIMA di tagliare la pagina: altrimenti ogni pagina si
-  // ordinerebbe da sola (i suoi 25 elementi), non l'insieme intero.
+  // L'ordinamento va fatto prima di tagliare la pagina, altrimenti ogni pagina sarebbe ordinata solo al suo interno
   const ordinato = sortByField(tutteInsieme, sortBy);
   const pacchetto = ordinato.slice(inizio, fine);
 
@@ -172,6 +201,7 @@ function renderArtworksUI() {
     artworkEL.appendChild(emptyLi);
     return 0;
   }
+  // Serve a distinguere le opere proprie da quelle altrui
   const ids = new Set(mieFiltrate.map(item => item._id))
   for (const artwork of pacchetto) {
     ids.has(artwork._id) ?
@@ -181,12 +211,13 @@ function renderArtworksUI() {
   return totale;
 }
 
+// Scarica le visite del museo (pubbliche e proprie private) e mostra lo stato del caricamento
 async function loadVisitsData() {
   statusEl.hidden = false;
   statusEl.className = 'status-message';
   statusEl.textContent = 'Caricamento visite…';
   try {
-    cacheVisits = await getVisits(museumId, { includeMine: true });
+    cacheVisits = await getVisits(museumId);
     statusEl.hidden = true;
   } catch {
     statusEl.className = 'error-message';
@@ -194,6 +225,7 @@ async function loadVisitsData() {
   }
 }
 
+// Crea la card di una visita. Solo l'autore vede i pulsanti Modifica ed Elimina, gli altri vedono il nome dell'autore.
 function renderVisitCard(visit) {
   const li = document.createElement('li');
   li.className = 'card';
@@ -238,6 +270,7 @@ function renderVisitCard(visit) {
   return li;
 }
 
+// Elimina una visita dopo la conferma e poi ricarica la lista
 async function handleDelete(visit) {
   if (!window.confirm(`Eliminare la visita "${visit.title}"? L'operazione non è reversibile.`)) {
     return;
@@ -251,6 +284,7 @@ async function handleDelete(visit) {
   }
 }
 
+// Scarica in parallelo le opere proprie, quelle altrui e le licenze dell'utente
 async function loadArtworksData() {
   try {
     const [mine, others, userLicenses] = await Promise.all([
@@ -266,6 +300,7 @@ async function loadArtworksData() {
   }
 }
 
+// Crea la card di un'opera propria, con prezzi, licenza e pulsanti Modifica ed Elimina
 function renderArtworkCard(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
@@ -297,6 +332,7 @@ function renderArtworkCard(artwork) {
   return li;
 }
 
+// Elimina un'opera dopo la conferma e ricarica la lista. Il server rifiuta se ha ancora Content collegati.
 async function handleDeleteArtwork(artwork) {
   if (!window.confirm(`Eliminare "${artwork.title}"? Fallisce se ci sono ancora content collegati.`)) {
     return;
@@ -310,6 +346,11 @@ async function handleDeleteArtwork(artwork) {
   }
 }
 
+/*
+ * Crea la card di un'opera di un altro autore.
+ * Il pulsante di adozione è disabilitato se l'utente ha già adottato l'opera.
+ * Il pulsante di acquisizione compare solo ad autore e admin.
+ */
 function renderOtherArtworkCard(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
@@ -324,7 +365,7 @@ function renderOtherArtworkCard(artwork) {
   const actions = document.createElement('div');
   actions.className = 'card-actions';
 
-  // Eseguiamo il controllo sull'array reale
+  // Controlla se tra le licenze dell'utente c'è già un'adozione di quest'opera
   const hasAdopted = cacheLicenses.licenses.some(lic =>
     lic.artwork?._id === artwork._id && lic.type === 'adoption'
   );
@@ -353,12 +394,13 @@ function renderOtherArtworkCard(artwork) {
   return li;
 }
 
+// Adotta l'opera. Durante la richiesta il pulsante è disabilitato e in caso di errore torna com'era.
 async function handleAdopt(artwork, button) {
   button.disabled = true;
   button.textContent = 'Adozione in corso…';
   try {
     await adoptArtwork(artwork._id);
-    await loadArtworksData(); // l'opera resta nel gruppo "altre", ma ora è licenziata
+    await loadArtworksData(); // l'opera resta tra le altrui, ma ora risulta adottata
     renderCurrentList();
   } catch (err) {
     window.alert(err.message || 'Impossibile completare l\'adozione.');
@@ -367,12 +409,13 @@ async function handleAdopt(artwork, button) {
   }
 }
 
+// Acquisisce l'opera, con lo stesso comportamento del pulsante di handleAdopt
 async function handleAcquire(artwork, button) {
   button.disabled = true;
   button.textContent = 'Acquisizione in corso…';
   try {
     await acquireArtwork(artwork._id);
-    await loadArtworksData(); // l'opera passa dal gruppo "altre" a "le tue"
+    await loadArtworksData(); // l'opera passa dalle altrui alle proprie
     renderCurrentList();
   } catch (err) {
     window.alert(err.message || 'Impossibile completare l\'acquisizione.');
@@ -381,11 +424,13 @@ async function handleAcquire(artwork, button) {
   }
 }
 
+// Apre l'editor per creare una nuova opera o una nuova visita, a seconda della lista visibile
 function handleNew() {
   const page = whichList === 'a' ? 'artwork-editor' : 'visit-editor';
   window.location.href = `${page}?museum=${museumId}`;
 }
 
+// Passa dalla lista delle opere ('a') a quella delle visite ('b') e aggiorna lo stato dell'interruttore
 function showList(which) {
   const showA = which === 'a';
   whichList = which;
@@ -402,20 +447,22 @@ function showList(which) {
   slideBg(showA ? 0 : 1);
 }
 
+// Sposta lo sfondo dell'interruttore sul pulsante selezionato (0 = opere, 1 = visite)
 function slideBg(n) {
   const bgOffset = 50 * n;
   switchContainer.style.setProperty("--bg-offset", `${bgOffset}%`);
 }
 
+// Collega la ricerca delle visite e la scelta degli elementi per pagina
 function setupToolbarListeners() {
-  // Listener per la ricerca visite
+  // Ricerca visite
   document.getElementById('search-visite')?.addEventListener('input', (e) => {
     queryVisite = e.target.value;
-    visiteCorrenti = 1; // Ritorna in prima pagina se l'utente filtra
+    visiteCorrenti = 1; // dopo un filtro si riparte dalla prima pagina
     renderCurrentList();
   });
 
-  // Listener scala elementi visite
+  // Elementi per pagina
   document.getElementById('select-visite-per-page')?.addEventListener('change', (e) => {
     paginazione = parseInt(e.target.value, 10);
     visiteCorrenti = 1;

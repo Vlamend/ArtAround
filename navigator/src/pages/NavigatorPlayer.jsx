@@ -7,30 +7,42 @@ import { matchVoiceCommand } from '../voiceCommands.js';
 import { DOMAIN_LABELS, LANGUAGE_ORDER, buildTopicQueue, buildFrames, firstFrameIndexForDomain, pickText, pickBaseItem } from '../topics.js';
 import MuseumMap from '../components/MuseumMap.jsx';
 
+/*
+ * Pagina che esegue una visita tappa per tappa.
+ * Per ogni tappa (opera) mostra il testo adatto al livello linguistico dell'utente
+ * e permette di navigare con i pulsanti o con i comandi vocali:
+ * tappa precedente/successiva, testo più lungo/corto, più semplice/difficile,
+ * approfondimenti su autore e stile, mappa e punti di interesse.
+ */
 export default function NavigatorPlayer() {
   const navigate = useNavigate();
   const { visitId } = useParams();
+  // Visita caricata dal server, stato del caricamento ('loading' | 'ready' | 'error') e tappa corrente
   const [visit, setVisit] = useState(null);
   const [status, setStatus] = useState('loading');
   const [stepIndex, setStepIndex] = useState(0);
+  // Pannelli aperti (punti di interesse e mappa) e ultimo comando vocale sentito
   const [showPoi, setShowPoi] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [lastHeard, setLastHeard] = useState(null);
+  // Utente loggato (per livello linguistico e interessi) e tutti i Content dell'opera corrente
   const [user, setUser] = useState(null);
   const [artworkItems, setArtworkItems] = useState([]);
+  // Feedback dato alla tappa corrente ('up' | 'down' | null) e se la visita è già stata segnata come completata
   const [feedbackGiven, setFeedbackGiven] = useState(null);
   const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
   const [itemLoading, setItemLoading] = useState(false);
 
-  // Livello linguistico voluto per questa tappa
+  // Livello linguistico scelto a mano per la tappa corrente con "non capisco" / "troppo semplice".
+  // Se è null vale il livello del profilo utente.
   const [languageOverride, setLanguageOverride] = useState(null);
 
-  // Coda dei topic per l'opera corrente e sequenza di frame
+  // Coda dei topic dell'opera corrente e posizione nella sequenza di frame
   const [topicQueue, setTopicQueue] = useState([]);
   const [frameIndex, setFrameIndex] = useState(0);
   const [topicsLoading, setTopicsLoading] = useState(false);
 
-  // Caricamento iniziale della visita
+  // Carica la visita dal server (con le opere popolate)
   useEffect(() => {
     getVisitById(visitId)
       .then(data => {
@@ -40,7 +52,7 @@ export default function NavigatorPlayer() {
       .catch(() => setStatus('error'));
   }, [visitId]);
 
-  // Caricamento del profilo utente per la personalizzazione
+  // Carica il profilo dell'utente per personalizzare i testi
   useEffect(() => {
     getMe()
       .then(data => setUser(data.user))
@@ -49,15 +61,17 @@ export default function NavigatorPlayer() {
   const currentStep = visit?.steps?.[stepIndex];
   const currentArtwork = currentStep?.artwork;
 
-  // Reset degli stati di feedback e scostamento lingua al cambio tappa
+  // A ogni cambio di tappa si azzerano il feedback dato e il livello linguistico scelto a mano
   useEffect(() => {
     setFeedbackGiven(null);
     setLanguageOverride(null);
   }, [stepIndex]);
 
+  // Livello linguistico richiesto: scelta manuale, altrimenti profilo, altrimenti 'medio'
   const targetLanguage = languageOverride ?? user?.preferredLanguageLevel ?? 'medio';
 
-  // Un'unica richiesta di rete per tappa, scarico direttamente tutti i content
+  // A ogni cambio di opera scarica tutti i suoi Content con una sola richiesta.
+  // Il flag cancelled evita di salvare la risposta di una tappa già abbandonata.
   useEffect(() => {
     if (!currentArtwork?._id) {
       setArtworkItems([]);
@@ -79,35 +93,28 @@ export default function NavigatorPlayer() {
     return () => { cancelled = true; };
   }, [currentArtwork?._id]);
 
-  // Scelta sincrona del testo di base tra i Content già scaricati:
-  // preferisce quelli senza domini taggati (un content taggato
-  // 'materiali'/'storia'/ecc. è un approfondimento per il "dimmi di
-  // più" a topic, non il testo principale) e la lingua più vicina a
-  // quella target — vedi topics.js per il dettaglio del criterio.
+  // Content mostrato come testo principale della tappa (criterio di scelta in pickBaseItem, topics.js)
   const displayedItem = useMemo(
     () => pickBaseItem(artworkItems, targetLanguage),
     [artworkItems, targetLanguage]
   );
 
-  // Livelli linguistici REALMENTE disponibili per la narrazione di
-  // base di quest'opera (stesso pool di pickBaseItem: content senza
-  // domini taggati, o tutti se nessuno è senza domini). Serve per
-  // "non capisco"/"troppo semplice": senza questo, il passo successivo
-  // si calcolerebbe su targetLanguage (il livello RICHIESTO) invece
-  // che su displayedItem.language (il livello REALMENTE mostrato) — e
-  // se un fallback è già scattato (l'opera non ha quella lingua), i
-  // due valori divergono: si può ricalcolare lo stesso identico testo
-  // già in mostra, che è esattamente il "si ripete" notato.
+  /*
+   * Livelli linguistici per cui l'opera ha un testo base (stesso gruppo di Content di pickBaseItem).
+   * Serve a "non capisco" e "troppo semplice" per saltare i livelli che non esistono.
+   */
   const availableBaseLanguages = useMemo(() => {
     const generalItems = artworkItems.filter(i => !i.domains || i.domains.length === 0);
     const pool = generalItems.length > 0 ? generalItems : artworkItems;
     return new Set(pool.map(i => i.language));
   }, [artworkItems]);
 
-  // Ricostruisce la coda dei topic sugli stessi Content già scaricati
-  // per questa tappa — nessuna richiesta di rete propria per i topic
-  // "artista"/"stile" a parte, che restano fetch dedicate (Author/Style
-  // non sono Content, vivono in collezioni separate).
+  /*
+   * Ricostruisce la coda dei topic ogni volta che cambiano opera, Content, interessi o lingua.
+   * I topic sui Content usano quelli già scaricati; solo autore e stile richiedono
+   * una richiesta a parte, perché Author e Style sono collezioni separate.
+   * Quando la coda è pronta il frame riparte dall'inizio (testo base).
+   */
   useEffect(() => {
     if (!currentArtwork?._id) {
       setTopicQueue([]);
@@ -128,18 +135,21 @@ export default function NavigatorPlayer() {
       .finally(() => { if (!cancelled) setTopicsLoading(false); });
     return () => { cancelled = true; };
   }, [currentArtwork?._id, artworkItems, user?.interestWeights, displayedItem?._id, targetLanguage]);
+  // Sequenza di frame della tappa, il frame corrente e il topic che sta mostrando (null se è il testo base)
   const frames = useMemo(
     () => buildFrames(visit?.pace ?? '15s', topicQueue),
     [visit?.pace, topicQueue]
   );
   const currentFrame = frames[Math.min(frameIndex, frames.length - 1)];
   const currentTopic = currentFrame?.type === 'topic' ? topicQueue[currentFrame.topicIndex] : null;
+  // Testo da mostrare: quello del topic o del Content base, scelto in base al tier del frame
   const currentText = useMemo(() => {
     if (currentFrame?.type === 'topic' && currentTopic) {
       return pickText(currentTopic.texts, currentFrame.tier);
     }
     return pickText(displayedItem?.texts, currentFrame?.tier ?? 1);
   }, [currentFrame, currentTopic, displayedItem]);
+  // Legge il testo ad alta voce (in italiano) interrompendo l'eventuale lettura in corso
   const speak = useCallback((text) => {
     if (!text || !('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
@@ -148,7 +158,7 @@ export default function NavigatorPlayer() {
     window.speechSynthesis.speak(utterance);
   }, []);
 
-  // Registrazione del completamento della visita museale
+  // Quando si arriva all'ultima tappa segna la visita come completata (una volta sola)
   useEffect(() => {
     if (!visit || hasMarkedComplete) return;
     if (stepIndex === visit.steps.length - 1) {
@@ -156,6 +166,7 @@ export default function NavigatorPlayer() {
       setHasMarkedComplete(true);
     }
   }, [currentText]);
+  // Tappa successiva. Sull'ultima tappa termina la visita e torna alla lista.
   function goNext() {
     window.speechSynthesis.cancel();
     if (!visit) return;
@@ -165,23 +176,28 @@ export default function NavigatorPlayer() {
       setStepIndex(i => Math.min(i + 1, visit.steps.length - 1));
     }
   }
+  // Tappa precedente
   function goPrev() {
     window.speechSynthesis.cancel();
     setStepIndex(i => Math.max(i - 1, 0));
   }
+  // "Dimmi di più": passa al frame successivo (testo più lungo o topic successivo)
   function tellMore() {
     window.speechSynthesis.cancel();
     setFrameIndex(i => Math.min(i + 1, frames.length - 1));
   }
+  // "Dimmi di meno": torna al frame precedente
   function tellLess() {
     window.speechSynthesis.cancel();
     setFrameIndex(i => Math.max(i - 1, 0));
   }
-  // "Non capisco" / "Troppo semplice": il passo si calcola sul livello
-  // REALMENTE mostrato (displayedItem.language), non su targetLanguage
-  // — e salta i livelli per cui questa specifica opera non ha nessuna
-  // variante, altrimenti impostare un livello "vuoto" farebbe ricadere
-  // pickBaseItem di nuovo sullo stesso identico testo già in mostra.
+  /*
+   * "Non capisco": passa al livello linguistico più semplice per cui l'opera ha un testo.
+   * 1. Parte dal livello del testo che si sta mostrando davvero, non da quello richiesto,
+   * perché i due possono differire se l'opera non ha la lingua richiesta.
+   * 2. Scende finché trova un livello disponibile in availableBaseLanguages.
+   * 3. Se non ne trova non fa nulla.
+   */
   function makeSimpler() {
     window.speechSynthesis.cancel();
     const currentIdx = LANGUAGE_ORDER.indexOf(displayedItem?.language ?? targetLanguage);
@@ -192,6 +208,7 @@ export default function NavigatorPlayer() {
       }
     }
   }
+  // "Troppo semplice": come makeSimpler ma sale verso i livelli più complessi
   function makeHarder() {
     window.speechSynthesis.cancel();
     const currentIdx = LANGUAGE_ORDER.indexOf(displayedItem?.language ?? targetLanguage);
@@ -202,16 +219,19 @@ export default function NavigatorPlayer() {
       }
     }
   }
+  // Salta alla tappa indicata (usato dai marker della mappa) e chiude la mappa
   function jumpToStep(i) {
     window.speechSynthesis.cancel();
     setStepIndex(i);
     setShowMap(false);
   }
+  // Salta al primo frame del dominio indicato ('artista' o 'stile'), se presente in coda
   function jumpToDomain(domain) {
     window.speechSynthesis.cancel();
     const idx = firstFrameIndexForDomain(frames, topicQueue, domain);
     if (idx !== -1) setFrameIndex(idx);
   }
+  // Invia il feedback al server. Se la richiesta fallisce toglie la selezione dal pulsante.
   async function handleFeedback(direction) {
     if (!displayedItem?._id) return;
     setFeedbackGiven(direction);
@@ -221,6 +241,7 @@ export default function NavigatorPlayer() {
       setFeedbackGiven(null);
     }
   }
+  // Esegue l'azione associata a un comando vocale (le azioni sono definite in voiceCommands.js)
   function runVoiceAction(action) {
     switch (action) {
       case 'next': goNext(); break;
@@ -237,6 +258,7 @@ export default function NavigatorPlayer() {
       default: break;
     }
   }
+  // Riceve la trascrizione dal riconoscimento vocale, la mostra all'utente e ne esegue il comando
   function handleTranscript(transcript) {
     const action = matchVoiceCommand(transcript);
     setLastHeard({ transcript, recognized: !!action });
@@ -244,10 +266,12 @@ export default function NavigatorPlayer() {
   }
   const { isSupported: voiceSupported, isListening, error: voiceError, start: startListening } = useVoiceCommands(handleTranscript);
 
+  // Schermate alternative in attesa dei dati, in caso di errore o se la visita non ha tappe
   if (status === 'loading') return <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center px-4"><p className="text-sm text-slate-500 dark:text-slate-400">Caricamento visita…</p></div>;
   if (status === 'error') return <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center px-4"><p className="text-sm text-red-600 dark:text-red-400">Non riesco a caricare la visita.</p></div>;
   if (!visit?.steps?.length) return <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center px-4"><p className="text-sm text-slate-500 dark:text-slate-400">Questa visita non ha ancora contenuti.</p></div>;
 
+  // Valori usati dal rendering: abilitazione dei pulsanti di livello, nome della sala e presenza dei topic autore/stile
   const currentLangIdx = LANGUAGE_ORDER.indexOf(displayedItem?.language ?? targetLanguage);
   const canGoSimpler = [...availableBaseLanguages].some(l => LANGUAGE_ORDER.indexOf(l) < currentLangIdx);
   const canGoHarder = [...availableBaseLanguages].some(l => LANGUAGE_ORDER.indexOf(l) > currentLangIdx);
@@ -418,6 +442,7 @@ export default function NavigatorPlayer() {
   );
 }
 
+// Traduce il tipo di punto di interesse nel testo mostrato all'utente
 function poiLabel(type) {
   const labels = {
     entrance: 'Entrata',
@@ -432,6 +457,7 @@ function poiLabel(type) {
   };
   return labels[type] || type;
 }
+// Traduce il codice di errore del riconoscimento vocale in un messaggio per l'utente
 function voiceErrorMessage(code) {
   const messages = {
     'not-allowed': 'Permesso al microfono negato. Controlla le impostazioni del browser.',

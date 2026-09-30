@@ -9,14 +9,20 @@ const museumSelect = document.getElementById('museum-slug');
 
 main();
 
+/*
+ * Pagina di modifica della config del Navigator (solo admin).
+ * 1. Verifica il login con requireAuth.
+ * 2. Se l'utente non è admin nasconde il form e mostra un messaggio.
+ * 3. Altrimenti carica i musei e la config attuale e attiva il salvataggio.
+ */
 async function main() {
   const currentUser = await requireAuth();
   if (!currentUser) {
     return; // requireAuth ha già gestito il redirect al login
   }
 
-  // Anche se la route è già protetta lato server, la pagina si blocca anche qui: un non-admin non deve
-  // nemmeno vedere il form, non solo fallire il salvataggio dopo averlo compilato.
+  // Il server protegge già la route, ma il form si nasconde anche qui:
+  // un non-admin non deve nemmeno vederlo, non solo ricevere un errore dopo averlo compilato.
   if (currentUser.role !== 'admin') {
     statusEl.hidden = false;
     statusEl.className = 'error-message';
@@ -31,6 +37,7 @@ async function main() {
   form.addEventListener('submit', handleSubmit);
 }
 
+// Riempie il menu a tendina con i musei (il valore di ogni opzione è lo slug). Un museo si sceglie, non si scrive a mano.
 async function loadMuseums() {
   try {
     const museums = await getMuseums();
@@ -46,6 +53,7 @@ async function loadMuseums() {
   }
 }
 
+// Precompila il form con la config attuale
 async function loadCurrentConfig() {
   try {
     const config = await getConfig();
@@ -55,11 +63,16 @@ async function loadCurrentConfig() {
       museumSelect.value = config.museumSlug;
     }
   } catch {
-    // se la config attuale non si carica, il form resta vuoto: si può
-    // comunque compilarlo e salvarne una nuova da zero
+    // Se la config non si carica il form resta vuoto e se ne può salvare una nuova
   }
 }
 
+/*
+ * Alla conferma del form:
+ * 1. Controlla che museo e titolo siano compilati.
+ * 2. Invia la config al server con updateConfig.
+ * 3. Mostra l'esito. L'app Navigator legge la nuova config solo al suo prossimo caricamento.
+ */
 async function handleSubmit(e) {
   e.preventDefault();
   errorEl.hidden = true;

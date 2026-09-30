@@ -1,10 +1,18 @@
 import { useState } from 'react';
 import { signup } from '../api.js';
 
+/*
+ * Pagina di registrazione (l'account creato è sempre di tipo visitatore).
+ * Alla conferma:
+ * 1. Controlla che password e conferma password coincidano, altrimenti mostra l'errore.
+ * 2. Chiama signup(), che salva anche il token, e avvisa App tramite onSignup.
+ * 3. Se il server rifiuta la registrazione mostra il suo messaggio di errore.
+ */
 export default function Signup({ onSignup }) {
    const [username, setUsername] = useState('');
    const [email, setEmail] = useState('');
    const [password, setPassword] = useState('');
+   // Campo "Conferma password"
    const [parsePassword, setParsingPassword] = useState('');
    const [error, setError] = useState('');
 
@@ -61,14 +69,14 @@ export default function Signup({ onSignup }) {
                   <div className="flex items-start flex-wrap gap-2">
                      <label className="flex items-center group has-[input:checked]:text-slate-900">
                         <input id="tmc" name="tmc" type="checkbox" required className="sr-only" />
-                        {/* Custom box */}
+                        {/* Checkbox personalizzata: l'input vero è nascosto (sr-only), questo span ne disegna il riquadro */}
                         <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded outline-1 outline-slate-300 dark:outline-neutral-600
                               bg-white dark:bg-neutral-700
                               group-has-[input:checked]:bg-primary dark:group-has-[input:checked]:bg-secondary
                               group-has-[input:checked]:outline-primary dark:group-has-[input:checked]:outline-secondary
                               group-focus-within:outline-2
                               group-focus-within:outline-primary dark:group-focus-within:outline-secondary" aria-hidden="true">
-                           {/* Checkmark */}
+                           {/* Segno di spunta, visibile solo quando l'input è selezionato */}
                            <svg className="size-3 text-white opacity-0 group-has-[input:checked]:opacity-100" viewBox="0 0 12 10"
                               fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M1 5l3 3 7-7" />

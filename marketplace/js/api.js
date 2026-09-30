@@ -1,10 +1,7 @@
 import { API_BASE } from './config.js';
 
-// Chiave diversa da quella usata dal Navigator: le due app, anche se
-// servite sullo stesso dominio in futuro, non devono condividere la
-// sessione per errore (sono due applicazioni distinte con utenti che
-// potrebbero avere ruoli diversi: autore per l'editor, visitatore per
-// il Navigator).
+// Chiave del localStorage per il JWT. È diversa da quella del Navigator perché
+// le due app non devono condividere la sessione, anche se servite dallo stesso dominio.
 const TOKEN_KEY = 'artaround_editor_token';
 
 export function getToken() {
@@ -19,6 +16,12 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+/*
+ * Funzione base per tutte le chiamate al backend (stessa logica del Navigator).
+ * 1. Aggiunge l'header Authorization se c'è un token e Content-Type JSON se c'è un body.
+ * 2. Se la risposta non è ok lancia un Error con il messaggio del server (campo "error").
+ * 3. Restituisce il JSON della risposta, o null se il corpo è vuoto.
+ */
 async function request(path, options = {}) {
   const token = getToken();
 
@@ -34,19 +37,20 @@ async function request(path, options = {}) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `Errore ${res.status}`);
   }
-  // Le risposte 204/DELETE possono non avere corpo JSON
+  // Alcune risposte (es. DELETE) non hanno corpo, quindi si controlla prima che ci sia del testo
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
 
 // ---- Autenticazione ----
 
+// Effettua il login, salva il token e restituisce l'utente
 export async function login(email, password) {
   const data = await request('/users/login', {
     method: 'POST',
     body: JSON.stringify({ email, password })
   });
-  setToken(data.token); // FONDAMENTALE: mancava, la sessione non veniva mai salvata
+  setToken(data.token);
   return data.user;
 }
 
@@ -58,7 +62,7 @@ export function logout() {
   clearToken();
 }
 
-// ---- Musei (sola lettura per l'editor: pannello di scelta multipla) ----
+// ---- Musei (il marketplace li può solo leggere) ----
 
 export function getMuseums() {
   return request('/museums');
@@ -70,10 +74,9 @@ export function getMuseumById(id) {
 
 // ---- Visite ----
 
-export function getVisits(museumId, { includeMine = false } = {}) {
-  const params = new URLSearchParams({ museum: museumId });
-  if (includeMine) params.set('mine', 'true');
-  return request(`/visits?${params.toString()}`);
+// Visite del museo: le pubbliche e, se si è loggati, anche le proprie private
+export function getVisits(museumId) {
+  return request(`/visits?museum=${encodeURIComponent(museumId)}`);
 }
 
 export function getVisitById(id) {
@@ -92,7 +95,7 @@ export function deleteVisit(id) {
   return request(`/visits/${id}`, { method: 'DELETE' });
 }
 
-// ---- Item ----
+// ---- Item (i Content, cioè i testi di un'opera) ----
 
 export function getItems(params = {}) {
   const qs = new URLSearchParams(params);
@@ -114,12 +117,10 @@ export function updateItem(id, payload) {
 export function deleteItem(id) {
   return request(`/items/${id}`, { method: 'DELETE' });
 }
-// NB: l'adozione/acquisizione sono ora su Artwork (sotto), non più
-// per singolo content.
 
-// ---- Artwork (l'oggetto fisico del museo: posizione, sala, autore/stile,
-// e ORA anche il controllo commerciale: license/isPublic/adoptionPrice/
-// acquisitionPrice/owner) ----
+// ---- Artwork (l'opera fisica del museo) ----
+// Contiene posizione, sala, autore e stile, e anche i dati commerciali:
+// licenza, visibilità, prezzi di adozione e acquisizione, proprietario.
 
 export function getArtworks(params = {}) {
   const qs = new URLSearchParams(params);
@@ -142,19 +143,19 @@ export function deleteArtwork(id) {
   return request(`/artworks/${id}`, { method: 'DELETE' });
 }
 
-// Adozione: licenzia l'uso non esclusivo del content nelle proprie
-// visite. NON dà diritti editoriali, NON cambia il proprietario.
+// Adozione: dà il diritto di usare l'opera nelle proprie visite.
+// Non dà il diritto di modificarla e non cambia il proprietario.
 export function adoptArtwork(id) {
   return request(`/artworks/${id}/adopt`, { method: 'POST' });
 }
 
-// Acquisizione: trasferisce i pieni diritti editoriali (modificare
-// l'opera, i suoi content, i due prezzi). Richiede ruolo autore/admin.
+// Acquisizione: l'utente diventa il nuovo proprietario e può modificare l'opera,
+// i suoi Content e i prezzi. Richiede il ruolo autore o admin.
 export function acquireArtwork(id) {
   return request(`/artworks/${id}/acquire`, { method: 'POST' });
 }
 
-// ---- Author / Style (catalogo riusabile tra opere e musei diversi) ----
+// ---- Author / Style (artisti e stili, riusabili da più opere e musei) ----
 
 export function getAuthors() {
   return request('/authors');
@@ -172,7 +173,7 @@ export function createStyle(payload) {
   return request('/styles', { method: 'POST', body: JSON.stringify(payload) });
 }
 
-// ---- Config del Navigator (solo admin può scriverla) ----
+// ---- Config del Navigator (la può modificare solo un admin) ----
 
 export function getConfig() {
   return request('/config');
@@ -182,11 +183,13 @@ export function updateConfig(payload) {
   return request('/config', { method: 'PUT', body: JSON.stringify(payload) });
 }
 
+// Licenze (adozioni e acquisizioni) dell'utente loggato
 export function getLicenses() {
   return request('/users/licenses');
 }
 
 // ---- Gestione account (solo admin) ----
+// listUsers filtra per ruolo, createAuthorUser crea un account autore
 
 export function listUsers(role) {
   return request(`/users${role ? `?role=${encodeURIComponent(role)}` : ''}`);

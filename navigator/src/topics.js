@@ -1,15 +1,15 @@
 import { getAuthorById, getStyleById } from './api.js';
 
-// Stessi 5 tier di durata usati in tutto lo schema (textEntry).
+// I 5 tier di durata dei testi, dal più breve al più lungo (gli stessi di textEntry nel backend).
 export const DURATION_ORDER = ['3s', '15s', '40s', '1min', '4min'];
 
-// I 4 livelli linguistici, dal più semplice al più complesso — asse
-// indipendente dalla durata: "non capisco"/"troppo semplice" si
-// muovono su questa scala, "dimmi di più/meno" sull'altra.
+// I 4 livelli linguistici, dal più semplice al più complesso.
+// È un asse separato dalla durata: "non capisco" / "troppo semplice"
+// si muovono su questa scala, "dimmi di più" / "dimmi di meno" su quella delle durate.
 export const LANGUAGE_ORDER = ['infantile', 'elementare', 'medio', 'specialistico'];
 
-// Vocabolario dei 5 domini, condiviso con User.interestWeights e
-// Content.domains. L'ordine qui è solo lo spareggio a parità di peso.
+// I 5 domini di interesse, gli stessi di User.interestWeights e Content.domains.
+// A parità di peso vale l'ordine di questo array.
 export const DOMAINS = ['artista', 'stile', 'storia', 'materiali', 'architettura'];
 
 export const DOMAIN_LABELS = {
@@ -20,11 +20,12 @@ export const DOMAIN_LABELS = {
   architettura: "L'architettura"
 };
 
-// Peso -> tier di partenza. Pesi positivi scalano verso testi più
-// lunghi quanto più l'interesse è marcato; pesi nulli o negativi
-// partono sempre dal tier minimo (non c'è verso ovvio in cui un
-// interesse negativo dovrebbe accorciare ulteriormente un testo già
-// al minimo consentito dallo schema).
+/*
+ * Restituisce l'indice del tier di durata da cui partire per un dato peso di interesse.
+ * Più il peso è alto, più il testo iniziale è lungo:
+ * peso <= 0 -> 3s, 1-2 -> 15s, 3-4 -> 40s, 5-6 -> 1min, 7-10 -> 4min.
+ * I pesi negativi partono comunque dal tier minimo, che è già il più corto possibile.
+ */
 export function startTierIndexForWeight(weight) {
   if (weight <= 0) return 0; // 3s
   if (weight <= 2) return 1; // 15s
@@ -33,10 +34,12 @@ export function startTierIndexForWeight(weight) {
   return 4; // 7-10 -> 4min
 }
 
-// Dato un array di textEntry disponibili e un tier "desiderato",
-// sceglie il testo più vicino: prima cerca al tier esatto, poi scende
-// verso tier più corti, poi sale verso tier più lunghi. Ritorna null
-// se l'array è vuoto.
+/*
+ * Sceglie il testo più adatto al tier richiesto tra quelli disponibili.
+ * 1. Se non ci sono testi ritorna null.
+ * 2. Cerca il tier esatto e, se non c'è, scende verso i tier più corti.
+ * 3. Se nemmeno questi esistono, sale verso i tier più lunghi.
+ */
 export function pickText(texts, tierIndex) {
   if (!texts || texts.length === 0) return null;
   const byDuration = new Map(texts.map(t => [DURATION_ORDER.indexOf(t.duration), t]));
@@ -50,10 +53,12 @@ export function pickText(texts, tierIndex) {
   return null;
 }
 
-// Sceglie, tra un elenco di Content, quello più vicino alla lingua
-// target: lingua esatta, poi la più vicina nell'ordine di complessità
-// (mai a caso il "primo che càpita") — stesso principio di pickText,
-// applicato all'asse linguistico invece che a quello della durata.
+/*
+ * Sceglie tra i Content quello con la lingua più vicina a quella richiesta.
+ * Stesso criterio di pickText, applicato ai livelli linguistici invece che alle durate:
+ * prima la lingua esatta, poi quelle più semplici, infine quelle più complesse.
+ * Se la lingua richiesta non è valida si parte dal livello più semplice.
+ */
 function pickNearestLanguage(items, targetLanguage) {
   if (!items || items.length === 0) return null;
   const byLanguage = new Map(items.map(i => [LANGUAGE_ORDER.indexOf(i.language), i]));
@@ -69,16 +74,14 @@ function pickNearestLanguage(items, targetLanguage) {
   return null;
 }
 
-// Sceglie il Content "narrazione di base" di un'opera tra TUTTI i suoi
-// Content già scaricati in un'unica richiesta per artwork: preferisce
-// quelli SENZA domini taggati (un content taggato 'materiali'/'storia'/
-// ecc. è pensato come approfondimento per il "dimmi di più" a topic,
-// non come testo principale della tappa) — se non ce n'è nessuno così,
-// ripiega su tutti i content disponibili piuttosto che non mostrare
-// nulla.
-// NB: euristica lato client, non un flag esplicito nello schema — se
-// in backend esiste già un modo per distinguere base/approfondimento,
-// questa funzione va sostituita con quello.
+/*
+ * Sceglie il Content da usare come testo principale della tappa.
+ * 1. Si tengono i Content senza domini, perché quelli con un dominio
+ * (materiali, storia, ...) servono come approfondimento per "dimmi di più".
+ * 2. Se non ce ne sono, si usano tutti i Content disponibili.
+ * 3. Dal gruppo scelto si prende quello con la lingua più vicina a quella richiesta.
+ * La distinzione base/approfondimento è dedotta dai domini, non c'è un campo apposito nello schema.
+ */
 export function pickBaseItem(items, targetLanguage) {
   if (!items || items.length === 0) return null;
   const generalItems = items.filter(i => !i.domains || i.domains.length === 0);
@@ -86,17 +89,21 @@ export function pickBaseItem(items, targetLanguage) {
   return pickNearestLanguage(pool, targetLanguage);
 }
 
-// Costruisce la coda dei topic per l'artwork corrente, ordinata per
-// interestWeights decrescente (i pesi negativi restano in coda, non
-// vengono esclusi). Ogni voce include solo i tier per cui esiste
-// davvero un testo, a partire dal tier iniziale dettato dal peso, così
-// "dimmi di più" non produce mai una pressione a vuoto.
-//
-// artista -> Author.bio, stile -> Style.description, gli altri tre
-// domini -> Content taggato su questo artwork, filtrato dagli 'items'
-// già scaricati per l'intera opera in un'unica richiesta (la stessa
-// usata per scegliere il testo di base, vedi pickBaseItem) — niente
-// più una seconda fetch di rete solo per i topic.
+/*
+ * Costruisce la coda dei topic (gli approfondimenti) dell'opera corrente.
+ * 1. Ordina i 5 domini per peso di interesse decrescente. I pesi negativi
+ * finiscono in fondo alla coda ma non vengono esclusi.
+ * 2. Recupera i testi di ogni dominio:
+ *    - artista: la bio dell'Author (richiesta al server)
+ *    - stile: la descrizione dello Style (richiesta al server)
+ *    - gli altri tre: i Content dell'opera taggati con quel dominio,
+ *      presi da 'items' che è già stato scaricato dal chiamante.
+ * 3. Salta i domini senza testi e, per gli altri, tiene solo i tier
+ * per cui esiste un testo, partendo da quello dato dal peso.
+ * Ogni voce della coda ha la forma { domain, weight, title, texts, tiers }.
+ * Opzioni: excludeItemId è il Content già mostrato come testo base,
+ * preferredLanguage è la lingua da preferire quando un dominio ha più Content.
+ */
 export async function buildTopicQueue(artwork, interestWeights = {}, items = [], options = {}) {
   if (!artwork) return [];
   const { excludeItemId = null, preferredLanguage = null } = options;
@@ -109,19 +116,15 @@ export async function buildTopicQueue(artwork, interestWeights = {}, items = [],
     .map(o => o.domain)
     .filter(d => d !== 'artista' && d !== 'stile');
 
-  // Stesso identico filtro che prima faceva il backend con
-  // ?domains=..., ora applicato lato client sugli item già in mano.
-  // Il testo base (quello scelto come step corrente) non è un
-  // "approfondimento": va escluso, altrimenti "dimmi di più" può
-  // ripresentare esattamente lo stesso content appena letto, solo
-  // sotto etichetta diversa. Tra i candidati rimasti, se ce n'è più
-  // di uno per lo stesso dominio, si preferisce quello nella lingua
-  // dell'utente — altrimenti si salterebbe di registro linguistico
-  // in modo silenzioso rispetto al testo base appena mostrato.
+  // Content di approfondimento: quelli taggati con almeno uno dei tre
+  // domini che vengono dai Content. Si esclude il testo base già mostrato,
+  // altrimenti "dimmi di più" lo riproporrebbe con un'etichetta diversa.
   const extraContents = items
     .filter(c => c.domains?.some(d => extraDomains.includes(d)))
     .filter(c => c._id !== excludeItemId);
 
+  // Tra i Content di un dominio preferisce quello nella lingua dell'utente,
+  // così un approfondimento non cambia livello linguistico rispetto al testo base.
   function pickContentForDomain(domain) {
     const candidates = extraContents.filter(c => c.domains?.includes(domain));
     if (candidates.length === 0) return null;
@@ -143,19 +146,19 @@ export async function buildTopicQueue(artwork, interestWeights = {}, items = [],
         const author = await getAuthorById(artwork.author._id);
         title = author.name;
         texts = author.bio;
-      } catch { /* nessun contenuto disponibile per questo topic su quest'opera */ }
+      } catch { /* la richiesta è fallita: il topic viene saltato più sotto */ }
     } else if (domain === 'stile' && artwork.style?._id) {
       try {
         const style = await getStyleById(artwork.style._id);
         title = style.name;
         texts = style.description;
-      } catch { /* nessun contenuto disponibile per questo topic su quest'opera */ }
+      } catch { /* la richiesta è fallita: il topic viene saltato più sotto */ }
     } else if (domain !== 'artista' && domain !== 'stile') {
       const match = pickContentForDomain(domain);
       texts = match?.texts ?? null;
     }
 
-    if (!texts || texts.length === 0) continue; // topic non disponibile per quest'opera, si salta
+    if (!texts || texts.length === 0) continue; // nessun testo per questo topic, lo salto
 
     const start = startTierIndexForWeight(weight);
     const availableTiers = texts
@@ -164,10 +167,8 @@ export async function buildTopicQueue(artwork, interestWeights = {}, items = [],
       .sort((a, b) => a - b);
 
     const tiers = availableTiers.filter(t => t >= start);
-    // Se nessun tier disponibile è >= al tier di partenza (es. il topic
-    // ha solo un 3s ma il peso vorrebbe partire da 4min), si mostra
-    // comunque il tier più lungo disponibile, invece di saltare
-    // interamente un topic per cui l'utente ha mostrato interesse.
+    // Se nessun tier arriva al tier di partenza (es. c'è solo il 3s ma il peso
+    // chiede 4min) si usa il più lungo disponibile, così il topic non sparisce.
     const finalTiers = tiers.length > 0 ? tiers : [Math.max(...availableTiers)];
 
     queue.push({ domain, weight, title, texts, tiers: finalTiers });
@@ -176,9 +177,13 @@ export async function buildTopicQueue(artwork, interestWeights = {}, items = [],
   return queue;
 }
 
-// Sequenza piatta di "frame" da attraversare con dimmi di più/meno:
-// [ base@pace, topic0@tier..., topic0@tier_max, topic1@tier..., ... ]
-// Un solo indice intero (frameIndex) governa tutta la navigazione.
+/*
+ * Costruisce la sequenza di "frame" che l'utente percorre con "dimmi di più" / "dimmi di meno".
+ * Il primo frame è il testo base alla durata 'pace' della visita, poi ci sono
+ * i frame di ogni topic, uno per ciascun tier, in ordine crescente:
+ * [ base, topic0@tierA, topic0@tierB, topic1@tierA, ... ]
+ * Basta un solo indice (frameIndex) per sapere cosa mostrare.
+ */
 export function buildFrames(pace, topicQueue) {
   const frames = [{ type: 'base', tier: Math.max(0, DURATION_ORDER.indexOf(pace)) }];
 
@@ -191,9 +196,8 @@ export function buildFrames(pace, topicQueue) {
   return frames;
 }
 
-// Trova il primo frame che apre un dato topic (per gli shortcut
-// "Chi è l'autore" / "Qual è lo stile", che saltano direttamente al
-// topic indicato scavalcando l'ordine per peso).
+// Trova l'indice del primo frame di un dominio, oppure -1 se il dominio non è in coda.
+// Serve ai pulsanti "Chi è l'autore" e "Qual è lo stile", che saltano direttamente a quel topic.
 export function firstFrameIndexForDomain(frames, topicQueue, domain) {
   const topicIndex = topicQueue.findIndex(t => t.domain === domain);
   if (topicIndex === -1) return -1;

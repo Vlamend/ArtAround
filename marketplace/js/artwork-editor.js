@@ -5,7 +5,8 @@ import {
 } from './api.js';
 import { initContentEditor } from './content-editor.js';
 
-let mode; // 'create' | 'edit'
+// Stato della pagina: 'create' (nuova opera) o 'edit' (opera esistente), museo e opera in uso
+let mode;
 let museumId;
 let artworkId;
 
@@ -22,6 +23,14 @@ const backLink = document.getElementById('back-link');
 
 main();
 
+/*
+ * Pagina di creazione e modifica di un'opera.
+ * 1. Legge dall'URL l'id dell'opera (modifica) o del museo (creazione). Se mancano entrambi torna alla scelta del museo.
+ * 2. Verifica il login con requireAuth.
+ * 3. In modifica carica l'opera; in creazione prepara i titoli della pagina.
+ * 4. Carica sale, autori e stili nei menu a tendina e attiva i pulsanti della pagina.
+ * La sezione Content si attiva solo se l'opera esiste già.
+ */
 async function main() {
   const params = new URLSearchParams(window.location.search);
   artworkId = params.get('id');
@@ -47,11 +56,10 @@ async function main() {
   }
 
   if (!museumId) {
-    return; // loadExistingArtwork può aver fallito e già mostrato l'errore
+    return; // in caso di errore loadExistingArtwork ha già mostrato il messaggio e azzerato museumId
   }
 
-  // Sezione Content sbloccata solo se l'opera esiste già (ha un id):
-  // finché è in creazione non c'è nulla a cui agganciare un Content.
+  // Un Content si collega a un'opera esistente: in creazione la sezione resta bloccata
   if (mode === 'edit') {
     await initContentEditor(artworkId);
   }
@@ -64,6 +72,11 @@ async function main() {
   form.addEventListener('submit', handleSubmit);
 }
 
+/*
+ * Carica l'opera da modificare e ne precompila il form.
+ * Se l'utente non è il proprietario o l'opera non si carica, nasconde il form
+ * e mostra un messaggio (museumId viene azzerato per fermare main).
+ */
 async function loadExistingArtwork(currentUser) {
   try {
     const artwork = await getArtworkById(artworkId);
@@ -93,9 +106,8 @@ async function loadExistingArtwork(currentUser) {
     document.getElementById('adoption-price').value = artwork.adoptionPrice ?? 0;
     document.getElementById('acquisition-price').value = artwork.acquisitionPrice ?? 0;
     document.getElementById('is-public').checked = !!artwork.isPublic;
-    // Sala/autore/stile vanno selezionati DOPO che le rispettive
-    // option sono state popolate (loadRooms/loadAuthors/loadStyles):
-    // salviamo l'id target e lo applichiamo lì.
+    // Sala, autore e stile si possono selezionare solo dopo che le loro option sono state caricate
+    // (loadRooms, loadAuthors, loadStyles): qui si salva il valore da selezionare e lo si applica lì.
     roomSelect.dataset.pendingValue = artwork.roomId ?? '';
     authorSelect.dataset.pendingValue = artwork.author?._id ?? '';
     styleSelect.dataset.pendingValue = artwork.style?._id ?? '';
@@ -108,6 +120,7 @@ async function loadExistingArtwork(currentUser) {
   }
 }
 
+// Riempie il menu delle sale con quelle del museo e imposta il titolo della pagina in creazione
 async function loadRooms() {
   try {
     const museum = await getMuseumById(museumId);
@@ -126,32 +139,37 @@ async function loadRooms() {
       roomSelect.value = roomSelect.dataset.pendingValue;
     }
   } catch {
-    // se le sale non si caricano, il campo resta con la sola opzione "nessuna"
+    // Se le sale non si caricano resta solo l'opzione "nessuna"
   }
 }
 
+// Riempie il menu degli autori
 async function loadAuthors() {
   try {
     const authors = await getAuthors();
     fillSelect(authorSelect, authors);
   } catch {
-    // se gli autori non si caricano, il campo resta con la sola opzione "nessuno"
+    // Se gli autori non si caricano resta solo l'opzione "nessuno"
   }
 }
 
+// Riempie il menu degli stili
 async function loadStyles() {
   try {
     const styles = await getStyles();
     fillSelect(styleSelect, styles);
   } catch {
-    // se gli stili non si caricano, il campo resta con la sola opzione "nessuno"
+    // Se gli stili non si caricano resta solo l'opzione "nessuno"
   }
 }
 
+/*
+ * Riempie un menu a tendina con le entità indicate (autori o stili).
+ * 1. Toglie le option di un caricamento precedente, tenendo solo la prima ("— nessuno —").
+ * 2. Aggiunge un'option per ogni entità.
+ * 3. Se c'è un valore da selezionare salvato in pendingValue lo seleziona.
+ */
 function fillSelect(select, entities) {
-  // Rimuove le eventuali option create da un caricamento precedente
-  // (es. dopo la creazione rapida di un nuovo autore/stile), tenendo
-  // solo la prima opzione "— nessuno —".
   while (select.options.length > 1) select.remove(1);
 
   for (const entity of entities) {
@@ -166,6 +184,11 @@ function fillSelect(select, entities) {
   }
 }
 
+/*
+ * Crea al volo un nuovo autore dai campi sotto il menu.
+ * 1. Il nome è obbligatorio, gli altri campi sono facoltativi.
+ * 2. Dopo la creazione ricarica il menu selezionando il nuovo autore e svuota i campi.
+ */
 async function handleCreateAuthor() {
   const name = document.getElementById('new-author-name').value.trim();
   if (!name) {
@@ -194,6 +217,7 @@ async function handleCreateAuthor() {
   }
 }
 
+// Crea al volo un nuovo stile, con lo stesso procedimento di handleCreateAuthor
 async function handleCreateStyle() {
   const name = document.getElementById('new-style-name').value.trim();
   if (!name) {
@@ -220,6 +244,14 @@ async function handleCreateStyle() {
   }
 }
 
+/*
+ * Alla conferma del form:
+ * 1. Raccoglie i campi in un payload e controlla che il titolo sia compilato.
+ * 2. In creazione crea l'opera, passa in modalità modifica sulla stessa pagina
+ * (cambiando l'URL senza ricaricarla) e attiva la sezione Content.
+ * 3. In modifica aggiorna l'opera e resta sulla pagina, per poter continuare a gestire i Content.
+ * 4. Se il server rifiuta mostra il suo messaggio d'errore.
+ */
 async function handleSubmit(e) {
   e.preventDefault();
   errorEl.hidden = true;
@@ -256,10 +288,7 @@ async function handleSubmit(e) {
   try {
     if (mode === 'create') {
       const artwork = await createArtwork({ ...payload, museum: museumId });
-      // Transizione sul posto invece di un redirect a item-editor:
-      // l'opera esiste ora, si sblocca la sezione Content sulla STESSA
-      // pagina — niente più passaggio da un'altra schermata per
-      // scrivere il primo testo.
+      // L'opera ora esiste: si passa in modalità modifica senza cambiare pagina e si attiva la sezione Content
       artworkId = artwork._id;
       mode = 'edit';
       titleEl.textContent = `Modifica — ${artwork.title}`;
@@ -269,10 +298,7 @@ async function handleSubmit(e) {
       await initContentEditor(artworkId);
     } else {
       await updateArtwork(artworkId, payload);
-      // Niente redirect qui: si resta sulla pagina apposta, perché lo
-      // scopo di questa sezione è proprio poter gestire anche i
-      // Content senza uscire — un redirect via da qui vanificherebbe
-      // il motivo per cui è stata integrata.
+      // Si resta sulla pagina perché anche i Content si gestiscono da qui
       statusEl.hidden = false;
       statusEl.className = 'status-message';
       statusEl.textContent = 'Opera aggiornata.';
@@ -287,6 +313,7 @@ async function handleSubmit(e) {
   }
 }
 
+// Elimina l'opera dopo la conferma e torna alla lista dei contenuti. Il server rifiuta se ha Content collegati o è usata in una visita.
 async function handleDelete() {
   if (!window.confirm('Eliminare questa opera? Fallisce se ci sono ancora content collegati o se è usata in una visita. L\'operazione non è reversibile.')) {
     return;

@@ -38,9 +38,13 @@ async function validateStepsAccessibility(steps, userId) {
     return null;
 }
 
-// Lista visite, filtrabile per museo e visibilità pubblica
-// (marketplace: "contenuti esistenti - sia gratuiti sia in vendita -
-// per il museo in questione")
+/*
+ * Lista delle visite, filtrabile per museo.
+ * 1. Con mine=true e utente autenticato restituisce solo le visite di cui è autore (pubbliche e private).
+ * 2. Altrimenti, se l'utente è autenticato, restituisce le visite pubbliche
+ * più le sue private, così le proprie bozze non spariscono dalla lista.
+ * 3. Se la richiesta è anonima restituisce solo le visite pubbliche.
+ */
 export async function getVisits(req, res) {
     try {
         const filter = {};
@@ -48,11 +52,10 @@ export async function getVisits(req, res) {
             filter.museum = req.query.museum;
         }
 
-        // Per default mostra solo le visite pubbliche; un autore che
-        // vuole vedere anche le proprie visite private lo farà tramite
-        // un'altra route dedicata (fuori scope per ora).
         if (req.query.mine === 'true' && req.user) {
             filter.author = req.user.id;
+        } else if (req.user) {
+            filter.$or = [{ isPublic: true }, { author: req.user.id }];
         } else {
             filter.isPublic = true;
         }

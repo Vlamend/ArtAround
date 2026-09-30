@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+// Nome dei tipi di punto di interesse mostrato nella legenda
 const POI_LABELS = {
   entrance: 'Ingresso',
   exit: 'Uscita',
@@ -12,6 +13,7 @@ const POI_LABELS = {
   obstacle: 'Ostacolo'
 };
 
+// Simbolo o sigla con cui ogni tipo di punto di interesse è disegnato sulla mappa
 const POI_GLYPH = {
   entrance: '\u2192',
   exit: '\u2190',
@@ -24,9 +26,15 @@ const POI_GLYPH = {
   obstacle: '!'
 };
 
+/*
+ * Finestra modale con la mappa del museo, un piano alla volta.
+ * Mostra le tappe della visita (quella corrente evidenziata), i punti di interesse
+ * e una legenda. Un clic su una tappa chiama onSelectStep.
+ * Se il museo ha la planimetria del piano la usa come sfondo (MapWithFloorPlan),
+ * altrimenti disegna le sale come rettangoli (MapAbstract).
+ */
 export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInterest = [], floorPlans = [], onSelectStep, closeMap }) {
-  // Piano della tappa corrente (via la sua sala), usato come piano di
-  // default quando si apre la mappa.
+  // Sala della tappa corrente: il suo piano è quello mostrato all'apertura della mappa
   const roomById = new Map(rooms.map(r => [r._id, r]));
   const currentRoom = roomById.get(steps[currentIndex]?.artwork?.roomId);
 
@@ -34,6 +42,7 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
     currentRoom?.floor ?? rooms[0]?.floor ?? 0
   );
 
+  // Finché la mappa è aperta blocca lo scroll della pagina sotto e lo ripristina alla chiusura
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
 
@@ -44,12 +53,14 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
     };
   }, []);
 
+  // Quando cambia la tappa corrente la mappa passa al piano di quella tappa
   useEffect(() => {
     if (currentRoom?.floor !== undefined) {
       setSelectedFloor(currentRoom.floor);
     }
   }, [currentIndex]);
 
+  // Dati del piano selezionato: piani disponibili, planimetria, tappe (con il loro indice), punti di interesse e sale
   const floorsAvailable = [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
   const floorPlan = floorPlans.find(fp => fp.floor === selectedFloor);
 
@@ -162,9 +173,9 @@ export default function MuseumMap({ steps, currentIndex, rooms = [], pointsOfInt
   );
 }
 
-// Modalità planimetria reale: l'immagine fornita dal museo come sfondo,
-// marker posizionati in percentuale (non SVG scalato: così non si
-// distorcono se l'immagine non è quadrata).
+// Mappa con la planimetria del museo come immagine di sfondo.
+// I marker sono posizionati con coordinate in percentuale sull'immagine,
+// così restano al loro posto qualunque sia la sua dimensione.
 function MapWithFloorPlan({
   imageUrl,
   steps,
@@ -275,9 +286,9 @@ function MapWithFloorPlan({
     </div>
   );
 }
-// Fallback: nessuna planimetria fornita per questo piano. Rettangoli
-// astratti calcolati da Museum.rooms[].bounds, invece di lasciare i
-// marker fluttuare senza alcun riferimento spaziale.
+// Mappa alternativa per i piani senza planimetria: disegna le sale come
+// rettangoli, usando i bounds di ogni sala, e sopra di esse punti di interesse e tappe.
+// Le coordinate sono in una griglia da 0 a 100.
 function MapAbstract({ rooms, steps, currentIndex, pointsOfInterest, onSelectStep }) {
   return (
     <div className="w-full overflow-hidden rounded-b-xl bg-gray-100 dark:bg-gray-900">

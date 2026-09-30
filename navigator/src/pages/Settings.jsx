@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getMe, updateMe } from '../api.js';
 import { toggleDarkMode } from '../theme.js';
 
+// Nome con cui ogni dominio di interesse appare nelle impostazioni
 const DOMAIN_LABELS = {
   artista: "Storia dell'artista",
   architettura: 'Abbigliamento e architettura',
@@ -11,6 +12,7 @@ const DOMAIN_LABELS = {
   storia: 'Eventi storici'
 };
 
+// Livelli linguistici selezionabili come preferenza
 const LANGUAGE_LABELS = {
   infantile: 'Infantile',
   elementare: 'Elementare',
@@ -18,12 +20,19 @@ const LANGUAGE_LABELS = {
   specialistico: 'Specialistico'
 };
 
+/*
+ * Pagina delle impostazioni: livello linguistico preferito e pesi di interesse
+ * (da -10 a +10) per ogni dominio, che il Navigator usa per adattare i testi.
+ * Al salvataggio invia entrambi al server con updateMe().
+ */
 export default function Settings() {
+  // Stato del caricamento ('loading' | 'ready' | 'error') e stato del salvataggio ('idle' | 'saving' | 'saved' | 'error')
   const [status, setStatus] = useState('loading');
   const [preferredLanguageLevel, setPreferredLanguageLevel] = useState('medio');
   const [interestWeights, setInterestWeights] = useState({});
   const [saveStatus, setSaveStatus] = useState('idle');
 
+  // Carica dal server le preferenze attuali dell'utente
   useEffect(() => {
     getMe()
       .then(data => {
@@ -40,6 +49,7 @@ export default function Settings() {
       .catch(() => setStatus('error'));
   }, []);
 
+  // Invia le preferenze al server e aggiorna il messaggio di esito
   async function handleSave(e) {
     e.preventDefault();
     setSaveStatus('saving');

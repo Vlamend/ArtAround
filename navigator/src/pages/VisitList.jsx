@@ -1,22 +1,36 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getMyVisits, getVisits, logout, getMe } from '../api.js';
+import { getVisits, logout, getMe } from '../api.js';
 
+/*
+ * Pagina con le visite del museo, tra cui l'utente sceglie quale iniziare.
+ * Ha ricerca per titolo, ordinamento, paginazione e un menu con impostazioni e logout.
+ * Filtro, ordinamento e paginazione sono fatti nel browser sull'elenco già scaricato.
+ */
 export default function VisitList({ museum, onLogout }) {
+   // Tutte le visite scaricate e gli id di quelle già completate dall'utente
    const [visits, setVisits] = useState([]);
    const [visitedIds, setVisitedIds] = useState(new Set());
    const [status, setStatus] = useState('loading');
    const [isMenuOpen, setIsMenuOpen] = useState(false);
+   // Paginazione: quante visite per pagina e pagina corrente (parte da 1)
    const [visitsOnScreen, setVisitsOnScreen] = useState(3);
    const [actualPage, setActualPage] = useState(1);
 
+   // Testo di ricerca e criterio di ordinamento scelti dall'utente
    const [search, setSearch] = useState('');
    const [sortOrder, setSortOrder] = useState('default');
 
+   // Riferimenti per il menu mobile: il menu stesso e l'elemento che aveva il focus prima di aprirlo
    const menuRef = useRef(null);
    const lastFocusedElementRef = useRef(null);
    const navigate = useNavigate();
 
+   /*
+    * Visite da mostrare dopo il filtro e l'ordinamento.
+    * 1. Tiene solo quelle il cui titolo contiene il testo cercato (senza distinguere maiuscole).
+    * 2. Le ordina per titolo o prezzo secondo sortOrder ('default' mantiene l'ordine del server).
+    */
    const filteredVisits = [...visits]
       .filter(v =>
          v.title.toLowerCase().includes(search.toLowerCase())
@@ -40,6 +54,7 @@ export default function VisitList({ museum, onLogout }) {
          }
       });
 
+   // Calcolo della pagina corrente: numero di pagine, indici della fetta da mostrare e testo "x-y di z"
    const maxPages = Math.ceil(filteredVisits.length / visitsOnScreen);
 
    const startIndex = (actualPage - 1) * visitsOnScreen;
@@ -49,12 +64,15 @@ export default function VisitList({ museum, onLogout }) {
    const firstVisible = filteredVisits.length === 0 ? 0 : startIndex + 1;
    const lastVisible = Math.min(endIndex, filteredVisits.length);
 
+   /*
+    * Quando il museo è disponibile scarica in parallelo le visite (le pubbliche più
+    * le private dell'utente) e il suo profilo (per sapere quali visite ha già completato).
+    */
    useEffect(() => {
       if (!museum?._id) return;
-      Promise.all([getVisits(museum._id), getMyVisits(museum._id), getMe()])
-         .then(([visitsData, myVisitsData, meData]) => {
-            const allVisits = [...visitsData, ...myVisitsData];
-            setVisits(allVisits);
+      Promise.all([getVisits(museum._id), getMe()])
+         .then(([visitsData, meData]) => {
+            setVisits(visitsData);
             const ids = new Set((meData.user.visitedVisits ?? []).map(v => v.visit));
             setVisitedIds(ids);
             setStatus('ready');
@@ -63,6 +81,7 @@ export default function VisitList({ museum, onLogout }) {
    }, [museum]);
    useEffect(() => {
    }, [visits]);
+   // Con il menu aperto il tasto Esc lo chiude
    useEffect(() => {
       const handleEscapeKey = (e) => {
          if (e.key === 'Escape' && isMenuOpen) {
@@ -77,34 +96,39 @@ export default function VisitList({ museum, onLogout }) {
       };
    }, [isMenuOpen]);
 
+   // Cancella il token e avvisa App che l'utente non è più loggato
    function handleLogout() {
       logout();
       onLogout();
    }
 
+   // Apre il menu ricordando dove era il focus, per accessibilità
    const openMenu = () => {
       lastFocusedElementRef.current = document.activeElement;
       setIsMenuOpen(true);
 
-      // Move focus into menu after state update
+      // Sposta il focus dentro il menu dopo l'aggiornamento dello stato
       setTimeout(() => {
          menuRef.current?.focus();
       }, 0);
    };
 
+   // Chiude il menu e riporta il focus dove si trovava prima
    const closeMenu = () => {
       setIsMenuOpen(false);
 
-      // Restore focus after state update
+      // Ripristina il focus dopo l'aggiornamento dello stato
       setTimeout(() => {
          lastFocusedElementRef.current?.focus();
       }, 0);
    };
 
+   // Pagina precedente (non va sotto la prima)
    function goToPreviousPage() {
       setActualPage(page => Math.max(1, page - 1));
    }
 
+   // Pagina successiva (non va oltre l'ultima)
    function goToNextPage() {
       setActualPage(page => Math.min(maxPages, page + 1));
    }

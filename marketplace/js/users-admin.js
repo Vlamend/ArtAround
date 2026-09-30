@@ -10,14 +10,19 @@ const listStatusEl = document.getElementById('list-status');
 
 main();
 
+/*
+ * Pagina di gestione degli account autore (solo admin).
+ * 1. Verifica il login con requireAuth.
+ * 2. Se l'utente non è admin nasconde form e lista e mostra un messaggio.
+ * 3. Altrimenti attiva il form di creazione e carica l'elenco degli autori.
+ */
 async function main() {
   const currentUser = await requireAuth();
   if (!currentUser) {
     return; // requireAuth ha già gestito il redirect al login
   }
 
-  // Come per la config: anche se le route sono protette lato server,
-  // un non-admin non deve nemmeno vedere il form.
+  // Come per la config: il server protegge già le route, ma un non-admin non deve nemmeno vedere il form
   if (currentUser.role !== 'admin') {
     statusEl.hidden = false;
     statusEl.className = 'error-message';
@@ -31,6 +36,7 @@ async function main() {
   await loadAuthors();
 }
 
+// Scarica gli account con ruolo autore e li mostra in un elenco
 async function loadAuthors() {
   try {
     const users = await listUsers('autore');
@@ -40,7 +46,7 @@ async function loadAuthors() {
 
     for (const user of users) {
       const li = document.createElement('li');
-      // textContent: username ed email sono input degli utenti
+      // Si usa textContent perché username ed email li scrivono gli utenti
       li.textContent = `${user.username} — ${user.email}`;
       listEl.appendChild(li);
     }
@@ -50,6 +56,12 @@ async function loadAuthors() {
   }
 }
 
+/*
+ * Alla conferma del form:
+ * 1. Controlla che username ed email siano compilati.
+ * 2. Crea l'account autore. Se la password è vuota il server usa quella di default.
+ * 3. Mostra l'esito, svuota il form e ricarica l'elenco.
+ */
 async function handleSubmit(e) {
   e.preventDefault();
   errorEl.hidden = true;

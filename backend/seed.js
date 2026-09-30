@@ -56,7 +56,7 @@ async function seed() {
     ]);
     console.log("Collection pulite.");
 
-    // ---------- Utenti demo (invariati) ----------
+    // ---------- Utenti demo ----------
     const usersData = [
         { username: "autore1", email: "autore1@artaround.test", password: "12345678", role: "autore" },
         { username: "autore2", email: "autore2@artaround.test", password: "12345678", role: "autore" },
@@ -72,7 +72,7 @@ async function seed() {
     }
     console.log("Utenti demo creati.");
 
-    // ---------- Museo: 8 sale (invece di 5) per coprire anche il Settecento ----------
+    // ---------- Museo: 8 sale per coprire anche il Settecento ----------
     const museum = await Museum.create({
         slug: "pinacoteca-bologna",
         name: "Pinacoteca Nazionale di Bologna",

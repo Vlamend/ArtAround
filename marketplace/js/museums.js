@@ -7,6 +7,12 @@ const listEl = document.getElementById('museum-list');
 
 main();
 
+/*
+ * Pagina di scelta del museo.
+ * 1. Verifica il login con requireAuth (se manca è lui a reindirizzare).
+ * 2. Scarica i musei e ne mostra una card ciascuno, oppure un messaggio se non ce ne sono.
+ * 3. Se il server non risponde mostra un messaggio d'errore.
+ */
 async function main() {
   const currentUser = await requireAuth();
   if (!currentUser) {
@@ -30,6 +36,7 @@ async function main() {
   }
 }
 
+// Crea la card di un museo con il pulsante che apre la pagina dei suoi contenuti
 function renderMuseumCard(museum) {
   const li = document.createElement('li');
   li.className = 'card';

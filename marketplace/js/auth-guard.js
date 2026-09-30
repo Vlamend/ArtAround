@@ -1,8 +1,13 @@
 import { clearToken, getToken, getMe, logout } from './api.js';
 
-// Da chiamare in cima ad ogni pagina protetta. Valida il token contro
-// il server (non solo la sua presenza), stesso principio già adottato
-// nel Navigator. Restituisce l'utente autenticato se tutto ok.
+/*
+ * Da chiamare all'inizio di ogni pagina protetta.
+ * 1. Se nel localStorage non c'è il token reindirizza al login e ritorna null.
+ * 2. Altrimenti chiede al server chi è l'utente: controlla che il token sia valido,
+ * non solo che esista.
+ * 3. Se è valido disegna l'header e ritorna l'utente. Se il server lo rifiuta
+ * elimina il token, reindirizza al login e ritorna null.
+ */
 export async function requireAuth() {
   const token = getToken();
   if (!token) {
@@ -21,12 +26,12 @@ export async function requireAuth() {
   }
 }
 
+// Aggiunge all'header lo username col ruolo, i link riservati agli admin e il pulsante di logout
 function renderHeader(user) {
   const header = document.querySelector('header');
   if (!header) return;
 
-  // Costruito con il DOM e textContent, non con innerHTML: lo username
-  // lo sceglie l'utente in fase di registrazione.
+  // Si usano createElement e textContent, non innerHTML, perché lo username lo sceglie l'utente
   const userInfo = document.createElement('div');
 
   const label = document.createElement('span');

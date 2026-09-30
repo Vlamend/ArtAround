@@ -10,15 +10,18 @@ import {
   deleteVisit
 } from './api.js';
 
-// Stato della pagina, popolato in main().
-let mode; // 'create' | 'edit'
+// Stato della pagina, riempito in main()
+let mode; // 'create' (nuova visita) o 'edit' (visita esistente)
 let museumId;
 let visitId;
 let currentUser;
+// Opere che l'utente può già usare (proprie, gratuite o adottate) e opere da adottare o acquisire prima di poterle usare
 let allArtworks = [];
-let purchasableArtworks = []; // opere pubbliche non ancora utilizzabili
-let steps = []; // { artworkId, title, logisticNote }
+let purchasableArtworks = [];
+// Tappe della visita nell'ordine attuale, ognuna nella forma { artworkId, title, logisticNote }
+let steps = [];
 
+// Paginazione e ordinamento dell'elenco delle opere aggiungibili
 let purchasableCurrentPage = 1;
 let purchasablePerPage = 25;
 let sortBy = 'property';
@@ -45,6 +48,14 @@ const paginationInfoEl = document.getElementById('pagination-info');
 
 main();
 
+/*
+ * Pagina di creazione e modifica di una visita.
+ * 1. Legge dall'URL l'id della visita (modifica) o del museo (creazione). Se mancano entrambi torna alla scelta del museo.
+ * 2. Verifica il login con requireAuth.
+ * 3. In modifica carica la visita, in creazione prepara il titolo della pagina.
+ * 4. Legge ordinamento ed elementi per pagina dai controlli, scarica le opere e disegna elenco e tappe.
+ * 5. Collega i pulsanti della pagina (salvataggio, ricerca, filtri, ordinamento, paginazione).
+ */
 async function main() {
   const params = new URLSearchParams(window.location.search);
   visitId = params.get('id');
@@ -96,11 +107,13 @@ async function main() {
   });
 }
 
+// Riporta l'elenco delle opere alla prima pagina e lo ridisegna (dopo un cambio di filtro, ordinamento o dimensione pagina)
 function resetPurchasablePage() {
   purchasableCurrentPage = 1;
   renderObjects();
 }
 
+// Prepara la pagina per una nuova visita, mettendo il nome del museo nel titolo
 async function setupCreateMode() {
   titleEl.textContent = 'Nuova visita';
   submitBtn.textContent = 'Crea visita';
@@ -109,10 +122,15 @@ async function setupCreateMode() {
     const museum = await getMuseumById(museumId);
     titleEl.textContent = `Nuova visita — ${museum.name}`;
   } catch {
-    // Il titolo può restare generico se il museo non è disponibile.
+    // Se il museo non si carica il titolo resta generico
   }
 }
 
+/*
+ * Carica la visita da modificare e ne precompila il form e l'elenco delle tappe.
+ * Se l'utente non è l'autore della visita o la visita non si carica,
+ * nasconde il form e mostra un messaggio.
+ */
 async function loadExistingVisit() {
   try {
     const visit = await getVisitById(visitId);
@@ -156,6 +174,7 @@ async function loadExistingVisit() {
   }
 }
 
+// Completa il titolo delle tappe della visita cercando l'opera tra quelle scaricate, se il server non l'ha fornito
 function hydrateSteps() {
   for (const step of steps) {
     const artwork = allArtworks.find(candidate => String(candidate._id) === String(step.artworkId));
@@ -164,6 +183,7 @@ function hydrateSteps() {
   }
 }
 
+// Scarica le opere utilizzabili: quelle pubbliche e quelle proprie, unite senza duplicati
 async function loadArtworks() {
   try {
     const [publicArtworks, ownArtworks] = await Promise.all([
@@ -180,16 +200,24 @@ async function loadArtworks() {
   }
 }
 
+/*
+ * Disegna la pagina corrente dell'elenco delle opere che si possono aggiungere alla visita.
+ * 1. Unisce le opere già utilizzabili e quelle da adottare o acquisire,
+ * secondo le caselle dei filtri, tenendo solo quelle il cui titolo contiene il testo cercato.
+ * 2. Le ordina e taglia la pagina corrente.
+ * 3. Disegna una card per ciascuna e aggiorna la paginazione.
+ * Le opere già presenti tra le tappe non vengono mostrate.
+ */
 function renderObjects() {
   const query = searchInput.value.trim().toLocaleLowerCase();
   const showLicensed = checkMine ? checkMine.checked : true;
   const showPurchasable = checkOthers ? checkOthers.checked : true;
   const objects = [];
 
-  // “Miei” corrisponde alle opere per cui il museo/utente ha già la licenza.
+  // Opere già utilizzabili dall'utente (filtro "miei")
   if (showLicensed) {
     for (const artwork of allArtworks) {
-      // Le tappe già inserite non compaiono e non contribuiscono al conteggio/paginazione.
+      // Le opere già tra le tappe si saltano, quindi non compaiono e non contano nella paginazione
       if (!artwork._id || isArtworkAlreadyInSteps(artwork._id)) continue;
       const title = artwork.title ?? '(opera senza titolo)';
       if (query && !title.toLocaleLowerCase().includes(query)) continue;
@@ -197,7 +225,7 @@ function renderObjects() {
     }
   }
 
-  // “Altrui” corrisponde alle opere non ancora utilizzabili, ma acquistabili.
+  // Opere non ancora utilizzabili, che l'utente può adottare o acquisire (filtro "altrui")
   if (showPurchasable) {
     for (const artwork of purchasableArtworks) {
       const title = artwork.title ?? '(opera senza titolo)';
@@ -234,11 +262,13 @@ function renderObjects() {
   return total;
 }
 
+// Controlla se l'opera è già una tappa della visita (gli id si confrontano come stringhe)
 function isArtworkAlreadyInSteps(artworkId) {
   const targetId = String(artworkId);
   return steps.some(step => step.artworkId && String(step.artworkId) === targetId);
 }
 
+// Crea la card di un'opera utilizzabile, con il pulsante che la aggiunge come nuova tappa
 function renderArtworkResult(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
@@ -268,7 +298,7 @@ function renderArtworkResult(artwork) {
   return li;
 }
 
-// Le opere acquistabili restano ottenute dall'API esistente e dal suo filtro.
+// Scarica le opere da adottare o acquisire, usando il filtro purchasable del server
 async function loadPurchasableArtworks() {
   try {
     purchasableArtworks = await getArtworks({ museum: museumId, purchasable: 'true' });
@@ -278,6 +308,7 @@ async function loadPurchasableArtworks() {
   }
 }
 
+// Restituisce una copia ordinata dell'elenco secondo sortBy: titolo crescente o decrescente, più recenti o più vecchie
 function sortElements(objects) {
   return [...objects].sort((a, b) => {
     const titleA = a.title ?? '';
@@ -300,6 +331,10 @@ function sortElements(objects) {
   });
 }
 
+/*
+ * Disegna il testo "x–y di z" e i pulsanti della paginazione (frecce e numeri di pagina).
+ * Se c'è una sola pagina mostra solo il testo. Un clic su un pulsante cambia pagina e ridisegna l'elenco.
+ */
 function renderPagination(total, totalPages) {
   if (paginationInfoEl) {
     const start = total === 0 ? 0 : (purchasableCurrentPage - 1) * purchasablePerPage + 1;
@@ -338,6 +373,8 @@ function renderPagination(total, totalPages) {
   addPageButton('→', Math.min(totalPages, purchasableCurrentPage + 1), purchasableCurrentPage === totalPages);
 }
 
+// Restituisce i numeri di pagina da mostrare, con "…" al posto di quelli omessi.
+// Fino a 7 pagine le mostra tutte, oltre ne mostra alcune attorno a quella corrente più la prima e l'ultima.
 function getPageNumbers(current, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   if (current <= 4) return [1, 2, 3, 4, 5, '…', total];
@@ -345,6 +382,8 @@ function getPageNumbers(current, total) {
   return [1, '…', current - 1, current, current + 1, '…', total];
 }
 
+// Crea la card di un'opera non ancora utilizzabile, con i prezzi e i pulsanti di adozione e acquisizione
+// (quello di acquisizione compare solo ad autore e admin)
 function renderPurchasableCard(artwork) {
   const li = document.createElement('li');
   li.className = 'card';
@@ -378,6 +417,7 @@ function renderPurchasableCard(artwork) {
   return li;
 }
 
+// Adotta l'opera e aggiorna l'elenco. In caso di errore mostra un messaggio e il pulsante torna com'era.
 async function handleAdopt(artwork, button) {
   button.disabled = true;
   button.textContent = 'Adozione in corso…';
@@ -391,6 +431,7 @@ async function handleAdopt(artwork, button) {
   }
 }
 
+// Acquisisce l'opera, con lo stesso comportamento di handleAdopt
 async function handleAcquire(artwork, button) {
   button.disabled = true;
   button.textContent = 'Acquisizione in corso…';
@@ -404,18 +445,21 @@ async function handleAcquire(artwork, button) {
   }
 }
 
+// Dopo un'adozione o un'acquisizione riscarica le opere e ridisegna l'elenco dalla prima pagina
 async function refreshAfterLicenseChange() {
   await Promise.all([loadArtworks(), loadPurchasableArtworks()]);
   purchasableCurrentPage = 1;
   renderObjects();
 }
 
+// Ridisegna l'elenco delle tappe (o il messaggio "nessuna tappa" se è vuoto)
 function renderSteps() {
   stepsListEl.replaceChildren();
   stepsEmptyEl.hidden = steps.length > 0;
   steps.forEach((step, index) => stepsListEl.appendChild(renderStepRow(step, index)));
 }
 
+// Crea la riga di una tappa, con il campo per l'indicazione logistica e i pulsanti per spostarla o rimuoverla
 function renderStepRow(step, index) {
   const li = document.createElement('li');
   li.className = 'card';
@@ -457,6 +501,7 @@ function renderStepRow(step, index) {
   return li;
 }
 
+// Sposta una tappa di una posizione (delta -1 verso l'alto, +1 verso il basso) e ridisegna l'elenco
 function moveStep(index, delta) {
   const target = index + delta;
   if (target < 0 || target >= steps.length) return;
@@ -464,6 +509,12 @@ function moveStep(index, delta) {
   renderSteps();
 }
 
+/*
+ * Alla conferma del form:
+ * 1. Controlla che ci sia almeno una tappa, che ogni tappa abbia un'opera valida e che il titolo sia compilato.
+ * 2. Crea o aggiorna la visita sul server.
+ * 3. Se va a buon fine torna alla lista dei contenuti, altrimenti mostra il messaggio d'errore.
+ */
 async function handleSubmit(event) {
   event.preventDefault();
   errorEl.hidden = true;
@@ -511,6 +562,7 @@ async function handleSubmit(event) {
   }
 }
 
+// Elimina la visita dopo la conferma e torna alla lista dei contenuti
 async function handleDelete() {
   if (!window.confirm('Eliminare questa visita? L’operazione non è reversibile.')) return;
   try {
@@ -521,6 +573,7 @@ async function handleDelete() {
   }
 }
 
+// Aggiunge alla lista un elemento con un messaggio di stato
 function appendMessage(list, message) {
   const li = document.createElement('li');
   li.className = 'status-message';

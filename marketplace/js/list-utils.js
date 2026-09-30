@@ -1,8 +1,12 @@
-// Utilità generiche di lista, condivise tra la vista "opere" e la vista
-// "visite" della pagina contents: ordinamento e paginazione. Non sanno
-// nulla del dominio (opere/visite) — ricevono dati e un callback, non
-// toccano lo stato applicativo di chi le chiama.
+// Funzioni di ordinamento e paginazione condivise tra la lista delle opere e quella
+// delle visite della pagina contents. Non conoscono il tipo di dati: ricevono
+// i dati o una funzione da richiamare e non modificano lo stato di chi le usa.
 
+/*
+ * Restituisce una copia ordinata dell'array secondo il criterio scelto:
+ * 'property' per username del proprietario, 'title-asc' / 'title-desc' per titolo,
+ * 'newest' per ultima modifica. Con qualsiasi altro valore mantiene l'ordine attuale.
+ */
 export function sortByField(items, sortBy) {
     return [...items].sort((a, b) => {
         switch (sortBy) {
@@ -20,10 +24,15 @@ export function sortByField(items, sortBy) {
     });
 }
 
-// Disegna i controlli di paginazione dentro `container` (e il testo
-// "1-25 di 120" dentro `infoEl`), e richiama onPageChange(nuovaPagina)
-// quando l'utente sceglie una pagina diversa — non decide da sola cosa
-// succede dopo, quello resta a chi la chiama.
+/*
+ * Disegna i controlli di paginazione dentro `container` e il testo "1–25 di 120" dentro `infoEl`.
+ * 1. Se c'è una sola pagina mostra solo il testo.
+ * 2. Altrimenti mostra i pulsanti prima/ultima pagina e al massimo 3 numeri di pagina
+ * attorno a quella corrente. Il pulsante della pagina corrente è evidenziato e
+ * quelli di prima/ultima sono disabilitati quando non servono.
+ * 3. Quando l'utente sceglie una pagina chiama onPageChange(pagina):
+ * cosa fare dopo (di solito ridisegnare la lista) lo decide chi la chiama.
+ */
 export function renderPagination({ container, infoEl, totalItems, currentPage, pageSize, onPageChange }) {
     const maxPages = Math.ceil(totalItems / pageSize) || 1;
     container.innerHTML = '';
@@ -68,8 +77,8 @@ export function renderPagination({ container, infoEl, totalItems, currentPage, p
     lastBtn.addEventListener('click', () => onPageChange(maxPages));
 }
 
-// label è sempre ' << ', ' >> ' o un numero di pagina generato qui:
-// mai testo scelto dall'utente, quindi niente da proteggere con escapeHtml.
+// Crea un pulsante di paginazione. Il testo è sempre generato qui (frecce o numero di pagina),
+// mai scritto dall'utente, quindi non serve escapeHtml.
 function paginationButton(label) {
     const a = document.createElement('a');
     a.classList.add('pagination-button');

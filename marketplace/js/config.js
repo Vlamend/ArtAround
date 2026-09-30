@@ -1,10 +1,10 @@
-// Nessun bundler qui (vanilla JS): l'URL del backend si configura a
-// mano in questo unico file, invece che tramite variabili d'ambiente
-// di un build tool come nel Navigator (che usa Vite).
-//
-// In sviluppo (Live Server o simili su localhost:<altra porta>) il backend
-// è su localhost:3000; quando le pagine sono servite dal backend stesso
-// (localhost:3000/8000 o il dominio del dipartimento) l'URL è relativo.
+/*
+ * URL del backend usato da tutte le chiamate del marketplace.
+ * Il marketplace è in vanilla JS senza bundler, quindi l'URL si sceglie qui e non con variabili d'ambiente.
+ * 1. In sviluppo, con le pagine servite da un altro server locale (es. Live Server
+ * su una porta diversa da 3000 e 8000), il backend è su http://localhost:3000.
+ * 2. Se le pagine sono servite dal backend stesso o da un dominio, l'URL è relativo ("/api").
+ */
 const host = window.location.hostname;
 const isLocalDevServer =
   (host === 'localhost' || host === '127.0.0.1') &&
